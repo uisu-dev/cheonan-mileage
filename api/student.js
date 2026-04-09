@@ -67,21 +67,28 @@ module.exports = async (req, res) => {
     const { type, teacher, ids, mode } = req.body;
     const col = type === 'umbrella' ? 'umbrella' : 'ball';
     const txt = type === 'umbrella' ? '우산' : '공';
-    let count = 0;
-    for (const id of ids) {
-      const { data: user } = await supabase.from('users').select('*').eq('id', String(id).trim()).single();
-      if (!user) continue;
-      if (mode === 'rent' && user[col] !== '대여중') {
-        await supabase.from('users').update({ [col]: '대여중' }).eq('id', String(id).trim());
-        await supabase.from('logs').insert({ teacher, student_id: id, item: txt + ' 대여', point: 0 });
-        count++;
-      } else if (mode === 'return' && user[col] === '대여중') {
-        await supabase.from('users').update({ [col]: '' }).eq('id', String(id).trim());
-        await supabase.from('logs').insert({ teacher, student_id: id, item: txt + ' 반납', point: 0 });
-        count++;
-      }
+
+    // 한번에 조회
+    const trimmedIds = ids.map(id => String(id).trim());
+    const { data: users } = await supabase.from('users').select('id, umbrella, ball').in('id', trimmedIds);
+    if (!users || users.length === 0) return res.json({ success: true, msg: '0명 처리' });
+
+    const targets = users.filter(u =>
+      (mode === 'rent' && u[col] !== '대여중') || (mode === 'return' && u[col] === '대여중')
+    );
+
+    const newVal = mode === 'rent' ? '대여중' : '';
+    const logItem = txt + (mode === 'rent' ? ' 대여' : ' 반납');
+
+    // 병렬 처리
+    await Promise.all(targets.map(u =>
+      supabase.from('users').update({ [col]: newVal }).eq('id', u.id)
+    ));
+    if (targets.length > 0) {
+      await supabase.from('logs').insert(targets.map(u => ({ teacher, student_id: u.id, item: logItem, point: 0 })));
     }
-    return res.json({ success: true, msg: count + '명 처리' });
+
+    return res.json({ success: true, msg: targets.length + '명 처리' });
   }
 
   return res.json({ success: false, msg: '알 수 없는 action' });

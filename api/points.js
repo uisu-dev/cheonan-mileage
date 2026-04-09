@@ -10,16 +10,21 @@ module.exports = async (req, res) => {
 
   if (action === 'give') {
     const { teacher, ids, itemName, point } = req.body;
-    let count = 0;
-    for (const id of ids) {
-      const { data: user } = await supabase.from('users').select('points').eq('id', String(id).trim()).single();
-      if (user) {
-        await supabase.from('logs').insert({ teacher, student_id: id, item: itemName, point: Number(point) });
-        await supabase.from('users').update({ points: (Number(user.points) || 0) + Number(point) }).eq('id', String(id).trim());
-        count++;
-      }
-    }
-    return res.json({ success: true, msg: count + '명 완료' });
+
+    // 1. 해당 학생들 정보 한번에 조회
+    const { data: users } = await supabase.from('users').select('id, points').in('id', ids.map(id => String(id).trim()));
+    if (!users || users.length === 0) return res.json({ success: true, msg: '0명 완료' });
+
+    // 2. 로그 일괄 삽입
+    const logRows = users.map(u => ({ teacher, student_id: u.id, item: itemName, point: Number(point) }));
+    await supabase.from('logs').insert(logRows);
+
+    // 3. 점수 업데이트 병렬 처리
+    await Promise.all(users.map(u =>
+      supabase.from('users').update({ points: (Number(u.points) || 0) + Number(point) }).eq('id', u.id)
+    ));
+
+    return res.json({ success: true, msg: users.length + '명 완료' });
   }
 
   if (action === 'delete') {
