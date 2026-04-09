@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>2026 천중 마일리지</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+      :root { --school-blue: #0054a6; --school-yellow: #ffcd00; }
+      body { background-color: #f0f2f5; font-family: 'Noto Sans KR', sans-serif; }
+      .bg-school { background-color: var(--school-blue); color: white; }
+      .text-school { color: var(--school-blue); }
+      .btn-school { background-color: var(--school-blue); color: white; border: none; }
+      #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; }
+      #error-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:none; align-items:center; justify-content:center; color:white; text-align:center; padding:20px; }
+
+      .nav-tabs { display: flex; flex-wrap: wrap; border-bottom: none; }
+      .nav-tabs .nav-link { border: 1px solid transparent; border-top-left-radius: .25rem; border-top-right-radius: .25rem; background-color: #f8f9fa; margin-bottom: 2px; font-size: 0.9rem; padding: 8px 5px; }
+      .nav-tabs .nav-item { flex: 0 0 25%; text-align: center; max-width: 25%; flex-grow: 1; }
+      .nav-link.active { color: var(--school-blue) !important; border-bottom: 4px solid var(--school-blue); background-color: #fff; font-weight: bold; }
+      @media (max-width: 576px) { .nav-link { font-size: 0.8rem; padding: 5px 2px; } }
+
+      .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      @media (max-width: 768px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
+      .grid-item { background: white; border: 1px solid #ddd; border-radius: 5px; padding: 5px; display: flex; align-items: center; }
+      .grid-num { background-color: #eee; color: #555; width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 8px; font-size: 0.9rem; }
+      .grid-input { border: none; width: 100%; font-size: 1.1rem; outline: none; letter-spacing: 0.5px; font-weight: bold; color: var(--school-blue); }
+      .student-name-display { font-size: 0.8rem; font-weight: bold; color: var(--school-blue); min-width: 60px; text-align: right; }
+
+      .tier-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.2); vertical-align: middle; margin-left: 4px;}
+      .mbti-desc-box { background-color: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--school-blue); text-align: left; }
+      .club-member-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; }
+      .mbti-card { cursor: pointer; transition: transform 0.2s; border: 2px solid transparent; }
+      .mbti-card:hover { transform: scale(1.02); }
+    </style>
+  </head>
+  <body>
+    <div id="loading"><div class="text-center"><div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div><div class="mt-3 fw-bold text-school fs-5">접속 중...</div></div></div>
+    <div id="error-overlay"><div><h3>⚠️ 연결 오류</h3><p id="error-message">데이터를 불러오지 못했습니다.</p><button class="btn btn-light btn-sm mt-3" onclick="location.reload()">새로고침</button></div></div>
+
+    <div id="loginPage" class="container mt-5 text-center" style="max-width: 400px;">
+      <div class="mb-4"><img src="https://yt3.googleusercontent.com/ytc/AIdro_lbmQGVAxCUHKRTMItHqYKv67PLHGk_cyXnKEFHqs-zeQ=s900-c-k-c0x00ffffff-no-rj" alt="학교로고" style="max-width: 150px; height: auto;" class="rounded shadow-sm bg-white p-2"></div>
+      <h5 class="fw-bold text-school mb-1">2026 학생생활자치제</h5>
+      <h2 class="fw-bold text-school mb-4">천중 마일리지</h2>
+      <div class="card shadow p-4 border-0" style="border-radius: 15px;">
+        <input type="text" id="userId" class="form-control mb-2 form-control-lg" placeholder="아이디">
+        <input type="password" id="userPw" class="form-control mb-3 form-control-lg" placeholder="비밀번호">
+        <button onclick="tryLogin()" class="btn btn-school w-100 btn-lg fw-bold">로그인</button>
+      </div>
+      <div class="mt-4"><a href="https://script.google.com/macros/s/AKfycbwrgCqVlo8duQiVu6PN5uTR4RW2BvBGdYE3kmqjcY2TybGrhP_N3IGz_wsyjvYVR7d0/exec" target="_blank" class="text-decoration-none"><div class="p-3 rounded shadow-sm text-white d-flex align-items-center justify-content-center" style="background: linear-gradient(45deg, #11998e, #38ef7d); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1.0)'"><div class="me-3 fs-1"><i class="bi bi-book-half"></i></div><div class="text-start"><h6 class="fw-bold mb-0">천중 독서감상 플랫폼</h6><small style="opacity: 0.9;">독서 기록 남기러 가기 <i class="bi bi-arrow-right"></i></small></div></div></a></div>
+    </div>
+
+    <div id="teacherPage" class="container-fluid p-0" style="display:none;">
+      <nav class="navbar navbar-dark bg-school px-3 mb-3 shadow-sm">
+        <span class="navbar-brand mb-0 h1 fw-bold">👨‍🏫 <span id="tName"></span> 선생님</span>
+        <div><button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button><button onclick="loadDashboard()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button></div>
+      </nav>
+      <div class="container pb-5">
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab">💯 점수</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석부</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab">📢 제보함</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab">💌 칭찬</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#useTab">🎁 교환</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab">📊 통계</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#rentalTab">📦 대여</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#surveyTab">📝 설문</button></li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="giveTab">
+            <div class="d-flex justify-content-center mb-3"><div class="btn-group" role="group"><input type="radio" class="btn-check" name="giveMode" id="modeSingle" autocomplete="off" checked onclick="toggleGiveMode('single')"><label class="btn btn-outline-primary" for="modeSingle">👤 1명</label><input type="radio" class="btn-check" name="giveMode" id="modeMulti" autocomplete="off" onclick="toggleGiveMode('multi')"><label class="btn btn-outline-primary" for="modeMulti">👥 여러 명</label></div></div>
+            <div id="viewSingle"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="form-label text-secondary fw-bold">학생 검색</label><div class="input-group mb-2"><input type="text" id="singleSearchInput" class="form-control form-control-lg" placeholder="예: 홍길동, 10101" onkeyup="if(window.event.keyCode==13){searchSingleUser()}"><button class="btn btn-primary" type="button" onclick="searchSingleUser()"><i class="bi bi-search"></i> 검색</button></div><div id="searchResultList" class="list-group mb-2"></div><div id="selectedStudentCard" class="mt-2 p-3 single-user-card shadow-sm" style="display:none;"><div class="d-flex justify-content-between align-items-center"><div><h4 class="fw-bold mb-1"><span id="selName"></span></h4><span class="badge bg-secondary" id="selId"></span></div><div class="text-end"><small class="text-muted">현재 점수</small><div class="fs-4 fw-bold text-primary"><span id="selPoint">0</span> P</div><div id="selTier"></div></div></div></div></div></div>
+            <div id="viewMulti" style="display:none;"><div class="alert alert-primary py-2 small mb-2"><i class="bi bi-keyboard"></i> <b>학번 5자리</b>를 입력하면 학생 이름이 뜹니다.</div><div class="grid-container mb-3" id="multiGrid"></div><div class="text-end mb-2"><button class="btn btn-sm btn-outline-secondary" onclick="resetGrid()">초기화</button></div></div>
+            <hr><h5 class="fw-bold mb-3 text-school">어떤 점수를 줄까요?</h5><div id="itemList" class="d-grid gap-2 mb-4"></div><div class="card shadow-sm border-0 bg-light"><div class="card-body p-2"><h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-clock-history"></i> 내가 부여한 최근 내역 (삭제 가능)</h6><div class="table-responsive" style="max-height: 200px;"><table class="table table-sm table-bordered bg-white small mb-0"><thead class="table-light"><tr><th>시간</th><th>학번</th><th>항목</th><th>점수</th><th>관리</th></tr></thead><tbody id="myLogsTable"></tbody></table></div></div></div>
+          </div>
+
+          <div class="tab-pane fade" id="attendanceTab">
+             <div class="card border-0 shadow-sm mb-3">
+                 <div class="card-body p-3">
+                     <h6 class="fw-bold mb-3">🏫 동아리/학급 출석부</h6>
+                     <div class="input-group mb-3"><input type="text" id="newClubName" class="form-control" placeholder="새 동아리/학급 이름"><button class="btn btn-primary" onclick="createClub()">생성</button></div>
+                     <label class="small text-muted mb-2">관리할 그룹 선택</label>
+                     <select id="myClubSelect" class="form-select mb-3" onchange="loadClubMembers()"><option value="">선택하세요</option></select>
+
+                     <div id="clubManageArea" style="display:none;">
+                         <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">학생 명단 관리</span><button class="btn btn-sm btn-outline-primary" onclick="toggleMemberAdd()">+ 학생 추가</button></div>
+                         <div id="memberAddArea" class="mb-3" style="display:none;">
+                             <div class="alert alert-info small py-2">학번 5자리를 입력하면 이름이 뜹니다. 다 입력하고 아래 <b>[명단 저장]</b> 버튼을 누르세요.</div>
+                             <div class="grid-container mb-3" id="clubMemberGrid"></div>
+                             <div class="text-end"><button class="btn btn-secondary btn-sm" onclick="toggleMemberAdd()">취소</button> <button class="btn btn-success btn-sm fw-bold" onclick="addMemberToClubFromGrid()">명단 저장</button></div>
+                         </div>
+                         <ul class="list-group mb-4 small" id="clubMemberList" style="max-height:150px; overflow-y:auto;"></ul>
+                         <hr><h6 class="fw-bold mb-2">📅 출석 체크</h6>
+                         <div class="d-flex mb-3"><input type="date" id="attDate" class="form-control me-2"><button class="btn btn-success w-50 fw-bold" onclick="saveAttendance()">저장</button></div>
+                         <div id="attendanceCheckList" class="bg-white border rounded p-2 mb-3"></div>
+
+                         <h6 class="fw-bold mb-2 small text-secondary">📜 최근 출석 기록 (수정 가능)</h6>
+                         <div id="clubHistoryList" class="bg-light border rounded p-2 small" style="max-height:200px; overflow-y:auto; color:#555;">기록이 없습니다.</div>
+                     </div>
+                 </div>
+             </div>
+          </div>
+
+          <div class="tab-pane fade" id="reportListTab">
+             <div class="card border-0 shadow-sm"><div class="card-body p-3"><h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger"></i> 접수된 제보 목록</h6><div class="table-responsive"><table class="table table-hover small"><thead class="table-light"><tr><th>날짜</th><th>제보자</th><th>내용</th><th>사진</th></tr></thead><tbody id="teacherReportTable"></tbody></table></div></div></div>
+          </div>
+
+          <div class="tab-pane fade" id="praiseTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabPraisePending">승인 대기</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabPraiseHistory">승인 내역</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabPraisePending"><div class="alert alert-info small mb-3"><i class="bi bi-heart-fill"></i> 승인하면 학생들에게 5점이 지급됩니다.</div><div class="d-flex justify-content-between align-items-center mb-2 px-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAllPraise" onchange="toggleAllPraises()"><label class="form-check-label small fw-bold" for="checkAllPraise">전체 선택</label></div><div><button class="btn btn-danger btn-sm me-1" onclick="rejectSelectedPraises()">선택 일괄 반려</button><button class="btn btn-primary btn-sm" onclick="approveSelectedPraises()">선택 일괄 승인</button></div></div><div id="teacherPraiseListPending"></div></div><div class="tab-pane fade" id="tabPraiseHistory"><div id="teacherPraiseListHistory"></div></div></div></div>
+
+          <div class="tab-pane fade" id="useTab"><div class="card p-3 border-0 shadow-sm mb-3"><label class="form-label fw-bold">학생 학번 입력</label><input type="number" id="redeemSearch" class="form-control form-control-lg" placeholder="학번 5자리 (예: 10101)" onkeyup="selectRedeemUser()"><div id="redeemStudentInfo" class="mt-3 p-3 bg-light rounded text-center" style="display:none;"><h5 class="fw-bold" id="rName"></h5><div class="fs-4 fw-bold text-school"><span id="rPoint">0</span> P</div><input type="hidden" id="rId"></div></div><h5 class="fw-bold mb-3 text-school">교환할 물품</h5><div id="rewardListTeacher" class="d-grid gap-2"></div></div>
+
+          <div class="tab-pane fade" id="statsTab"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
+
+          <div class="tab-pane fade" id="rentalTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#subUmbrella">☂️ 우산</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#subBall">⚽ 공</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="subUmbrella"><div class="alert alert-info py-2 small mb-3"><b>학번 5자리</b> 입력 후 우산 관리</div><div class="grid-container mb-3" id="umbrellaGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetUmbrellaGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-primary shadow-sm" onclick="processUmbrella('rent')"><i class="bi bi-umbrella"></i> <b>우산 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processUmbrella('return')"><i class="bi bi-arrow-return-left"></i> <b>우산 반납</b> 처리</button></div><div id="unreturnedUmbrellaList"></div></div><div class="tab-pane fade" id="subBall"><div class="alert alert-success py-2 small mb-3"><b>학번 5자리</b> 입력 후 공 관리</div><div class="grid-container mb-3" id="ballGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetBallGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-success shadow-sm" onclick="processBall('rent')"><i class="bi bi-circle"></i> <b>공 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processBall('return')"><i class="bi bi-arrow-return-left"></i> <b>공 반납</b> 처리</button></div><div id="unreturnedBallList"></div></div></div></div>
+
+          <div class="tab-pane fade" id="surveyTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGen">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbti">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGen"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white fw-bold"><i class="bi bi-plus-circle"></i> 새 설문 만들기</div><div class="card-body p-3 bg-light"><input type="text" id="newSurveyTitle" class="form-control mb-3 fw-bold" placeholder="설문 제목 (예: 이번 달 급식 만족도)"><div id="questionsContainer"></div><button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="addQuestionField()"><i class="bi bi-plus"></i> 문항 추가</button><button class="btn btn-school w-100" onclick="makeSurvey()">설문 등록하기</button></div></div><h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">진행 중인 설문 결과 (삭제 가능)</h6><div class="accordion" id="teacherSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyMbti"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="row g-2 mb-2"><div class="col-6"><select id="mbtiGrade" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체학년</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><select id="mbtiClass" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div></div><input type="text" id="mbtiSearchType" class="form-control form-control-sm" placeholder="유형 검색 (예: ENFP)" onkeyup="renderMbtiStats()"></div></div><div class="alert alert-primary py-2 small">검사 완료: <strong id="mbtiCount">0</strong>명</div><div class="table-responsive bg-white border rounded" style="max-height:400px;overflow-y:auto;"><table class="table table-hover mb-0 small"><thead class="table-light sticky-top"><tr><th>학번</th><th>이름</th><th>MBTI</th></tr></thead><tbody id="mbtiTableBody"></tbody></table></div></div></div></div>
+        </div>
+
+        <div class="mt-4 mb-2">
+          <a href="https://script.google.com/macros/s/AKfycbxto6yNcdypwbkdzx0DOYDIMaQk6JE7uYaoDSrif-EkPiST1Q4Jsj8icCRXxPe060wf6A/exec" target="_blank" class="text-decoration-none">
+            <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #00c6ff, #0072ff);">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                  <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check-fill me-2"></i>천안중학교 교육활동 계획(주간, 월간)</h5>
+                  <small style="opacity:0.9">학교 교육활동 계획 조회 바로가기</small>
+                </div>
+                <i class="bi bi-chevron-right fs-4"></i>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://docs.google.com/spreadsheets/d/1I8f_CWChqeabqiPpcdqjcLqPbbsr7bqe/edit?usp=sharing&ouid=103603006942933020847&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
+            <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #f2994a, #f2c94c);">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                  <h5 class="fw-bold mb-0"><i class="bi bi-info-square-fill me-2"></i>2026 천안중학교 정보게시판</h5>
+                  <small style="opacity:0.9">학교 주요 정보 및 자료 공유 바로가기</small>
+                </div>
+                <i class="bi bi-chevron-right fs-4"></i>
+              </div>
+            </div>
+          </a>
+
+          <a href="https://script.google.com/macros/s/AKfycbwmsxVioFWAjLnmRwCnixY5kIqVaRJZ5mfQvY9zbKtusAtCbTSIHdaVyKoUCOdLt6eb/exec" target="_blank" class="text-decoration-none"><div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #6a11cb, #2575fc);"><div class="card-body d-flex align-items-center justify-content-between p-3"><div><h5 class="fw-bold mb-0"><i class="bi bi-chat-heart-fill me-2"></i>상담 프로그램 마주봄</h5><small style="opacity:0.9">학생 상담 관리 바로가기</small></div><i class="bi bi-chevron-right fs-4"></i></div></div></a>
+          <a href="https://script.google.com/macros/s/AKfycbzRxYYhtjRua-EpWJBaezRzTtTLCNqXBrCkacKbeBaJLW7vRtgHCWlqFOX2kK83xF88Vw/exec" target="_blank" class="text-decoration-none"><div class="card border-0 shadow-sm text-white" style="background: linear-gradient(to right, #56ab2f, #a8e063);"><div class="card-body d-flex align-items-center justify-content-between p-3"><div><h5 class="fw-bold mb-0"><i class="bi bi-heart-pulse-fill me-2"></i>회복적 성찰문 관리 시스템</h5><small style="opacity:0.9">학생 성찰문 조회 및 관리 바로가기</small></div><i class="bi bi-chevron-right fs-4"></i></div></div></a>
+        </div>
+      </div>
+    </div>
+
+    <div id="studentPage" class="container-fluid p-0" style="display:none;">
+      <nav class="navbar navbar-dark bg-school px-3 mb-3">
+        <span class="navbar-brand mb-0 h1">🎓 <span id="sName"></span><span id="myTierBadge"></span><span id="umbrellaBadge" class="badge bg-danger ms-1" style="display:none; font-size: 0.7rem;">☂️ 대여중</span><span id="ballBadge" class="badge bg-success ms-1" style="display:none; font-size: 0.7rem;">⚽ 대여중</span></span>
+        <div><button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button></div>
+      </nav>
+      <div class="container">
+        <div class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
+        <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
+        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li></ul>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="historyTab"><ul class="list-group list-group-flush" id="logList"></ul></div>
+          <div class="tab-pane fade" id="shopTab"><div class="alert alert-warning text-center small mb-3 shadow-sm border-0"><i class="bi bi-info-circle-fill"></i> 교환은 학생부에 문의하세요.</div><div class="row g-2" id="rewardListStudent"></div></div>
+          <div class="tab-pane fade" id="surveyTabStudent"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGenStu">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbtiStu">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGenStu"><div id="studentSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyMbtiStu"><div id="mbtiResultView" style="display:none;" class="text-center py-4"><h5 class="text-muted mb-3">나의 성격 유형은?</h5><h1 class="display-1 fw-bold text-school mb-3" id="myMbtiResultText">----</h1><p class="lead mb-4">자신의 성향을 잘 이해하고 활용해보세요!</p><div id="mbtiStudentDesc" class="text-start mb-4"></div><button class="btn btn-outline-secondary btn-sm" onclick="startMbtiTest()">다시 검사하기</button></div><div id="mbtiTestView" style="display:none;"><div class="progress mb-4" style="height: 5px;"><div class="progress-bar bg-school" role="progressbar" style="width: 0%" id="mbtiProgress"></div></div><div class="card border-0 shadow-sm"><div class="card-body text-center py-5"><h5 class="fw-bold mb-4" id="mbtiQuestion">질문</h5><div class="d-grid gap-3"><button class="btn btn-outline-primary py-3 mbti-card" onclick="nextQuestion('A')"><span id="mbtiOptionA">A</span></button><button class="btn btn-outline-primary py-3 mbti-card" onclick="nextQuestion('B')"><span id="mbtiOptionB">B</span></button></div></div></div></div><div id="mbtiStartView" class="text-center py-5"><div class="display-1 mb-3">🧩</div><h4 class="fw-bold">간단 MBTI 검사</h4><p class="text-muted mb-4">20개의 질문으로 알아보는 나의 성격 유형</p><div class="alert alert-success d-inline-block py-2 px-3 mb-4 rounded-pill small">🎁 완료 시 100P 지급! (최초 1회)</div><br><button class="btn btn-school btn-lg px-5 rounded-pill" onclick="startMbtiTest()">검사 시작</button></div></div></div></div>
+          <div class="tab-pane fade" id="reportTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger"></i> 학교 시설 고장 및 일탈 행위 제보</h6><div class="mb-3"><label class="form-label small text-muted">제보 내용</label><textarea id="reportContent" class="form-control" rows="4" placeholder="상세히 적어주세요."></textarea></div><div class="mb-3"><label class="form-label small text-muted">증거 사진 (선택)</label><input type="file" id="reportFile" class="form-control" accept="image/png, image/jpeg, image/gif"></div><button class="btn btn-danger w-100 fw-bold" onclick="submitReport()">제보하기</button><div class="mt-2 text-center"><small class="text-muted" style="font-size:0.75rem;">- 익명이 보장됩니다.</small></div></div></div></div>
+          <div class="tab-pane fade" id="praiseTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3">💌 친구 칭찬하기</h6><label class="small text-muted">칭찬할 친구 학번 (5자리)</label><input type="number" id="praiseReceiverId" class="form-control mb-2" placeholder="예: 10101" onkeyup="searchPraiseUser()"><div id="praiseTargetName" class="text-primary fw-bold small mb-2" style="min-height:20px;"></div><label class="small text-muted">칭찬 내용</label><textarea id="praiseContent" class="form-control mb-3" rows="3" placeholder="예: 수업 시간에 지우개를 빌려줘서 고마워!"></textarea><button class="btn btn-primary w-100" onclick="sendPraiseMsg()">칭찬 엽서 보내기</button></div></div><h6 class="fw-bold mb-3 text-success">💚 내가 받은 칭찬</h6><div id="myPraiseListArea"></div></div>
+          <div class="tab-pane fade" id="rankTabStudent"><h6 class="fw-bold text-center mb-3">🏆 명예의 전당 (TOP 10)</h6><ul class="nav nav-pills justify-content-center mb-3" id="rankPills" role="tablist"><li class="nav-item" role="presentation"><button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#rank1">1학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank2">2학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank3">3학년</button></li></ul><div class="tab-content text-center"><div class="tab-pane fade show active" id="rank1"><ul class="list-group" id="rankList1"></ul></div><div class="tab-pane fade" id="rank2"><ul class="list-group" id="rankList2"></ul></div><div class="tab-pane fade" id="rank3"><ul class="list-group" id="rankList3"></ul></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-school text-white"><h5 class="modal-title fw-bold"><span id="histModalName"></span> 기록</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="histModalMbtiInfo" class="p-3 bg-light border-bottom" style="display:none;"></div><table class="table table-striped mb-0 text-center small"><thead class="table-light sticky-top"><tr><th>날짜</th><th>내용</th><th>점수</th></tr></thead><tbody id="histModalBody"></tbody></table></div><div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div></div></div></div>
+
+    <div class="modal fade" id="attendanceEditModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">📝 출석 기록 수정</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <h6 class="fw-bold mb-3" id="editModalDate"></h6>
+            <div id="editModalList"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            <button type="button" class="btn btn-primary" onclick="submitAttendanceEdit()">수정 완료</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="pwModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">🔒 비번 변경</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><input type="password" id="newPwInput" class="form-control" placeholder="새 비밀번호"></div></div><div class="modal-footer p-2"><button type="button" class="btn btn-primary btn-sm fw-bold" onclick="changePasswordAction()">변경</button></div></div></div></div>
+    <datalist id="studentDataListAll"></datalist>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // ========== API 헬퍼 ==========
+      var API_BASE = '/api';
+
+      async function apiCall(endpoint, body) {
+        const resp = await fetch(API_BASE + endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        return resp.json();
+      }
+
+      // ========== 글로벌 변수 ==========
+      var currentUser = {}; var allStudents = []; var allTeachers = []; var myClubList = []; var clubLogs = []; var currentGiveMode = 'single'; var selectedSingleUserId = null; var selectedClubMembers = [];
+      var currentEditingLogIndex = -1;
+
+      var MBTI_INFO = { "ISTJ": { s_study: "계획적이고 체계적인 학습 선호. 벼락치기보다 꾸준한 복습 추천.", s_rel: "약속을 잘 지키는 신중한 친구." }, "ISFJ": { s_study: "꼼꼼한 필기와 반복 학습 강점. 모범생 스타일.", s_rel: "타인을 잘 배려하고 경청하는 따뜻한 친구." }, "INFJ": { s_study: "전체 흐름 파악 중시. '왜'라는 질문을 던지며 학습.", s_rel: "깊은 유대감을 선호하며 고민 상담을 잘해줌." }, "INTJ": { s_study: "논리적 분석과 목표 설정 탁월. 독립적 탐구형.", s_rel: "지적 호기심을 공유하는 친구와 잘 통함." }, "ISTP": { s_study: "효율 중시. 체험/실습 위주 학습에서 두각.", s_rel: "행동으로 보여주는 쿨한 성격. 함께 활동하기 좋음." }, "ISFP": { s_study: "자유로운 분위기 선호. 예술적 감각 활용 추천.", s_rel: "다정하고 온화하며 갈등을 싫어하는 평화주의자." }, "INFP": { s_study: "자신만의 의미 찾기 중요. 문학/예술 분야 강점.", s_rel: "마음이 통하는 친구와 깊은 대화 선호." }, "INTP": { s_study: "원리 이해와 논리적 추론 선호. 탐구형 학습자.", s_rel: "관심사가 같은 친구와 밤새 토론 가능." }, "ESTP": { s_study: "활동적, 경험 중심. 경쟁이나 퀴즈 활용 추천.", s_rel: "유머 감각이 뛰어나고 에너지가 넘치는 분위기 메이커." }, "ESFP": { s_study: "즐거운 분위기 선호. 스터디 그룹 추천.", s_rel: "사교성 좋고 정이 많아 모두와 친하게 지냄." }, "ENFP": { s_study: "창의적 학습 선호. 반복 암기보다 토론/프로젝트.", s_rel: "사람을 좋아하고 리액션이 좋아 인기 많음." }, "ENTP": { s_study: "토론과 논쟁을 통한 학습 즐김. 질문왕.", s_rel: "다재다능하고 아이디어 넘치는 친구." }, "ESTJ": { s_study: "계획 실천형. 목표 지향적이며 성실함.", s_rel: "책임감 강하고 리더십 있어 학급 임원 적합." }, "ESFJ": { s_study: "설명 잘 듣고 정리 잘함. 협력 학습 시너지.", s_rel: "친구들 잘 챙기고 세심하게 배려함." }, "ENFJ": { s_study: "함께 성장하는 것 중시. 가르쳐주며 공부하기.", s_rel: "따뜻한 리더십으로 친구들 화합 이끎." }, "ENTJ": { s_study: "큰 그림 그리고 체계적 목표 달성. 분석력 탁월.", s_rel: "주도적으로 모임을 이끄는 결단력 있는 친구." } };
+      var mbtiQuestions = [{ dim: 'EI', q: "주말에 나는?", a: "친구들과 신나게 논다", b: "집에서 쉰다", typeA: 'E', typeB: 'I' }, { dim: 'EI', q: "새 친구 사귈 때", a: "내가 먼저 말 건다", b: "말 걸어주길 기다린다", typeA: 'E', typeB: 'I' }, { dim: 'EI', q: "에너지 충전은?", a: "사람들과 함께", b: "혼자만의 시간", typeA: 'E', typeB: 'I' }, { dim: 'SN', q: "나는 주로", a: "현실을 본다", b: "상상을 한다", typeA: 'S', typeB: 'N' }, { dim: 'SN', q: "설명 들을 때", a: "구체적 예시 필요", b: "전체 흐름 중요", typeA: 'S', typeB: 'N' }, { dim: 'SN', q: "나는", a: "꼼꼼하다", b: "독창적이다", typeA: 'S', typeB: 'N' }, { dim: 'TF', q: "고민 상담 시", a: "해결책 제시", b: "공감과 위로", typeA: 'T', typeB: 'F' }, { dim: 'TF', q: "결정할 때", a: "논리가 중요", b: "감정이 중요", typeA: 'T', typeB: 'F' }, { dim: 'TF', q: "듣고 싶은 말", a: "똑똑하다", b: "착하다", typeA: 'T', typeB: 'F' }, { dim: 'JP', q: "여행 갈 때", a: "철저한 계획", b: "즉흥적", typeA: 'J', typeB: 'P' }, { dim: 'JP', q: "책상 정리", a: "깔끔하다", b: "어수선하지만 위치는 암", typeA: 'J', typeB: 'P' }, { dim: 'JP', q: "과제", a: "미리미리", b: "몰아서", typeA: 'J', typeB: 'P' }];
+      var currentQIndex = 0; var mbtiScores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
+
+      function getTierBadge(points) { var p = Number(points); if(p >= 5000) return '<span class="tier-badge" style="background:linear-gradient(45deg,#ff0055,#ffcc00);border:1px solid #ffcc00">👑 챌린저</span>'; if(p >= 4000) return '<span class="tier-badge" style="background:#6c80d4;border:1px solid #4a5aa3">💎 다이아</span>'; if(p >= 3000) return '<span class="tier-badge" style="background:#3faac1;border:1px solid #2a7a8c">🟢 플래티넘</span>'; if(p >= 2000) return '<span class="tier-badge" style="background:#eac134;border:1px solid #bfa02e">🟡 골드</span>'; if(p >= 1000) return '<span class="tier-badge" style="background:#a5a9b4;border:1px solid #737780">⚪ 실버</span>'; if(p >= 500) return '<span class="tier-badge" style="background:#cd7f32;border:1px solid #8c5622">🟠 브론즈</span>'; return '<span class="tier-badge" style="background:#585858;border:1px solid #3c3c3c">🟤 아이언</span>'; }
+      function showLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+
+      async function tryLogin() {
+        var id = document.getElementById('userId').value.trim();
+        var pw = document.getElementById('userPw').value.trim();
+        if(!id || !pw) return alert("입력해주세요.");
+        showLoading(true);
+        try {
+          var res = await apiCall('/login', { id, pw });
+          showLoading(false);
+          if(res.success) { currentUser = res; document.getElementById('loginPage').style.display = 'none'; loadDashboard(); }
+          else { alert(res.message); }
+        } catch(e) { showLoading(false); alert("로그인 오류: "+e); }
+      }
+
+      async function loadDashboard() {
+        showLoading(true);
+        try {
+          var data = await apiCall('/get-data', { role: currentUser.role, userId: currentUser.id });
+          showLoading(false);
+          if(data.error) { document.getElementById('error-overlay').style.display='flex'; document.getElementById('error-message').innerText=data.error; return; }
+          clubLogs = data.clubLogs || [];
+          if(currentUser.role === 'teacher' || currentUser.role === 'admin') setupTeacherUI(data);
+          else setupStudentUI(data);
+        } catch(e) { showLoading(false); console.error(e); document.getElementById('error-overlay').style.display='flex'; }
+      }
+
+      function setupStudentUI(data) {
+        document.getElementById('studentPage').style.display = 'block';
+        document.getElementById('sName').innerText = currentUser.name;
+        document.getElementById('sTotal').innerText = data.myPoints || 0;
+        document.getElementById('myTierBadge').innerHTML = getTierBadge(data.myPoints || 0);
+        allStudents = data.students || [];
+
+        if(data.myUmbrella === '대여중') document.getElementById('umbrellaBadge').style.display = 'inline-block';
+        if(data.myBall === '대여중') document.getElementById('ballBadge').style.display = 'inline-block';
+
+        var hHtml = "";
+        if(data.history && data.history.length > 0) {
+            data.history.forEach(h => {
+                var color = h.point > 0 ? "text-primary" : "text-danger";
+                var sign = h.point > 0 ? "+" : "";
+                hHtml += `<li class="list-group-item d-flex justify-content-between align-items-center"><div><span class="small text-muted">${h.date}</span><br>${h.item}</div><span class="fw-bold ${color}">${sign}${h.point}</span></li>`;
+            });
+        } else { hHtml = "<li class='list-group-item text-center text-muted'>기록이 없습니다.</li>"; }
+        document.getElementById('logList').innerHTML = hHtml;
+
+        var rHtml = "";
+        (data.rewards || []).forEach(r => {
+             rHtml += `<div class="col-6"><div class="card h-100 shadow-sm border-0"><div class="card-body text-center"><h6 class="fw-bold">${r.name}</h6><p class="text-primary fw-bold mb-2">${r.price} P</p><button class="btn btn-sm btn-outline-primary w-100" onclick="alert('학생부 선생님께 문의하세요!')">교환불가</button></div></div></div>`;
+        });
+        document.getElementById('rewardListStudent').innerHTML = rHtml;
+
+        var sHtml = "";
+        if(data.surveyList && data.surveyList.length > 0) {
+            data.surveyList.forEach(s => {
+               if(s.voted) { sHtml += `<div class="alert alert-secondary mb-2 small"><i class="bi bi-check-circle-fill"></i> ${s.title} (참여완료)</div>`; }
+               else { sHtml += `<div class="card mb-2 border-primary"><div class="card-body p-2"><h6 class="fw-bold mb-1">${s.title}</h6><button class="btn btn-primary btn-sm w-100" onclick="takeSurvey('${s.id}', '${s.title}', '${escape(JSON.stringify(s.questions))}')">참여하기 (+100P)</button></div></div>`; }
+            });
+        } else { sHtml = "<div class='text-center text-muted py-3'>진행 중인 설문이 없습니다.</div>"; }
+        document.getElementById('studentSurveyList').innerHTML = sHtml;
+
+        if(data.myMbti) {
+           document.getElementById('mbtiStartView').style.display='none';
+           document.getElementById('mbtiResultView').style.display='block';
+           document.getElementById('myMbtiResultText').innerText=data.myMbti;
+           if(MBTI_INFO[data.myMbti]) document.getElementById('mbtiStudentDesc').innerHTML = `<b>💡 학습 스타일:</b> ${MBTI_INFO[data.myMbti].s_study}<br><b>🤝 친구 관계:</b> ${MBTI_INFO[data.myMbti].s_rel}`;
+        }
+
+        var pHtml = "";
+        if(data.receivedPraises && data.receivedPraises.length > 0){
+             data.receivedPraises.forEach(p => {
+                 pHtml += `<div class="card mb-2 border-success"><div class="card-body p-2 bg-light"><div class="d-flex justify-content-between small text-muted mb-1"><span>${p.date}</span><span>From. ${p.senderName}</span></div><div class="fw-bold text-success">${p.content}</div></div></div>`;
+             });
+        } else { pHtml = "<div class='text-center text-muted py-3'>받은 칭찬이 없습니다.</div>"; }
+        document.getElementById('myPraiseListArea').innerHTML = pHtml;
+
+        if(data.leaderboard) {
+            ['1','2','3'].forEach(g => {
+                var list = document.getElementById('rankList'+g);
+                list.innerHTML = "";
+                if(data.leaderboard[g]) {
+                    data.leaderboard[g].forEach((r, i) => {
+                        var badge = i<3 ? ["🥇","🥈","🥉"][i] : `<span class="badge bg-light text-dark border">${i+1}</span>`;
+                        list.innerHTML += `<li class="list-group-item d-flex justify-content-between"><span>${badge} ${r.name}</span><span class="fw-bold">${r.points}</span></li>`;
+                    });
+                }
+            });
+        }
+      }
+
+      function setupTeacherUI(data) {
+        document.getElementById('teacherPage').style.display = 'block'; document.getElementById('tName').innerText = currentUser.name;
+        allStudents = data.students || []; myClubList = data.myClubs || [];
+        var listAll = document.getElementById('studentDataListAll'); listAll.innerHTML = "";
+        allStudents.forEach(s=>{ var o = document.createElement('option'); o.value = `${s.id} ${s.name}`; listAll.appendChild(o); });
+        createMultiGrid(); createUmbrellaGrid(); createBallGrid(); updateClubSelectOptions(); createClubGrid();
+
+        var itemHtml = ""; (data.items || []).forEach(i=>{ var c = i.points>0?"btn-outline-primary":"btn-outline-danger"; itemHtml += `<button class="btn ${c} py-3 shadow-sm" onclick="confirmGivePoints('${i.name}', ${i.points})"><div class="d-flex justify-content-between"><span class="fw-bold">${i.name}</span><span class="badge bg-secondary rounded-pill">${i.points}</span></div></button>`; });
+        itemHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmGivePoints('기타', 0)"><div class="d-flex justify-content-between"><span class="fw-bold">✏️ 기타 (사유입력)</span><span class="badge bg-secondary rounded-pill">직접입력</span></div></button>`;
+        document.getElementById('itemList').innerHTML = itemHtml;
+        var rHtml = ""; (data.rewards || []).forEach(r=>{ rHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmRedeem('${r.name}', ${r.price})"><div class="d-flex justify-content-between"><span class="fw-bold">${r.name}</span><span class="badge bg-secondary rounded-pill">-${r.price}</span></div></button>`; });
+        document.getElementById('rewardListTeacher').innerHTML = rHtml;
+
+        var rt=document.getElementById('teacherReportTable'); rt.innerHTML="";
+        if (data.reportList && data.reportList.length > 0) {
+           data.reportList.forEach(r => {
+             var fileBtn = r.fileLink ? `<a href="${r.fileLink}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i> 보기</a>` : '<span class="text-muted">-</span>';
+             rt.innerHTML += `<tr><td>${r.date}</td><td>${r.reporterName}</td><td>${r.content}</td><td>${fileBtn}</td></tr>`;
+           });
+        } else { rt.innerHTML = "<tr><td colspan='4' class='text-center text-muted'>접수된 제보가 없습니다.</td></tr>"; }
+
+        var sHtml = ""; if(data.surveyList && data.surveyList.length > 0) { data.surveyList.forEach((s, idx) => { sHtml += `<div class="accordion-item mb-2 shadow-sm border-0 overflow-hidden" style="border-radius:10px;"><h2 class="accordion-header" id="heading${idx}"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">${s.title} <span class="badge bg-danger ms-2" onclick="deleteSurveyAction('${s.id}'); event.stopPropagation();">삭제</span></button></h2><div id="collapse${idx}" class="accordion-collapse collapse" data-bs-parent="#teacherSurveyList"><div class="accordion-body bg-light">${s.stats}</div></div></div>`; }); } else { sHtml = "<div class='text-center text-muted py-3'>진행 중인 설문이 없습니다.</div>"; } document.getElementById('teacherSurveyList').innerHTML = sHtml;
+        renderMbtiStats();
+        var pHtml = ""; if(data.pendingPraises && data.pendingPraises.length > 0) { data.pendingPraises.forEach(p => { pHtml += `<div class="card mb-2 border-warning"><div class="card-body p-2"><div class="form-check"><input class="form-check-input praise-checkbox" type="checkbox" value="${p.id}" id="praise${p.id}"><label class="form-check-label w-100" for="praise${p.id}"><div class="d-flex justify-content-between small mb-1"><span class="text-muted">${p.date}</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></label></div></div></div>`; }); } else { pHtml = "<div class='text-center text-muted py-3'>대기 중인 칭찬 없음</div>"; } document.getElementById('teacherPraiseListPending').innerHTML = pHtml;
+        var phHtml = ""; if(data.approvedPraises && data.approvedPraises.length > 0) { data.approvedPraises.forEach(p => { phHtml += `<div class="card mb-2 border-success"><div class="card-body p-2"><div class="d-flex justify-content-between small text-muted mb-1"><span>${p.date}</span><span class="badge bg-success">승인완료</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></div></div>`; }); } else { phHtml = "<div class='text-center text-muted py-3'>승인 내역 없음</div>"; } document.getElementById('teacherPraiseListHistory').innerHTML = phHtml;
+        renderStats();
+        if(data.unreturnedUmbrella.length > 0) document.getElementById('unreturnedUmbrellaList').innerHTML = '<div class="alert alert-warning py-2 small mb-0">미반납: ' + data.unreturnedUmbrella.map(u => `${u.name}(${u.id})`).join(', ') + '</div>'; else document.getElementById('unreturnedUmbrellaList').innerHTML = '<div class="alert alert-success py-2 small mb-0">모두 반납 완료</div>';
+        if(data.unreturnedBall.length > 0) document.getElementById('unreturnedBallList').innerHTML = '<div class="alert alert-warning py-2 small mb-0">미반납: ' + data.unreturnedBall.map(u => `${u.name}(${u.id})`).join(', ') + '</div>'; else document.getElementById('unreturnedBallList').innerHTML = '<div class="alert alert-success py-2 small mb-0">모두 반납 완료</div>';
+        var logHtml = ""; if(data.teacherHistory.length > 0) { data.teacherHistory.forEach(log=>{ logHtml += `<tr><td>${log.date}</td><td>${log.target}</td><td>${log.item}</td><td>${log.point}</td><td><button class="btn btn-outline-danger btn-sm" style="font-size:0.7em; padding:1px 5px;" onclick="deleteLog('${log.rowIndex}', '${log.target}', ${log.point})">삭제</button></td></tr>`; }); } else { logHtml = "<tr><td colspan='5' class='text-center text-muted'>내역 없음</td></tr>"; } document.getElementById('myLogsTable').innerHTML = logHtml;
+      }
+
+      function selectRedeemUser() {
+        var val = document.getElementById('redeemSearch').value.trim();
+        if(val.length<5) { document.getElementById('redeemStudentInfo').style.display='none'; return; }
+        var s = allStudents.find(x => String(x.id) === String(val));
+        if(s) {
+           document.getElementById('redeemStudentInfo').style.display='block';
+           document.getElementById('rName').innerText = s.name;
+           document.getElementById('rPoint').innerText = s.points;
+           document.getElementById('rId').value = s.id;
+        } else {
+           document.getElementById('redeemStudentInfo').style.display='none';
+        }
+      }
+
+      function updateClubSelectOptions() { var s=document.getElementById('myClubSelect'); s.innerHTML="<option value=''>선택하세요</option>"; myClubList.forEach(c=>{ var o=document.createElement('option'); o.value=c.id; o.innerText=c.name; s.appendChild(o); }); }
+      function loadClubMembers() {
+          var cid=document.getElementById('myClubSelect').value;
+          if(!cid){ document.getElementById('clubManageArea').style.display='none'; return; }
+          var c=myClubList.find(x=>x.id==cid);
+          if(c){
+             selectedClubMembers=c.members;
+             renderClubMembers();
+             renderClubLogs(cid);
+             document.getElementById('clubManageArea').style.display='block';
+          }
+      }
+      function renderClubLogs(cid) {
+         var list = document.getElementById('clubHistoryList');
+         list.innerHTML = "";
+         var myLogs = clubLogs.filter(l => String(l.clubId) === String(cid));
+         if(myLogs.length === 0) { list.innerHTML = "기록이 없습니다."; return; }
+         myLogs.forEach(l => {
+            var div = document.createElement('div');
+            div.className = "d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom";
+            var summary = "";
+            try {
+               var att = JSON.parse(l.data);
+               var o = att.filter(a=>a.status=='O').length;
+               var x = att.filter(a=>a.status=='X').length;
+               var late = att.filter(a=>a.status=='L').length;
+               summary = `출:${o} / 지:${late} / 결:${x}`;
+            } catch(e) { summary = "데이터 오류"; }
+
+            div.innerHTML = `<div><span class="fw-bold">${l.date}</span> <span class="small text-muted">(${summary})</span></div>
+                             <button class="btn btn-outline-primary btn-sm" style="font-size:0.75rem; padding: 2px 6px;"
+                                     onclick="openAttendanceEditModal('${l.rowIndex}', '${l.date}', '${escape(l.data)}')">수정</button>`;
+            list.appendChild(div);
+         });
+      }
+
+      function openAttendanceEditModal(rowIndex, dateStr, encodedData) {
+         currentEditingLogIndex = rowIndex;
+         document.getElementById('editModalDate').innerText = dateStr + " 출석 수정";
+
+         var data = [];
+         try { data = JSON.parse(unescape(encodedData)); } catch(e) { alert("데이터 오류"); return; }
+
+         var list = document.getElementById('editModalList');
+         list.innerHTML = "";
+
+         selectedClubMembers.forEach(m => {
+             var savedStatus = 'O';
+             var found = data.find(d => String(d.id) == String(m.id));
+             if(found) savedStatus = found.status;
+
+             var html = `<div class='club-member-item py-2'>
+               <span class="fw-bold">${m.name}</span>
+               <div>
+                 <input type='radio' class='btn-check' name='edit_att_${m.id}' id='edit_o_${m.id}' value='O' ${savedStatus=='O'?'checked':''}>
+                 <label class='btn btn-outline-success btn-sm' for='edit_o_${m.id}'>출</label>
+
+                 <input type='radio' class='btn-check' name='edit_att_${m.id}' id='edit_l_${m.id}' value='L' ${savedStatus=='L'?'checked':''}>
+                 <label class='btn btn-outline-warning btn-sm' for='edit_l_${m.id}'>지</label>
+
+                 <input type='radio' class='btn-check' name='edit_att_${m.id}' id='edit_x_${m.id}' value='X' ${savedStatus=='X'?'checked':''}>
+                 <label class='btn btn-outline-danger btn-sm' for='edit_x_${m.id}'>결</label>
+               </div>
+             </div>`;
+             list.innerHTML += html;
+         });
+
+         new bootstrap.Modal(document.getElementById('attendanceEditModal')).show();
+      }
+
+      async function submitAttendanceEdit() {
+         if(currentEditingLogIndex === -1) return;
+
+         var att = [];
+         selectedClubMembers.forEach(m => {
+            var el = document.querySelector(`input[name="edit_att_${m.id}"]:checked`);
+            var val = el ? el.value : 'O';
+            att.push({id: m.id, status: val});
+         });
+
+         if(confirm("수정된 내용을 저장하시겠습니까?")) {
+            showLoading(true);
+            var r = await apiCall('/club', { action: 'updateAttendance', rowIndex: currentEditingLogIndex, data: JSON.stringify(att) });
+            showLoading(false);
+            alert(r.msg);
+            if(r.success) {
+               var modalEl = document.getElementById('attendanceEditModal');
+               var modal = bootstrap.Modal.getInstance(modalEl);
+               modal.hide();
+               loadDashboard();
+            }
+         }
+      }
+
+      function renderClubMembers() { var l=document.getElementById('clubMemberList'); l.innerHTML=""; var al=document.getElementById('attendanceCheckList'); al.innerHTML=""; if(selectedClubMembers.length==0) l.innerHTML="<li class='list-group-item'>학생 없음</li>"; else selectedClubMembers.forEach(m=>{ l.innerHTML+=`<li class='list-group-item d-flex justify-content-between'>${m.name}(${m.id}) <button class='btn btn-close btn-sm' onclick='removeMember("${m.id}")'></button></li>`; al.innerHTML+=`<div class='club-member-item'><span>${m.name}</span><div><input type='radio' class='btn-check' name='att_${m.id}' id='o_${m.id}' value='O' checked><label class='btn btn-outline-success btn-sm' for='o_${m.id}'>출</label><input type='radio' class='btn-check' name='att_${m.id}' id='l_${m.id}' value='L'><label class='btn btn-outline-warning btn-sm' for='l_${m.id}'>지</label><input type='radio' class='btn-check' name='att_${m.id}' id='x_${m.id}' value='X'><label class='btn btn-outline-danger btn-sm' for='x_${m.id}'>결</label></div></div>`; }); document.getElementById('attDate').valueAsDate = new Date(); }
+      function createGrid(id, cnt) { var c=document.getElementById(id); c.innerHTML=""; for(var i=1;i<=cnt;i++){ c.innerHTML+=`<div class="grid-item"><div class="grid-num">${i}</div><div style="flex-grow:1;text-align:center"><input type="number" class="grid-input" placeholder="학번" oninput="checkStudentName(this)"><div class="student-name-display"></div></div></div>`; } }
+      function createMultiGrid() { createGrid('multiGrid',15); } function createUmbrellaGrid(){ createGrid('umbrellaGrid',15); } function createBallGrid(){ createGrid('ballGrid',15); } function createClubGrid(){ createGrid('clubMemberGrid',35); }
+      function resetGrid() { document.querySelectorAll('#multiGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
+      function checkStudentName(i) { var v=i.value.trim(); var d=i.nextElementSibling; if(v.length==5){ var s=allStudents.find(u=>String(u.id)==v); if(s){i.style.color="blue";d.innerText=s.name;}else{i.style.color="red";d.innerText="없음";} }else{i.style.color="inherit";d.innerText="";} }
+
+      function submitReport() { var c = document.getElementById('reportContent').value; if(!c) return alert("내용을 입력하세요"); var f = document.getElementById('reportFile').files[0]; if(f) { var r = new FileReader(); r.onload = function(e) { var d = e.target.result.split(',')[1]; var m = e.target.result.split(',')[0].match(/:(.*?);/)[1]; sendReport(c, {data:d, mimeType:m}); }; r.readAsDataURL(f); } else { sendReport(c, null); } }
+      async function sendReport(c, f) { if(!confirm("제보하시겠습니까?")) return; showLoading(true); var r = await apiCall('/report', { studentId: currentUser.id, studentName: currentUser.name, content: c, fileData: f }); showLoading(false); alert(r.msg); if(r.success){ document.getElementById('reportContent').value=""; document.getElementById('reportFile').value=""; } }
+
+      async function removeMember(id) { if(confirm("삭제?")) { selectedClubMembers=selectedClubMembers.filter(m=>m.id!=id); saveMembersToServer(); } }
+      async function saveMembersToServer() { var cid=document.getElementById('myClubSelect').value; showLoading(true); await apiCall('/club', { action: 'updateMembers', clubId: cid, members: selectedClubMembers.map(m=>m.id) }); showLoading(false); loadDashboard(); }
+      async function saveAttendance() { var d=document.getElementById('attDate').value; if(!d) return alert("날짜선택"); var cid=document.getElementById('myClubSelect').value; var att=[]; selectedClubMembers.forEach(m=>{ var v=document.querySelector(`input[name="att_${m.id}"]:checked`).value; att.push({id:m.id, status:v}); }); if(confirm("저장?")) { showLoading(true); var r = await apiCall('/club', { action: 'saveAttendance', clubId: cid, date: d, data: JSON.stringify(att) }); showLoading(false); alert(r.msg); } }
+      function toggleMemberAdd() { var d=document.getElementById('memberAddArea'); d.style.display=d.style.display=='none'?'block':'none'; }
+      async function addMemberToClubFromGrid() { var inputs = document.querySelectorAll('#clubMemberGrid input'); var cnt = 0; inputs.forEach(i => { var val = i.value.trim(); if(val.length === 5) { if(!selectedClubMembers.find(m => m.id === val)) { var s = allStudents.find(st => String(st.id) === val); if(s) { selectedClubMembers.push({id: val, name: s.name}); cnt++; } } } }); if(cnt > 0) { saveMembersToServer(); alert(cnt + "명 추가 완료!"); inputs.forEach(i => { i.value=""; checkStudentName(i); }); } else { alert("추가된 학생이 없습니다."); } }
+      function searchSingleUser() { var v=document.getElementById('singleSearchInput').value.trim(); if(v.length<2) return; var l=document.getElementById('searchResultList'); l.innerHTML=""; var f=allStudents.filter(s=>s.name.includes(v)||String(s.id).includes(v)); if(f.length==0) l.innerHTML="<div class='list-group-item'>검색결과 없음</div>"; else f.forEach(s=>{ var b=document.createElement('button'); b.className="list-group-item list-group-item-action"; b.innerHTML=`<b>${s.name}</b> (${s.id})`; b.onclick=function(){ selectUser(s); }; l.appendChild(b); }); }
+      function selectUser(s) { selectedSingleUserId=s.id; document.getElementById('searchResultList').innerHTML=""; document.getElementById('selectedStudentCard').style.display='block'; document.getElementById('selName').innerText=s.name; document.getElementById('selId').innerText=s.id; document.getElementById('selPoint').innerText=s.points; document.getElementById('selTier').innerHTML=getTierBadge(s.points); }
+      async function deleteLog(r, t, p) { if(confirm("삭제하시겠습니까?")) { showLoading(true); var res = await apiCall('/delete-log', { rowId: r, studentId: t, point: p }); showLoading(false); alert(res.msg); loadDashboard(); } }
+      function searchPraiseUser() { var v=document.getElementById('praiseReceiverId').value; var s=allStudents.find(x=>String(x.id)==v); document.getElementById('praiseTargetName').innerText = s ? s.name+" 학생" : "학생 없음"; }
+      async function sendPraiseMsg() { var id=document.getElementById('praiseReceiverId').value; var t=document.getElementById('praiseContent').value; if(!id||!t) return alert("입력확인"); if(confirm("전송?")) { showLoading(true); var s=allStudents.find(x=>String(x.id)==id); var r = await apiCall('/praise', { action: 'send', senderId: currentUser.id, senderName: currentUser.name, receiverId: id, receiverName: s.name, content: t }); showLoading(false); alert(r.msg); document.getElementById('praiseContent').value=""; } }
+      async function createClub() { var n=document.getElementById('newClubName').value; if(!n) return alert("이름입력"); showLoading(true); var r = await apiCall('/club', { action: 'create', teacherId: currentUser.id, name: n }); showLoading(false); alert(r.msg); loadDashboard(); }
+      function openPwModal() { new bootstrap.Modal(document.getElementById('pwModal')).show(); }
+      async function changePasswordAction() { var p=document.getElementById('newPwInput').value; if(p.length<4) return alert("4자이상"); if(confirm("변경?")) { showLoading(true); var r = await apiCall('/change-password', { id: currentUser.id, newPw: p }); showLoading(false); alert(r.msg); location.reload(); } }
+      function startMbtiTest() { currentQIndex=0; mbtiScores={E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0}; document.getElementById('mbtiStartView').style.display='none'; document.getElementById('mbtiResultView').style.display='none'; document.getElementById('mbtiTestView').style.display='block'; showQuestion(); }
+      function showQuestion() { var q=mbtiQuestions[currentQIndex]; document.getElementById('mbtiQuestion').innerText=`Q${currentQIndex+1}. ${q.q}`; document.getElementById('mbtiOptionA').innerText=q.a; document.getElementById('mbtiOptionB').innerText=q.b; document.getElementById('mbtiProgress').style.width=(Number(currentQIndex + "00")/mbtiQuestions.length)+"%"; }
+      function nextQuestion(c) { var q=mbtiQuestions[currentQIndex]; if(c=='A') mbtiScores[q.typeA]++; else mbtiScores[q.typeB]++; currentQIndex++; if(currentQIndex<mbtiQuestions.length) showQuestion(); else finishMbtiTest(); }
+      async function finishMbtiTest() { var r=""; r+=(mbtiScores.E>=mbtiScores.I)?"E":"I"; r+=(mbtiScores.S>=mbtiScores.N)?"S":"N"; r+=(mbtiScores.T>=mbtiScores.F)?"T":"F"; r+=(mbtiScores.J>=mbtiScores.P)?"J":"P"; showLoading(true); var res = await apiCall('/mbti', { id: currentUser.id, mbti: r }); showLoading(false); alert(res.msg); document.getElementById('mbtiTestView').style.display='none'; document.getElementById('mbtiResultView').style.display='block'; document.getElementById('myMbtiResultText').innerText=r; loadDashboard(); }
+      async function viewStudentHistory(id, name) { document.getElementById('histModalName').innerText = name; document.getElementById('histModalBody').innerHTML = '<tr><td colspan="3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>'; var s = allStudents.find(x => String(x.id) === String(id)); var mbtiDiv = document.getElementById('histModalMbtiInfo'); if(s && s.mbti && typeof MBTI_INFO !== 'undefined' && MBTI_INFO[s.mbti]) { var info = MBTI_INFO[s.mbti]; mbtiDiv.style.display = 'block'; mbtiDiv.innerHTML = `<div class="d-flex align-items-center mb-3"><span class="badge bg-primary fs-6 me-2">${s.mbti}</span><span class="fw-bold text-dark">학생 지도 가이드</span></div><div class="row g-3 text-start small"><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-primary"><i class="bi bi-emoji-smile"></i> 생활/학습</strong><br>${info.s_study}</div></div><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-warning text-opacity-75" style="color:#d68c00!important"><i class="bi bi-people"></i> 교우 관계</strong><br>${info.s_rel}</div></div></div>`; } else { mbtiDiv.style.display = 'none'; } new bootstrap.Modal(document.getElementById('historyModal')).show(); var logs = await apiCall('/student-logs', { studentId: id }); var html = ""; if(logs.length === 0) html = "<tr><td colspan='3' class='text-muted'>기록이 없습니다.</td></tr>"; else { logs.forEach(l => { var color = l.point > 0 ? "text-primary" : "text-danger"; var sign = l.point > 0 ? "+" : ""; html += `<tr><td>${l.date}</td><td class="text-start">${l.item}</td><td class="${color} fw-bold">${sign}${l.point}</td></tr>`; }); } document.getElementById('histModalBody').innerHTML = html; }
+      function renderStats() { var gr=document.getElementById('statGrade').value; var cl=document.getElementById('statClass').value; var sv=document.getElementById('statSearch').value; var so=document.querySelector('input[name="sortOpt"]:checked').id; var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&(s.name.includes(sv)||String(s.id).includes(sv)); }); if(so=='sortPoint') f.sort((a,b)=>b.points-a.points); else if(so=='sortId') f.sort((a,b)=>a.id-b.id); else f.sort((a,b)=>a.name.localeCompare(b.name)); document.getElementById('statCount').innerText=f.length; document.getElementById('statAvg').innerText=f.length?Math.round(f.reduce((a,b)=>a+b.points,0)/f.length):0; var h=""; f.forEach(s=>{ h+=`<tr><td>${s.id}</td><td onclick="viewStudentHistory('${s.id}', '${s.name}')" style="cursor:pointer; color:var(--school-blue); text-decoration:underline; font-weight:bold;">${s.name} ${getTierBadge(s.points)}</td><td class="text-end fw-bold">${s.points}</td></tr>`; }); document.getElementById('statTableBody').innerHTML=h; }
+      function renderMbtiStats() { var gr=document.getElementById('mbtiGrade').value; var cl=document.getElementById('mbtiClass').value; var ty=document.getElementById('mbtiSearchType').value.toUpperCase(); var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&s.mbti&&(ty?s.mbti.includes(ty):true); }); document.getElementById('mbtiCount').innerText=f.length; var h=""; f.forEach(s=>{ h+=`<tr><td>${s.id}</td><td>${s.name}</td><td class="text-primary fw-bold">${s.mbti}</td></tr>`; }); document.getElementById('mbtiTableBody').innerHTML=h; }
+      function toggleGiveMode(m) { currentGiveMode=m; document.getElementById('viewSingle').style.display=m=='single'?'block':'none'; document.getElementById('viewMulti').style.display=m=='multi'?'block':'none'; }
+      function logout() { location.reload(); }
+      async function doAttendance() {
+          if(confirm("출석체크 하시겠습니까?")) {
+              showLoading(true);
+              var r = await apiCall('/attendance', { id: currentUser.id });
+              showLoading(false);
+              alert(r.msg);
+              if(r.success) loadDashboard();
+          }
+      }
+      async function takeSurvey(sid, title, qJson) {
+          var qs = JSON.parse(unescape(qJson));
+          var ans = [];
+          for(var i=0; i<qs.length; i++) {
+              var val = prompt(`Q${i+1}. ${qs[i].q}\n(답변을 입력하세요)`);
+              if(!val) return alert("취소되었습니다.");
+              ans.push(val);
+          }
+          if(confirm("제출하시겠습니까?")) {
+             showLoading(true);
+             var r = await apiCall('/survey', { action: 'vote', studentId: currentUser.id, surveyId: sid, answers: ans });
+             showLoading(false); alert(r.msg); loadDashboard();
+          }
+      }
+      async function confirmGivePoints(n, p) {
+        if(p==0) {
+            var r=prompt("점수 부여 사유를 입력하세요."); if(!r) return;
+            var pt=prompt("몇 점을 부여할까요? (숫자만 입력)"); if(!pt||isNaN(pt)) return alert("숫자만 입력가능");
+            n=r; p=Number(pt);
+        }
+        var targets=[];
+        if(currentGiveMode=='single') { if(!selectedSingleUserId) return alert("학생선택필요"); targets.push(selectedSingleUserId); }
+        else { targets = Array.from(document.querySelectorAll('#multiGrid input')).map(i=>i.value.trim()).filter(v=>v.length==5); if(targets.length==0) return alert("입력된 학번 없음"); }
+
+        if(confirm(`${targets.length}명에게 [${n}] 항목으로 ${p}점을 부여합니까?`)) {
+            showLoading(true);
+            var r = await apiCall('/give-points', { teacher: currentUser.name, ids: targets, itemName: n, point: p });
+            showLoading(false); alert(r.msg); loadDashboard(); if(currentGiveMode=='single') searchSingleUser(); else resetGrid();
+        }
+      }
+      async function confirmRedeem(n, p) {
+         var targets=[];
+         if(currentGiveMode=='single') { if(!selectedSingleUserId) return alert("학생선택필요"); targets.push(selectedSingleUserId); }
+         else { alert("교환은 1명씩만 가능합니다."); return; }
+
+         if(confirm(`${selectedSingleUserId} 학생의 포인트 ${p}점을 차감하고 [${n}] 교환 처리합니까?`)) {
+            showLoading(true);
+            var r = await apiCall('/reward', { teacher: currentUser.name, studentId: targets[0], rewardName: n, cost: p });
+            showLoading(false); alert(r.msg); loadDashboard(); searchSingleUser();
+         }
+      }
+
+      function toggleAllPraises() { var c=document.getElementById('checkAllPraise').checked; document.querySelectorAll('.praise-checkbox').forEach(i=>i.checked=c); }
+      async function approveSelectedPraises() { await processPraises('approve'); }
+      async function rejectSelectedPraises() { await processPraises('reject'); }
+      async function processPraises(mode) {
+          var ids = [];
+          document.querySelectorAll('.praise-checkbox:checked').forEach(i=>ids.push(i.value));
+          if(ids.length==0) return alert("선택된 항목이 없습니다.");
+          if(!confirm(`${ids.length}건을 ${mode=='approve'?'승인':'반려'}하시겠습니까?`)) return;
+          showLoading(true);
+          var r = await apiCall('/praise', { action: mode, ids: ids });
+          showLoading(false); alert(r.msg); loadDashboard();
+      }
+      async function processUmbrella(mode) { await processItem('umbrella', mode); }
+      async function processBall(mode) { await processItem('ball', mode); }
+      async function processItem(type, mode) {
+         var gridId = type === 'umbrella' ? 'umbrellaGrid' : 'ballGrid';
+         var ids = Array.from(document.querySelectorAll(`#${gridId} input`)).map(i=>i.value.trim()).filter(v=>v.length==5);
+         if(ids.length==0) return alert("입력된 학번 없음");
+         if(!confirm(`${ids.length}명을 ${mode=='rent'?'대여':'반납'} 처리합니까?`)) return;
+         showLoading(true);
+         var r = await apiCall('/rental', { type: type, teacher: currentUser.name, ids: ids, action: mode });
+         showLoading(false); alert(r.msg); loadDashboard();
+         if(type==='umbrella') resetUmbrellaGrid(); else resetBallGrid();
+      }
+      function resetUmbrellaGrid() { document.querySelectorAll('#umbrellaGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
+      function resetBallGrid() { document.querySelectorAll('#ballGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
+      function addQuestionField() {
+          var c = document.getElementById('questionsContainer');
+          var idx = c.children.length + 1;
+          var div = document.createElement('div');
+          div.className = "mb-3 p-2 border rounded bg-white";
+          div.innerHTML = `<label class="form-label small fw-bold">질문 ${idx}</label><select class="form-select mb-1 q-type"><option value="radio">객관식</option><option value="text">주관식</option></select><input type="text" class="form-control mb-1 q-title" placeholder="질문 내용"><input type="text" class="form-control q-opts" placeholder="옵션 (콤마로 구분, 객관식만)">`;
+          c.appendChild(div);
+      }
+      async function makeSurvey() {
+          var t = document.getElementById('newSurveyTitle').value;
+          if(!t) return alert("제목 입력");
+          var qs = [];
+          document.querySelectorAll('#questionsContainer > div').forEach(d => {
+              var type = d.querySelector('.q-type').value;
+              var q = d.querySelector('.q-title').value;
+              var opts = d.querySelector('.q-opts').value;
+              if(q) {
+                  var qObj = {type:type, q:q};
+                  if(type=='radio') { qObj.opts = opts.split(',').map(x=>x.trim()).filter(x=>x); }
+                  qs.push(qObj);
+              }
+          });
+          if(qs.length==0) return alert("질문 최소 1개");
+          if(confirm("등록하시겠습니까?")) {
+              showLoading(true);
+              var r = await apiCall('/survey', { action: 'create', title: t, questions: qs });
+              showLoading(false); alert(r.msg); loadDashboard(); document.getElementById('newSurveyTitle').value=""; document.getElementById('questionsContainer').innerHTML="";
+          }
+      }
+      async function deleteSurveyAction(id) {
+          if(confirm("삭제하시겠습니까?")) {
+              showLoading(true);
+              var r = await apiCall('/survey', { action: 'delete', id: id });
+              showLoading(false); alert(r.msg); loadDashboard();
+          }
+      }
+
+      window.onload = function() {
+      };
+    </script>
+  </body>
+</html>
