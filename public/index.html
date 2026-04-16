@@ -189,6 +189,22 @@
       </div>
     </div>
 
+    <div class="modal fade" id="surveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-school text-white">
+            <h5 class="modal-title fw-bold" id="surveyModalTitle">설문</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="surveyModalBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+            <button type="button" class="btn btn-primary fw-bold" onclick="submitSurveyModal()">제출하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="pwModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">🔒 비번 변경</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><input type="password" id="newPwInput" class="form-control" placeholder="새 비밀번호"></div></div><div class="modal-footer p-2"><button type="button" class="btn btn-primary btn-sm fw-bold" onclick="changePasswordAction()">변경</button></div></div></div></div>
     <datalist id="studentDataListAll"></datalist>
 
@@ -485,19 +501,48 @@
               if(r.success) loadDashboard();
           }
       }
-      async function takeSurvey(sid, title, qJson) {
+      var currentSurveyId = ''; var currentSurveyQs = [];
+      function takeSurvey(sid, title, qJson) {
           var qs = JSON.parse(unescape(qJson));
+          currentSurveyId = sid; currentSurveyQs = qs;
+          document.getElementById('surveyModalTitle').innerText = title;
+          var html = '';
+          qs.forEach(function(q, i) {
+              html += '<div class="mb-4"><h6 class="fw-bold">Q' + (i+1) + '. ' + q.q + '</h6>';
+              if (q.type === 'radio' && q.opts && q.opts.length > 0) {
+                  q.opts.forEach(function(opt, j) {
+                      html += '<div class="form-check mb-2">' +
+                        '<input class="form-check-input" type="radio" name="sq_' + i + '" id="sq_' + i + '_' + j + '" value="' + opt + '">' +
+                        '<label class="form-check-label" for="sq_' + i + '_' + j + '">' + opt + '</label></div>';
+                  });
+              } else {
+                  html += '<input type="text" class="form-control survey-text-input" placeholder="답변을 입력하세요" data-qi="' + i + '">';
+              }
+              html += '</div>';
+          });
+          document.getElementById('surveyModalBody').innerHTML = html;
+          new bootstrap.Modal(document.getElementById('surveyModal')).show();
+      }
+      async function submitSurveyModal() {
           var ans = [];
-          for(var i=0; i<qs.length; i++) {
-              var val = prompt(`Q${i+1}. ${qs[i].q}\n(답변을 입력하세요)`);
-              if(!val) return alert("취소되었습니다.");
-              ans.push(val);
-          }
-          if(confirm("제출하시겠습니까?")) {
-             showLoading(true);
-             var r = await apiCall('/survey', { action: 'vote', studentId: currentUser.id, surveyId: sid, answers: ans });
-             showLoading(false); alert(r.msg); loadDashboard();
-          }
+          var valid = true;
+          currentSurveyQs.forEach(function(q, i) {
+              if (q.type === 'radio' && q.opts && q.opts.length > 0) {
+                  var sel = document.querySelector('input[name="sq_' + i + '"]:checked');
+                  if (!sel) { valid = false; } else { ans.push(sel.value); }
+              } else {
+                  var inp = document.querySelector('.survey-text-input[data-qi="' + i + '"]');
+                  if (!inp || !inp.value.trim()) { valid = false; } else { ans.push(inp.value.trim()); }
+              }
+          });
+          if (!valid) return alert("모든 문항에 답변해주세요.");
+          if (!confirm("제출하시겠습니까?")) return;
+          showLoading(true);
+          var r = await apiCall('/survey', { action: 'vote', studentId: currentUser.id, surveyId: currentSurveyId, answers: ans });
+          showLoading(false);
+          var modalEl = document.getElementById('surveyModal');
+          bootstrap.Modal.getInstance(modalEl).hide();
+          alert(r.msg); loadDashboard();
       }
       async function confirmGivePoints(n, p) {
         if(p==0) {
