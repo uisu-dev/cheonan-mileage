@@ -229,12 +229,7 @@ function getSurveyStats(vid, qs, logs) {
           <span class='fw-bold' style='width:40px;text-align:right'>${cnt}명</span>
         </div>`;
       });
-      // opts에 없는 응답이 있을 경우 (기타)
-      for (const k in st[x]) {
-        if (!opts.includes(k)) {
-          h += `<div class='small'>- ${k}: ${st[x][k]}명</div>`;
-        }
-      }
+      // opts에 없는 응답(이전 버전의 텍스트 입력 잔존)은 표시 안함
     }
     h += '</div>';
   });
