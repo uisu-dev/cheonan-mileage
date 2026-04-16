@@ -212,9 +212,30 @@ function getSurveyStats(vid, qs, logs) {
   }
   let h = `<span class='badge bg-primary'>참여: ${count}</span>`;
   qs.forEach((q, x) => {
-    h += `<div class='mb-2 border-bottom'><strong>Q${x + 1}. ${q.q}</strong><br>`;
-    if (q.type === 'text') h += `<div class='bg-light p-1 small' style='max-height:80px;overflow:auto'>${st[x].join('<br>')}</div>`;
-    else for (const k in st[x]) h += `- ${k}: ${st[x][k]}<br>`;
+    h += `<div class='mb-3 pb-2 border-bottom'><strong>Q${x + 1}. ${q.q}</strong><br>`;
+    if (q.type === 'text') {
+      h += `<div class='bg-light p-1 small' style='max-height:80px;overflow:auto'>${st[x].join('<br>') || '(응답 없음)'}</div>`;
+    } else {
+      // 등록된 보기 순서대로, 응답 없는 항목은 0으로 표시
+      const opts = q.opts || [];
+      opts.forEach(opt => {
+        const cnt = st[x][opt] || 0;
+        const pct = count > 0 ? Math.round(cnt / count * 100) : 0;
+        h += `<div class='d-flex align-items-center my-1 small'>
+          <span style='width:120px;flex-shrink:0'>- ${opt}</span>
+          <div class='flex-grow-1 bg-light rounded mx-2' style='height:14px;'>
+            <div class='bg-primary rounded' style='height:14px;width:${pct}%;'></div>
+          </div>
+          <span class='fw-bold' style='width:40px;text-align:right'>${cnt}명</span>
+        </div>`;
+      });
+      // opts에 없는 응답이 있을 경우 (기타)
+      for (const k in st[x]) {
+        if (!opts.includes(k)) {
+          h += `<div class='small'>- ${k}: ${st[x][k]}명</div>`;
+        }
+      }
+    }
     h += '</div>';
   });
   return h;
