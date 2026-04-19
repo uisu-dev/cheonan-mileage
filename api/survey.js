@@ -10,10 +10,15 @@ module.exports = async (req, res) => {
 
   if (action === 'create') {
     const { title, questions, allowPhoto } = req.body;
-    await supabase.from('surveys').insert({
-      id: String(Date.now()), title, questions, status: 'O',
-      allow_photo: !!allowPhoto
-    });
+    const row = { id: String(Date.now()), title, questions, status: 'O', allow_photo: !!allowPhoto };
+    let { error } = await supabase.from('surveys').insert(row);
+    // allow_photo 컬럼이 없으면 fallback
+    if (error && String(error.message || '').toLowerCase().includes('allow_photo')) {
+      delete row.allow_photo;
+      const r2 = await supabase.from('surveys').insert(row);
+      error = r2.error;
+    }
+    if (error) return res.json({ success: false, msg: '등록 실패: ' + error.message });
     return res.json({ success: true, msg: '등록' });
   }
 
@@ -50,9 +55,12 @@ module.exports = async (req, res) => {
       }
     }
 
-    await supabase.from('survey_logs').insert({
-      vote_id: surveyId, student_id: studentId, answer: answers, photo_url: photoUrl
-    });
+    const logRow = { vote_id: surveyId, student_id: studentId, answer: answers, photo_url: photoUrl };
+    let { error: logErr } = await supabase.from('survey_logs').insert(logRow);
+    if (logErr && String(logErr.message || '').toLowerCase().includes('photo_url')) {
+      delete logRow.photo_url;
+      await supabase.from('survey_logs').insert(logRow);
+    }
 
     // +100P
     const { data: user } = await supabase.from('users').select('points').eq('id', studentId).single();
