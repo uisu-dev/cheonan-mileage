@@ -542,6 +542,33 @@
               reader.readAsDataURL(file);
           });
       }
+      // 이미지 리사이즈 + JPEG 압축 (최대 1280px, 품질 0.8)
+      function resizeImage(file, maxDim, quality) {
+          maxDim = maxDim || 1280; quality = quality || 0.8;
+          return new Promise(function(resolve, reject) {
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                  var img = new Image();
+                  img.onload = function() {
+                      var w = img.width, h = img.height;
+                      if (w > maxDim || h > maxDim) {
+                          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                          else { w = Math.round(w * maxDim / h); h = maxDim; }
+                      }
+                      var canvas = document.createElement('canvas');
+                      canvas.width = w; canvas.height = h;
+                      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                      var dataUrl = canvas.toDataURL('image/jpeg', quality);
+                      var b64 = dataUrl.split(',')[1] || '';
+                      resolve({ data: b64, mimeType: 'image/jpeg' });
+                  };
+                  img.onerror = reject;
+                  img.src = e.target.result;
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+          });
+      }
       async function submitSurveyModal() {
           var ans = [];
           var valid = true;
@@ -557,18 +584,28 @@
           if (!valid) return alert("모든 문항에 답변해주세요.");
           if (!confirm("제출하시겠습니까?")) return;
           showLoading(true);
-          var payload = { action: 'vote', studentId: currentUser.id, surveyId: currentSurveyId, answers: ans };
-          if (currentSurveyAllowPhoto) {
-              var fileInput = document.getElementById('surveyPhotoInput');
-              if (fileInput && fileInput.files && fileInput.files[0]) {
-                  try { payload.fileData = await readFileAsBase64(fileInput.files[0]); } catch(e) {}
+          try {
+              var payload = { action: 'vote', studentId: currentUser.id, surveyId: currentSurveyId, answers: ans };
+              if (currentSurveyAllowPhoto) {
+                  var fileInput = document.getElementById('surveyPhotoInput');
+                  if (fileInput && fileInput.files && fileInput.files[0]) {
+                      try {
+                          payload.fileData = await resizeImage(fileInput.files[0], 1280, 0.8);
+                      } catch(e) {
+                          showLoading(false);
+                          return alert("사진 처리 중 오류: " + (e.message || e));
+                      }
+                  }
               }
+              var r = await apiCall('/survey', payload);
+              showLoading(false);
+              var modalEl = document.getElementById('surveyModal');
+              bootstrap.Modal.getInstance(modalEl).hide();
+              alert(r.msg); loadDashboard();
+          } catch(err) {
+              showLoading(false);
+              alert("제출 오류: " + (err.message || err) + "\n\n사진 용량이 너무 크거나 네트워크 문제일 수 있습니다.");
           }
-          var r = await apiCall('/survey', payload);
-          showLoading(false);
-          var modalEl = document.getElementById('surveyModal');
-          bootstrap.Modal.getInstance(modalEl).hide();
-          alert(r.msg); loadDashboard();
       }
       async function confirmGivePoints(n, p) {
         if(p==0) {
