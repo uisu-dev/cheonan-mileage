@@ -9,15 +9,16 @@ module.exports = async (req, res) => {
   const supabase = getSupabase();
 
   if (action === 'create') {
-    const { title, questions } = req.body;
+    const { title, questions, allowPhoto } = req.body;
     await supabase.from('surveys').insert({
-      id: String(Date.now()), title, questions, status: 'O'
+      id: String(Date.now()), title, questions, status: 'O',
+      allow_photo: !!allowPhoto
     });
     return res.json({ success: true, msg: '등록' });
   }
 
   if (action === 'vote') {
-    const { studentId, surveyId, answers } = req.body;
+    const { studentId, surveyId, answers, fileData } = req.body;
 
     // 중복 체크
     const { data: existing } = await supabase
@@ -29,8 +30,28 @@ module.exports = async (req, res) => {
       return res.json({ success: false, msg: '이미 참여함' });
     }
 
+    // 사진 업로드 (있는 경우)
+    let photoUrl = '';
+    if (fileData && fileData.data) {
+      try {
+        const buffer = Buffer.from(fileData.data, 'base64');
+        const ext = (fileData.mimeType && fileData.mimeType.includes('png')) ? 'png' : 'jpg';
+        const fileName = `survey_${surveyId}_${studentId}_${Date.now()}.${ext}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('survey-photos').upload(fileName, buffer, {
+            contentType: fileData.mimeType || 'image/jpeg', upsert: false
+          });
+        if (!uploadError && uploadData) {
+          const { data: urlData } = supabase.storage.from('survey-photos').getPublicUrl(fileName);
+          photoUrl = urlData.publicUrl;
+        }
+      } catch (e) {
+        console.error('photo upload error:', e);
+      }
+    }
+
     await supabase.from('survey_logs').insert({
-      vote_id: surveyId, student_id: studentId, answer: answers
+      vote_id: surveyId, student_id: studentId, answer: answers, photo_url: photoUrl
     });
 
     // +100P

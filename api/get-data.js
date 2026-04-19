@@ -156,9 +156,9 @@ module.exports = async (req, res) => {
       if (role !== 'teacher') {
         myVoted = (surveyLogs || []).some(sl => String(sl.vote_id) === String(s.id) && String(sl.student_id) === String(userId));
       }
-      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted };
+      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted, allowPhoto: !!s.allow_photo };
       if (role === 'teacher' || role === 'admin') {
-        sv.stats = getSurveyStats(s.id, s.questions, surveyLogs || []);
+        sv.stats = getSurveyStats(s.id, s.questions, surveyLogs || [], !!s.allow_photo);
       }
       result.surveyList.push(sv);
     }
@@ -194,9 +194,10 @@ module.exports = async (req, res) => {
   return res.json(result);
 };
 
-function getSurveyStats(vid, qs, logs) {
+function getSurveyStats(vid, qs, logs, allowPhoto) {
   if (!logs) return '-';
   const st = qs.map(q => (q.type === 'text' ? [] : {}));
+  const photos = [];
   let count = 0;
   for (const log of logs) {
     if (String(log.vote_id) === String(vid)) {
@@ -208,13 +209,15 @@ function getSurveyStats(vid, qs, logs) {
           else if (st[x]) st[x][v] = (st[x][v] || 0) + 1;
         });
       } catch (e) { }
+      if (log.photo_url) photos.unshift({ url: log.photo_url, sid: log.student_id });
     }
   }
-  let h = `<span class='badge bg-primary'>참여: ${count}</span>`;
+  let h = `<div style='max-height:500px;overflow-y:auto;padding-right:6px;'>`;
+  h += `<span class='badge bg-primary'>참여: ${count}</span>`;
   qs.forEach((q, x) => {
     h += `<div class='mb-3 pb-2 border-bottom'><strong>Q${x + 1}. ${q.q}</strong><br>`;
     if (q.type === 'text') {
-      h += `<div class='bg-light p-1 small' style='max-height:80px;overflow:auto'>${st[x].join('<br>') || '(응답 없음)'}</div>`;
+      h += `<div class='bg-light p-2 small' style='max-height:220px;overflow:auto'>${st[x].join('<br>') || '(응답 없음)'}</div>`;
     } else {
       // 등록된 보기 순서대로, 응답 없는 항목은 0으로 표시
       const opts = q.opts || [];
@@ -233,6 +236,23 @@ function getSurveyStats(vid, qs, logs) {
     }
     h += '</div>';
   });
+  if (allowPhoto) {
+    h += `<div class='mt-3 pt-2 border-top'><strong>📷 업로드된 사진 (${photos.length})</strong>`;
+    if (photos.length === 0) {
+      h += `<div class='text-muted small mt-1'>업로드된 사진이 없습니다.</div>`;
+    } else {
+      h += `<div class='d-flex flex-wrap gap-2 mt-2'>`;
+      photos.forEach(p => {
+        h += `<a href='${p.url}' target='_blank' title='학번 ${p.sid}'>
+          <img src='${p.url}' style='width:100px;height:100px;object-fit:cover;border:1px solid #ddd;border-radius:6px;'>
+          <div class='text-center small text-muted'>${p.sid}</div>
+        </a>`;
+      });
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
+  h += `</div>`;
   return h;
 }
 
