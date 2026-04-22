@@ -72,7 +72,7 @@
           <div class="tab-pane fade show active" id="giveTab">
             <div class="d-flex justify-content-center mb-3"><div class="btn-group" role="group"><input type="radio" class="btn-check" name="giveMode" id="modeSingle" autocomplete="off" checked onclick="toggleGiveMode('single')"><label class="btn btn-outline-primary" for="modeSingle">👤 1명</label><input type="radio" class="btn-check" name="giveMode" id="modeMulti" autocomplete="off" onclick="toggleGiveMode('multi')"><label class="btn btn-outline-primary" for="modeMulti">👥 여러 명</label></div></div>
             <div id="viewSingle"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="form-label text-secondary fw-bold">학생 검색</label><div class="input-group mb-2"><input type="text" id="singleSearchInput" class="form-control form-control-lg" placeholder="예: 홍길동, 10101" onkeyup="if(window.event.keyCode==13){searchSingleUser()}"><button class="btn btn-primary" type="button" onclick="searchSingleUser()"><i class="bi bi-search"></i> 검색</button></div><div id="searchResultList" class="list-group mb-2"></div><div id="selectedStudentCard" class="mt-2 p-3 single-user-card shadow-sm" style="display:none;"><div class="d-flex justify-content-between align-items-center"><div><h4 class="fw-bold mb-1"><span id="selName"></span></h4><span class="badge bg-secondary" id="selId"></span></div><div class="text-end"><small class="text-muted">현재 점수</small><div class="fs-4 fw-bold text-primary"><span id="selPoint">0</span> P</div><div id="selTier"></div></div></div></div></div></div>
-            <div id="viewMulti" style="display:none;"><div class="alert alert-primary py-2 small mb-2"><i class="bi bi-keyboard"></i> <b>학번 5자리</b>를 입력하면 학생 이름이 뜹니다.</div><div class="grid-container mb-3" id="multiGrid"></div><div class="text-end mb-2"><button class="btn btn-sm btn-outline-secondary" onclick="resetGrid()">초기화</button></div></div>
+            <div id="viewMulti" style="display:none;"><div class="alert alert-primary py-2 small mb-2"><i class="bi bi-keyboard"></i> <b>학번 5자리</b> 또는 <b>이름</b>을 입력하세요. 동명이인이 있으면 드롭다운이 뜹니다.</div><div class="grid-container mb-3" id="multiGrid"></div><div class="text-end mb-2"><button class="btn btn-sm btn-outline-secondary" onclick="resetGrid()">초기화</button></div></div>
             <hr><h5 class="fw-bold mb-3 text-school">어떤 점수를 줄까요?</h5><div id="itemList" class="d-grid gap-2 mb-4"></div><div class="card shadow-sm border-0 bg-light"><div class="card-body p-2"><h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-clock-history"></i> 내가 부여한 최근 내역 (삭제 가능)</h6><div class="table-responsive" style="max-height: 200px;"><table class="table table-sm table-bordered bg-white small mb-0"><thead class="table-light"><tr><th>시간</th><th>학번</th><th>항목</th><th>점수</th><th>관리</th></tr></thead><tbody id="myLogsTable"></tbody></table></div></div></div>
           </div>
 
@@ -497,10 +497,60 @@
       }
 
       function renderClubMembers() { var l=document.getElementById('clubMemberList'); l.innerHTML=""; var al=document.getElementById('attendanceCheckList'); al.innerHTML=""; if(selectedClubMembers.length==0) l.innerHTML="<li class='list-group-item'>학생 없음</li>"; else selectedClubMembers.forEach(m=>{ l.innerHTML+=`<li class='list-group-item d-flex justify-content-between'>${m.name}(${m.id}) <button class='btn btn-close btn-sm' onclick='removeMember("${m.id}")'></button></li>`; al.innerHTML+=`<div class='club-member-item'><span>${m.name}</span><div><input type='radio' class='btn-check' name='att_${m.id}' id='o_${m.id}' value='O' checked><label class='btn btn-outline-success btn-sm' for='o_${m.id}'>출</label><input type='radio' class='btn-check' name='att_${m.id}' id='l_${m.id}' value='L'><label class='btn btn-outline-warning btn-sm' for='l_${m.id}'>지</label><input type='radio' class='btn-check' name='att_${m.id}' id='x_${m.id}' value='X'><label class='btn btn-outline-danger btn-sm' for='x_${m.id}'>결</label></div></div>`; }); document.getElementById('attDate').valueAsDate = new Date(); }
-      function createGrid(id, cnt) { var c=document.getElementById(id); c.innerHTML=""; for(var i=1;i<=cnt;i++){ c.innerHTML+=`<div class="grid-item"><div class="grid-num">${i}</div><div style="flex-grow:1;text-align:center"><input type="number" class="grid-input" placeholder="학번" oninput="checkStudentName(this)"><div class="student-name-display"></div></div></div>`; } }
+      function createGrid(id, cnt) { var c=document.getElementById(id); c.innerHTML=""; for(var i=1;i<=cnt;i++){ c.innerHTML+=`<div class="grid-item"><div class="grid-num">${i}</div><div style="flex-grow:1;text-align:center"><input type="text" class="grid-input" placeholder="학번/이름" oninput="checkStudentName(this)"><div class="student-name-display"></div></div></div>`; } }
       function createMultiGrid() { createGrid('multiGrid',15); } function createUmbrellaGrid(){ createGrid('umbrellaGrid',15); } function createBallGrid(){ createGrid('ballGrid',15); } function createClubGrid(){ createGrid('clubMemberGrid',35); }
       function resetGrid() { document.querySelectorAll('#multiGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
-      function checkStudentName(i) { var v=i.value.trim(); var d=i.nextElementSibling; if(v.length==5){ var s=allStudents.find(u=>String(u.id)==v); if(s){i.style.color="blue";d.innerText=s.name;}else{i.style.color="red";d.innerText="없음";} }else{i.style.color="inherit";d.innerText="";} }
+      function checkStudentName(i) {
+        var v = i.value.trim();
+        var d = i.nextElementSibling;
+        d.innerHTML = '';
+        i.removeAttribute('data-id');
+        if (!v) { i.style.color = 'inherit'; return; }
+        // 학번 5자리(숫자)면 ID 검색
+        if (/^\d{5}$/.test(v)) {
+          var s = allStudents.find(u => String(u.id) === v);
+          if (s) { i.style.color = 'blue'; i.setAttribute('data-id', s.id); d.innerText = s.name; }
+          else { i.style.color = 'red'; d.innerText = '없음'; }
+          return;
+        }
+        // 숫자 5자리 미만은 대기
+        if (/^\d+$/.test(v)) { i.style.color = 'inherit'; return; }
+        // 이름 검색 (2자 이상)
+        if (v.length < 2) { i.style.color = 'inherit'; return; }
+        var matches = allStudents.filter(u => u.name.includes(v));
+        if (matches.length === 0) { i.style.color = 'red'; d.innerText = '없음'; }
+        else if (matches.length === 1) {
+          i.style.color = 'blue';
+          i.setAttribute('data-id', matches[0].id);
+          d.innerText = matches[0].name + '(' + matches[0].id + ')';
+        } else {
+          // 동명이인: 드롭다운으로 선택
+          var html = '<select class="form-select form-select-sm py-0" style="font-size:0.75rem;" onchange="pickStudentFromGrid(this)"><option value="">선택하세요</option>';
+          matches.forEach(m => { html += '<option value="' + m.id + '">' + m.name + ' (' + m.id + ')</option>'; });
+          html += '</select>';
+          d.innerHTML = html;
+          i.style.color = 'orange';
+        }
+      }
+      function pickStudentFromGrid(sel) {
+        var item = sel.closest('.grid-item');
+        var input = item.querySelector('.grid-input');
+        if (sel.value) {
+          input.setAttribute('data-id', sel.value);
+          input.style.color = 'blue';
+        } else {
+          input.removeAttribute('data-id');
+          input.style.color = 'orange';
+        }
+      }
+      function collectGridIds(gridId) {
+        return Array.from(document.querySelectorAll('#' + gridId + ' input')).map(i => {
+          var did = i.getAttribute('data-id');
+          if (did) return String(did);
+          var v = i.value.trim();
+          return /^\d{5}$/.test(v) ? v : '';
+        }).filter(v => v);
+      }
 
       function submitReport() { var c = document.getElementById('reportContent').value; if(!c) return alert("내용을 입력하세요"); var f = document.getElementById('reportFile').files[0]; if(f) { var r = new FileReader(); r.onload = function(e) { var d = e.target.result.split(',')[1]; var m = e.target.result.split(',')[0].match(/:(.*?);/)[1]; sendReport(c, {data:d, mimeType:m}); }; r.readAsDataURL(f); } else { sendReport(c, null); } }
       async function sendReport(c, f) { if(!confirm("제보하시겠습니까?")) return; showLoading(true); var r = await apiCall('/student', { action: 'report', studentId: currentUser.id, studentName: currentUser.name, content: c, fileData: f }); showLoading(false); alert(r.msg); if(r.success){ document.getElementById('reportContent').value=""; document.getElementById('reportFile').value=""; } }
@@ -509,7 +559,7 @@
       async function saveMembersToServer() { var cid=document.getElementById('myClubSelect').value; showLoading(true); await apiCall('/club', { action: 'updateMembers', clubId: cid, members: selectedClubMembers.map(m=>m.id) }); showLoading(false); loadDashboard(); }
       async function saveAttendance() { var d=document.getElementById('attDate').value; if(!d) return alert("날짜선택"); var cid=document.getElementById('myClubSelect').value; var att=[]; selectedClubMembers.forEach(m=>{ var v=document.querySelector(`input[name="att_${m.id}"]:checked`).value; att.push({id:m.id, status:v}); }); if(confirm("저장?")) { showLoading(true); var r = await apiCall('/club', { action: 'saveAttendance', clubId: cid, date: d, data: JSON.stringify(att) }); showLoading(false); alert(r.msg); } }
       function toggleMemberAdd() { var d=document.getElementById('memberAddArea'); d.style.display=d.style.display=='none'?'block':'none'; }
-      async function addMemberToClubFromGrid() { var inputs = document.querySelectorAll('#clubMemberGrid input'); var cnt = 0; inputs.forEach(i => { var val = i.value.trim(); if(val.length === 5) { if(!selectedClubMembers.find(m => m.id === val)) { var s = allStudents.find(st => String(st.id) === val); if(s) { selectedClubMembers.push({id: val, name: s.name}); cnt++; } } } }); if(cnt > 0) { saveMembersToServer(); alert(cnt + "명 추가 완료!"); inputs.forEach(i => { i.value=""; checkStudentName(i); }); } else { alert("추가된 학생이 없습니다."); } }
+      async function addMemberToClubFromGrid() { var inputs = document.querySelectorAll('#clubMemberGrid input'); var cnt = 0; var ids = collectGridIds('clubMemberGrid'); ids.forEach(val => { if(!selectedClubMembers.find(m => m.id === val)) { var s = allStudents.find(st => String(st.id) === val); if(s) { selectedClubMembers.push({id: val, name: s.name}); cnt++; } } }); if(cnt > 0) { saveMembersToServer(); alert(cnt + "명 추가 완료!"); inputs.forEach(i => { i.value=""; checkStudentName(i); }); } else { alert("추가된 학생이 없습니다."); } }
       function searchSingleUser() { var v=document.getElementById('singleSearchInput').value.trim(); if(v.length<2) return; var l=document.getElementById('searchResultList'); l.innerHTML=""; var f=allStudents.filter(s=>s.name.includes(v)||String(s.id).includes(v)); if(f.length==0) l.innerHTML="<div class='list-group-item'>검색결과 없음</div>"; else f.forEach(s=>{ var b=document.createElement('button'); b.className="list-group-item list-group-item-action"; b.innerHTML=`<b>${s.name}</b> (${s.id})`; b.onclick=function(){ selectUser(s); }; l.appendChild(b); }); }
       function selectUser(s) { selectedSingleUserId=s.id; document.getElementById('searchResultList').innerHTML=""; document.getElementById('selectedStudentCard').style.display='block'; document.getElementById('selName').innerText=s.name; document.getElementById('selId').innerText=s.id; document.getElementById('selPoint').innerText=s.points; document.getElementById('selTier').innerHTML=getTierBadge(s.points); }
       async function deleteLog(r, t, p) { if(confirm("삭제하시겠습니까?")) { showLoading(true); var res = await apiCall('/points', { action: 'delete', rowId: r, studentId: t, point: p }); showLoading(false); alert(res.msg); loadDashboard(); } }
@@ -699,7 +749,7 @@
         }
         var targets=[];
         if(currentGiveMode=='single') { if(!selectedSingleUserId) return alert("학생선택필요"); targets.push(selectedSingleUserId); }
-        else { targets = Array.from(document.querySelectorAll('#multiGrid input')).map(i=>i.value.trim()).filter(v=>v.length==5); if(targets.length==0) return alert("입력된 학번 없음"); }
+        else { targets = collectGridIds('multiGrid'); if(targets.length==0) return alert("입력된 학번 없음"); }
 
         if(confirm(`${targets.length}명에게 [${n}] 항목으로 ${p}점을 부여합니까?`)) {
             showLoading(true);
@@ -735,7 +785,7 @@
       async function processBall(mode) { await processItem('ball', mode); }
       async function processItem(type, mode) {
          var gridId = type === 'umbrella' ? 'umbrellaGrid' : 'ballGrid';
-         var ids = Array.from(document.querySelectorAll(`#${gridId} input`)).map(i=>i.value.trim()).filter(v=>v.length==5);
+         var ids = collectGridIds(gridId);
          if(ids.length==0) return alert("입력된 학번 없음");
          if(!confirm(`${ids.length}명을 ${mode=='rent'?'대여':'반납'} 처리합니까?`)) return;
          showLoading(true);

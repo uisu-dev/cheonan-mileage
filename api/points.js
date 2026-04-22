@@ -17,27 +17,35 @@ module.exports = async (req, res) => {
       .in('id', ids.map(id => String(id).trim()));
     if (!users || users.length === 0) return res.json({ success: true, msg: '0명 완료' });
 
-    // 2. 로그 일괄 삽입
-    const logRows = users.map(u => ({ teacher, student_id: u.id, item: itemName, point: Number(point) }));
+    const pt = Number(point);
+
+    // 2. 로그 일괄 삽입 (징계 중 양수 점수는 상쇄 처리 기록)
+    const logRows = users.map(u => {
+      const onPenalty = (Number(u.penalty_total) || 0) > 0 && pt > 0;
+      return {
+        teacher, student_id: u.id,
+        item: onPenalty ? `${itemName} (징계 상쇄: +${pt}P)` : itemName,
+        point: onPenalty ? 0 : pt
+      };
+    });
     await supabase.from('logs').insert(logRows);
 
-    // 3. 점수 + 징계 진행도 업데이트 병렬 처리
-    const pt = Number(point);
+    // 3. 점수/징계 업데이트 병렬 처리
     await Promise.all(users.map(u => {
-      const newPoints = (Number(u.points) || 0) + pt;
-      const upd = { points: newPoints };
-      // 양수 점수이고 징계 진행 중이면 진행도 증가
       const pTotal = Number(u.penalty_total) || 0;
       const pEarned = Number(u.penalty_earned) || 0;
-      if (pt > 0 && pTotal > 0) {
+      const onPenalty = pt > 0 && pTotal > 0;
+      const upd = {};
+      if (onPenalty) {
+        // 점수 미반영, 진행도만 증가. 도달 시 해제
         const newEarned = pEarned + pt;
         if (newEarned >= pTotal) {
-          // 해제
-          upd.penalty_total = 0;
-          upd.penalty_earned = 0;
+          upd.penalty_total = 0; upd.penalty_earned = 0;
         } else {
           upd.penalty_earned = newEarned;
         }
+      } else {
+        upd.points = (Number(u.points) || 0) + pt;
       }
       return supabase.from('users').update(upd).eq('id', u.id);
     }));

@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
   if (action === 'attendance') {
     const { id } = req.body;
-    const { data: user } = await supabase.from('users').select('points').eq('id', String(id).trim()).single();
+    const { data: user } = await supabase.from('users').select('points, penalty_total, penalty_earned').eq('id', String(id).trim()).single();
     if (!user) return res.json({ success: false, msg: '학생 없음' });
 
     const now = new Date();
@@ -18,10 +18,20 @@ module.exports = async (req, res) => {
     const todayStr = kst.toISOString().slice(0, 10);
 
     const { data: todayLogs } = await supabase.from('logs').select('*')
-      .eq('student_id', String(id)).eq('item', '출석체크')
+      .eq('student_id', String(id)).ilike('item', '출석체크%')
       .gte('date', todayStr + 'T00:00:00+09:00').lt('date', todayStr + 'T23:59:59+09:00');
     if (todayLogs && todayLogs.length > 0) return res.json({ success: false, msg: '이미 완료' });
 
+    const pTotal = Number(user.penalty_total) || 0;
+    const pEarned = Number(user.penalty_earned) || 0;
+    if (pTotal > 0) {
+      // 징계 중: 점수 미반영, 진행도만 증가
+      const newEarned = pEarned + 10;
+      const upd = (newEarned >= pTotal) ? { penalty_total: 0, penalty_earned: 0 } : { penalty_earned: newEarned };
+      await supabase.from('users').update(upd).eq('id', String(id).trim());
+      await supabase.from('logs').insert({ teacher: 'System', student_id: id, item: '출석체크 (징계 상쇄: +10P)', point: 0 });
+      return res.json({ success: true, msg: '출석 완료! 교내봉사 진행도 +10P' });
+    }
     await supabase.from('logs').insert({ teacher: 'System', student_id: id, item: '출석체크', point: 10 });
     await supabase.from('users').update({ points: (Number(user.points) || 0) + 10 }).eq('id', String(id).trim());
     return res.json({ success: true, msg: '완료! +10P' });
