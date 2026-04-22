@@ -552,8 +552,27 @@
         }).filter(v => v);
       }
 
-      function submitReport() { var c = document.getElementById('reportContent').value; if(!c) return alert("내용을 입력하세요"); var f = document.getElementById('reportFile').files[0]; if(f) { var r = new FileReader(); r.onload = function(e) { var d = e.target.result.split(',')[1]; var m = e.target.result.split(',')[0].match(/:(.*?);/)[1]; sendReport(c, {data:d, mimeType:m}); }; r.readAsDataURL(f); } else { sendReport(c, null); } }
-      async function sendReport(c, f) { if(!confirm("제보하시겠습니까?")) return; showLoading(true); var r = await apiCall('/student', { action: 'report', studentId: currentUser.id, studentName: currentUser.name, content: c, fileData: f }); showLoading(false); alert(r.msg); if(r.success){ document.getElementById('reportContent').value=""; document.getElementById('reportFile').value=""; } }
+      async function submitReport() {
+        var c = document.getElementById('reportContent').value;
+        if(!c) return alert("내용을 입력하세요");
+        if(!confirm("제보하시겠습니까?")) return;
+        showLoading(true);
+        try {
+          var f = document.getElementById('reportFile').files[0];
+          var fileData = null;
+          if (f) {
+            try { fileData = await resizeImage(f, 1280, 0.8); }
+            catch(e) { showLoading(false); return alert("사진 처리 오류: " + (e.message || e)); }
+          }
+          var r = await apiCall('/student', { action: 'report', studentId: currentUser.id, studentName: currentUser.name, content: c, fileData: fileData });
+          showLoading(false);
+          alert(r.msg);
+          if(r.success){ document.getElementById('reportContent').value=""; document.getElementById('reportFile').value=""; }
+        } catch(err) {
+          showLoading(false);
+          alert("제보 오류: " + (err.message || err) + "\n\n사진 용량 또는 네트워크 문제일 수 있습니다.");
+        }
+      }
 
       async function removeMember(id) { if(confirm("삭제?")) { selectedClubMembers=selectedClubMembers.filter(m=>m.id!=id); saveMembersToServer(); } }
       async function saveMembersToServer() { var cid=document.getElementById('myClubSelect').value; showLoading(true); await apiCall('/club', { action: 'updateMembers', clubId: cid, members: selectedClubMembers.map(m=>m.id) }); showLoading(false); loadDashboard(); }
