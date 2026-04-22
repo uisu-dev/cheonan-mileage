@@ -29,10 +29,16 @@ module.exports = async (req, res) => {
 
   if (action === 'mbti') {
     const { id, mbti } = req.body;
-    const { data: user } = await supabase.from('users').select('points, mbti').eq('id', String(id).trim()).single();
+    const { data: user } = await supabase.from('users').select('points, mbti, penalty_total').eq('id', String(id).trim()).single();
     if (!user) return res.json({ success: false, msg: '오류' });
 
     if (!user.mbti || user.mbti === '') {
+      const onPenalty = Number(user.penalty_total) > 0;
+      if (onPenalty) {
+        await supabase.from('users').update({ mbti }).eq('id', String(id).trim());
+        await supabase.from('logs').insert({ teacher: 'System', student_id: id, item: 'MBTI 완료 (징계 중 점수 미반영)', point: 0 });
+        return res.json({ success: true, msg: '결과 저장 완료 (징계 중이므로 점수는 지급되지 않습니다)' });
+      }
       await supabase.from('users').update({ mbti, points: Number(user.points) + 100 }).eq('id', String(id).trim());
       await supabase.from('logs').insert({ teacher: 'System', student_id: id, item: 'MBTI 완료', point: 100 });
       return res.json({ success: true, msg: '결과 저장 +100P!' });

@@ -62,9 +62,14 @@ module.exports = async (req, res) => {
       await supabase.from('survey_logs').insert(logRow);
     }
 
-    // +100P
-    const { data: user } = await supabase.from('users').select('points').eq('id', studentId).single();
+    // +100P (단, 징계 중인 학생은 점수 미반영)
+    const { data: user } = await supabase.from('users').select('points, penalty_total').eq('id', studentId).single();
     if (user) {
+      const onPenalty = Number(user.penalty_total) > 0;
+      if (onPenalty) {
+        await supabase.from('logs').insert({ teacher: 'System', student_id: studentId, item: '설문 참여 (징계 중 점수 미반영)', point: 0 });
+        return res.json({ success: true, msg: '참여 완료 (징계 중이므로 점수는 지급되지 않습니다)' });
+      }
       await supabase.from('users').update({ points: Number(user.points) + 100 }).eq('id', studentId);
       await supabase.from('logs').insert({ teacher: 'System', student_id: studentId, item: '설문 참여', point: 100 });
     }
