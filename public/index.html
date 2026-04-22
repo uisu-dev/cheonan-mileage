@@ -154,7 +154,8 @@
         <div><button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button></div>
       </nav>
       <div class="container">
-        <div class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
+        <div id="studentPointCard" class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
+        <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li></ul>
         <div class="tab-content">
@@ -168,7 +169,24 @@
       </div>
     </div>
 
-    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-school text-white"><h5 class="modal-title fw-bold"><span id="histModalName"></span> 기록</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="histModalMbtiInfo" class="p-3 bg-light border-bottom" style="display:none;"></div><table class="table table-striped mb-0 text-center small"><thead class="table-light sticky-top"><tr><th>날짜</th><th>내용</th><th>점수</th></tr></thead><tbody id="histModalBody"></tbody></table></div><div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div></div></div></div>
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-school text-white"><h5 class="modal-title fw-bold"><span id="histModalName"></span> 기록</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div id="histModalMbtiInfo" class="p-3 bg-light border-bottom" style="display:none;"></div>
+      <div id="histModalPenaltySection" class="p-3 border-bottom" style="background:#fff5f5;">
+        <div class="fw-bold mb-2 text-danger"><i class="bi bi-exclamation-triangle-fill"></i> 생활교육위원회 징계</div>
+        <div id="histPenaltyStatus" class="small mb-2"></div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="histPenaltyCheck" onchange="togglePenaltyInput()">
+          <label class="form-check-label fw-bold" for="histPenaltyCheck">교내봉사 처분 적용</label>
+        </div>
+        <div id="histPenaltyInputBox" style="display:none;">
+          <div class="row g-2 mb-2">
+            <div class="col-5"><input type="number" id="histPenaltyAmount" class="form-control form-control-sm" placeholder="마이너스 점수 (예: 50)" min="1"></div>
+            <div class="col-7"><input type="text" id="histPenaltyReason" class="form-control form-control-sm" placeholder="사유 (선택)"></div>
+          </div>
+          <button class="btn btn-danger btn-sm w-100 fw-bold" onclick="applyPenalty()">징계 적용</button>
+        </div>
+        <button id="histPenaltyClearBtn" class="btn btn-outline-secondary btn-sm w-100 mt-1" style="display:none;" onclick="clearPenalty()">징계 해제</button>
+      </div>
+      <table class="table table-striped mb-0 text-center small"><thead class="table-light sticky-top"><tr><th>날짜</th><th>내용</th><th>점수</th></tr></thead><tbody id="histModalBody"></tbody></table></div><div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div></div></div></div>
 
     <div class="modal fade" id="attendanceEditModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -263,6 +281,23 @@
         document.getElementById('sName').innerText = currentUser.name;
         document.getElementById('sTotal').innerText = data.myPoints || 0;
         document.getElementById('myTierBadge').innerHTML = getTierBadge(data.myPoints || 0);
+        // 교내봉사 징계 표시
+        var pT = Number(data.myPenaltyTotal) || 0;
+        var pE = Number(data.myPenaltyEarned) || 0;
+        if (pT > 0) {
+            document.getElementById('studentPointCard').style.display = 'none';
+            document.getElementById('myTierBadge').innerHTML = '';
+            var card = document.getElementById('studentPenaltyCard');
+            card.style.display = 'block';
+            document.getElementById('sPenaltyEarned').innerText = pE;
+            document.getElementById('sPenaltyTotal').innerText = pT;
+            document.getElementById('sPenaltyLeft').innerText = Math.max(0, pT - pE);
+            var pct = Math.min(100, Math.round(pE / pT * 100));
+            document.getElementById('sPenaltyBar').style.width = pct + '%';
+        } else {
+            document.getElementById('studentPointCard').style.display = 'block';
+            document.getElementById('studentPenaltyCard').style.display = 'none';
+        }
         allStudents = data.students || [];
 
         if(data.myUmbrella === '대여중') document.getElementById('umbrellaBadge').style.display = 'inline-block';
@@ -487,8 +522,57 @@
       function showQuestion() { var q=mbtiQuestions[currentQIndex]; document.getElementById('mbtiQuestion').innerText=`Q${currentQIndex+1}. ${q.q}`; document.getElementById('mbtiOptionA').innerText=q.a; document.getElementById('mbtiOptionB').innerText=q.b; document.getElementById('mbtiProgress').style.width=(Number(currentQIndex + "00")/mbtiQuestions.length)+"%"; }
       function nextQuestion(c) { var q=mbtiQuestions[currentQIndex]; if(c=='A') mbtiScores[q.typeA]++; else mbtiScores[q.typeB]++; currentQIndex++; if(currentQIndex<mbtiQuestions.length) showQuestion(); else finishMbtiTest(); }
       async function finishMbtiTest() { var r=""; r+=(mbtiScores.E>=mbtiScores.I)?"E":"I"; r+=(mbtiScores.S>=mbtiScores.N)?"S":"N"; r+=(mbtiScores.T>=mbtiScores.F)?"T":"F"; r+=(mbtiScores.J>=mbtiScores.P)?"J":"P"; showLoading(true); var res = await apiCall('/student', { action: 'mbti', id: currentUser.id, mbti: r }); showLoading(false); alert(res.msg); document.getElementById('mbtiTestView').style.display='none'; document.getElementById('mbtiResultView').style.display='block'; document.getElementById('myMbtiResultText').innerText=r; loadDashboard(); }
-      async function viewStudentHistory(id, name) { document.getElementById('histModalName').innerText = name; document.getElementById('histModalBody').innerHTML = '<tr><td colspan="3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>'; var s = allStudents.find(x => String(x.id) === String(id)); var mbtiDiv = document.getElementById('histModalMbtiInfo'); if(s && s.mbti && typeof MBTI_INFO !== 'undefined' && MBTI_INFO[s.mbti]) { var info = MBTI_INFO[s.mbti]; mbtiDiv.style.display = 'block'; mbtiDiv.innerHTML = `<div class="d-flex align-items-center mb-3"><span class="badge bg-primary fs-6 me-2">${s.mbti}</span><span class="fw-bold text-dark">학생 지도 가이드</span></div><div class="row g-3 text-start small"><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-primary"><i class="bi bi-emoji-smile"></i> 생활/학습</strong><br>${info.s_study}</div></div><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-warning text-opacity-75" style="color:#d68c00!important"><i class="bi bi-people"></i> 교우 관계</strong><br>${info.s_rel}</div></div></div>`; } else { mbtiDiv.style.display = 'none'; } new bootstrap.Modal(document.getElementById('historyModal')).show(); var logs = await apiCall('/points', { action: 'studentLogs', studentId: id }); var html = ""; if(logs.length === 0) html = "<tr><td colspan='3' class='text-muted'>기록이 없습니다.</td></tr>"; else { logs.forEach(l => { var color = l.point > 0 ? "text-primary" : "text-danger"; var sign = l.point > 0 ? "+" : ""; html += `<tr><td>${l.date}</td><td class="text-start">${l.item}</td><td class="${color} fw-bold">${sign}${l.point}</td></tr>`; }); } document.getElementById('histModalBody').innerHTML = html; }
-      function renderStats() { var gr=document.getElementById('statGrade').value; var cl=document.getElementById('statClass').value; var sv=document.getElementById('statSearch').value; var so=document.querySelector('input[name="sortOpt"]:checked').id; var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&(s.name.includes(sv)||String(s.id).includes(sv)); }); if(so=='sortPoint') f.sort((a,b)=>b.points-a.points); else if(so=='sortId') f.sort((a,b)=>a.id-b.id); else f.sort((a,b)=>a.name.localeCompare(b.name)); document.getElementById('statCount').innerText=f.length; document.getElementById('statAvg').innerText=f.length?Math.round(f.reduce((a,b)=>a+b.points,0)/f.length):0; var h=""; f.forEach(s=>{ h+=`<tr><td>${s.id}</td><td onclick="viewStudentHistory('${s.id}', '${s.name}')" style="cursor:pointer; color:var(--school-blue); text-decoration:underline; font-weight:bold;">${s.name} ${getTierBadge(s.points)}</td><td class="text-end fw-bold">${s.points}</td></tr>`; }); document.getElementById('statTableBody').innerHTML=h; }
+      var currentHistStudentId = '';
+      async function viewStudentHistory(id, name) { currentHistStudentId = id; document.getElementById('histModalName').innerText = name; document.getElementById('histModalBody').innerHTML = '<tr><td colspan="3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>'; var s = allStudents.find(x => String(x.id) === String(id)); var mbtiDiv = document.getElementById('histModalMbtiInfo'); if(s && s.mbti && typeof MBTI_INFO !== 'undefined' && MBTI_INFO[s.mbti]) { var info = MBTI_INFO[s.mbti]; mbtiDiv.style.display = 'block'; mbtiDiv.innerHTML = `<div class="d-flex align-items-center mb-3"><span class="badge bg-primary fs-6 me-2">${s.mbti}</span><span class="fw-bold text-dark">학생 지도 가이드</span></div><div class="row g-3 text-start small"><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-primary"><i class="bi bi-emoji-smile"></i> 생활/학습</strong><br>${info.s_study}</div></div><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-warning text-opacity-75" style="color:#d68c00!important"><i class="bi bi-people"></i> 교우 관계</strong><br>${info.s_rel}</div></div></div>`; } else { mbtiDiv.style.display = 'none'; }
+        // 징계 섹션 렌더링
+        var pT = s ? (Number(s.penaltyTotal)||0) : 0;
+        var pE = s ? (Number(s.penaltyEarned)||0) : 0;
+        var statusEl = document.getElementById('histPenaltyStatus');
+        var checkEl = document.getElementById('histPenaltyCheck');
+        var inputBox = document.getElementById('histPenaltyInputBox');
+        var clearBtn = document.getElementById('histPenaltyClearBtn');
+        document.getElementById('histPenaltyAmount').value = '';
+        document.getElementById('histPenaltyReason').value = '';
+        if (pT > 0) {
+            checkEl.checked = true; inputBox.style.display = 'none'; clearBtn.style.display = 'block';
+            statusEl.innerHTML = `<span class="badge bg-danger">진행 중</span> 교내봉사 <strong>${pE} / ${pT} P</strong> 완료 (남은 ${Math.max(0, pT-pE)}P)`;
+        } else {
+            checkEl.checked = false; inputBox.style.display = 'none'; clearBtn.style.display = 'none';
+            statusEl.innerHTML = '<span class="text-muted">현재 징계 없음</span>';
+        }
+        new bootstrap.Modal(document.getElementById('historyModal')).show(); var logs = await apiCall('/points', { action: 'studentLogs', studentId: id }); var html = ""; if(logs.length === 0) html = "<tr><td colspan='3' class='text-muted'>기록이 없습니다.</td></tr>"; else { logs.forEach(l => { var color = l.point > 0 ? "text-primary" : "text-danger"; var sign = l.point > 0 ? "+" : ""; html += `<tr><td>${l.date}</td><td class="text-start">${l.item}</td><td class="${color} fw-bold">${sign}${l.point}</td></tr>`; }); } document.getElementById('histModalBody').innerHTML = html; }
+      function togglePenaltyInput() {
+        var checked = document.getElementById('histPenaltyCheck').checked;
+        var s = allStudents.find(x => String(x.id) === String(currentHistStudentId));
+        var hasPenalty = s && Number(s.penaltyTotal) > 0;
+        // 이미 징계 중이면 체크 해제 = 해제 버튼 사용 유도
+        if (hasPenalty && !checked) {
+            if (confirm("징계를 해제하시겠습니까?")) clearPenalty();
+            else document.getElementById('histPenaltyCheck').checked = true;
+            return;
+        }
+        document.getElementById('histPenaltyInputBox').style.display = checked ? 'block' : 'none';
+      }
+      async function applyPenalty() {
+        var amt = Number(document.getElementById('histPenaltyAmount').value);
+        if (!amt || amt <= 0) return alert("마이너스 점수를 숫자로 입력하세요.");
+        var reason = document.getElementById('histPenaltyReason').value.trim();
+        if (!confirm(`[${currentHistStudentId}] 학생에게 교내봉사 -${amt}P 징계를 적용합니까?\n해제될 때까지 해당 학생은 점수가 숨겨집니다.`)) return;
+        showLoading(true);
+        var r = await apiCall('/points', { action: 'setPenalty', teacher: currentUser.name, studentId: currentHistStudentId, amount: amt, reason: reason });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) { bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide(); loadDashboard(); }
+      }
+      async function clearPenalty() {
+        if (!confirm(`[${currentHistStudentId}] 학생의 교내봉사 징계를 해제합니까?`)) return;
+        showLoading(true);
+        var r = await apiCall('/points', { action: 'clearPenalty', teacher: currentUser.name, studentId: currentHistStudentId });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) { bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide(); loadDashboard(); }
+      }
+      function renderStats() { var gr=document.getElementById('statGrade').value; var cl=document.getElementById('statClass').value; var sv=document.getElementById('statSearch').value; var so=document.querySelector('input[name="sortOpt"]:checked').id; var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&(s.name.includes(sv)||String(s.id).includes(sv)); }); if(so=='sortPoint') f.sort((a,b)=>b.points-a.points); else if(so=='sortId') f.sort((a,b)=>a.id-b.id); else f.sort((a,b)=>a.name.localeCompare(b.name)); document.getElementById('statCount').innerText=f.length; document.getElementById('statAvg').innerText=f.length?Math.round(f.reduce((a,b)=>a+b.points,0)/f.length):0; var h=""; f.forEach(s=>{ var penaltyBadge = (s.penaltyTotal>0) ? `<span class="badge bg-danger ms-1" title="교내봉사 ${s.penaltyEarned}/${s.penaltyTotal}">🚨</span>` : ''; h+=`<tr><td>${s.id}</td><td onclick="viewStudentHistory('${s.id}', '${s.name}')" style="cursor:pointer; color:var(--school-blue); text-decoration:underline; font-weight:bold;">${s.name}${penaltyBadge} ${getTierBadge(s.points)}</td><td class="text-end fw-bold">${s.points}</td></tr>`; }); document.getElementById('statTableBody').innerHTML=h; }
       function renderMbtiStats() { var gr=document.getElementById('mbtiGrade').value; var cl=document.getElementById('mbtiClass').value; var ty=document.getElementById('mbtiSearchType').value.toUpperCase(); var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&s.mbti&&(ty?s.mbti.includes(ty):true); }); document.getElementById('mbtiCount').innerText=f.length; var h=""; f.forEach(s=>{ h+=`<tr><td>${s.id}</td><td>${s.name}</td><td class="text-primary fw-bold">${s.mbti}</td></tr>`; }); document.getElementById('mbtiTableBody').innerHTML=h; }
       function toggleGiveMode(m) { currentGiveMode=m; document.getElementById('viewSingle').style.display=m=='single'?'block':'none'; document.getElementById('viewMulti').style.display=m=='multi'?'block':'none'; }
       function logout() { location.reload(); }

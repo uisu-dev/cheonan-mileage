@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
           result.myUmbrella = u.umbrella || '';
           result.myBall = u.ball || '';
           result.myMbti = u.mbti || '';
+          result.myPenaltyTotal = Number(u.penalty_total) || 0;
+          result.myPenaltyEarned = Number(u.penalty_earned) || 0;
         }
         break;
       }
@@ -46,7 +48,9 @@ module.exports = async (req, res) => {
       .map(u => ({
         id: String(u.id).trim(), name: u.name,
         points: Number(u.points) || 0,
-        umbrella: u.umbrella || '', ball: u.ball || '', mbti: u.mbti || ''
+        umbrella: u.umbrella || '', ball: u.ball || '', mbti: u.mbti || '',
+        penaltyTotal: Number(u.penalty_total) || 0,
+        penaltyEarned: Number(u.penalty_earned) || 0
       }));
     result.students = allStudentsData;
 
