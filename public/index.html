@@ -219,6 +219,24 @@
       </div>
     </div>
 
+    <div class="modal fade" id="noticeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title fw-bold"><i class="bi bi-megaphone-fill"></i> <span id="noticeModalTitle">공지사항</span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="noticeModalContent" style="white-space:pre-wrap; line-height:1.6;"></div>
+            <div id="noticeModalMeta" class="small text-muted mt-3 pt-2 border-top"></div>
+          </div>
+          <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="surveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -882,24 +900,30 @@
 
       // ========== 공지사항 ==========
       function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      var studentNoticesCache = [];
       function renderStudentNotices(notices) {
         var area = document.getElementById('studentNoticeArea');
         if (!area) return;
+        studentNoticesCache = notices || [];
         if (!notices || notices.length === 0) { area.innerHTML = ''; return; }
-        var html = '<div class="card border-0 shadow-sm"><div class="card-header bg-warning text-dark fw-bold py-2"><i class="bi bi-megaphone-fill"></i> 공지사항</div><div class="card-body p-0"><div class="list-group list-group-flush">';
-        notices.forEach(function(n) {
-          var title = n.title ? `<div class="fw-bold">${escapeHtml(n.title)}</div>` : '';
-          html += `<div class="list-group-item">
-            ${title}
-            <div class="small" style="white-space:pre-wrap;">${escapeHtml(n.content)}</div>
-            <div class="d-flex justify-content-between small text-muted mt-1">
-              <span>${n.teacher ? escapeHtml(n.teacher) + ' 선생님' : ''}</span>
-              <span>${escapeHtml(n.date || '')}</span>
-            </div>
-          </div>`;
+        var html = '<div class="card border-0 shadow-sm"><div class="card-header bg-warning text-dark fw-bold py-2"><i class="bi bi-megaphone-fill"></i> 공지사항</div><div class="list-group list-group-flush">';
+        notices.forEach(function(n, idx) {
+          var titleText = n.title ? n.title : (n.content.length > 40 ? n.content.slice(0,40) + '...' : n.content);
+          html += `<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="showNoticeModal(${idx})">
+            <span class="fw-bold text-truncate me-2">${escapeHtml(titleText)}</span>
+            <span class="small text-muted flex-shrink-0">${escapeHtml(n.date || '')} <i class="bi bi-chevron-right"></i></span>
+          </button>`;
         });
-        html += '</div></div></div>';
+        html += '</div></div>';
         area.innerHTML = html;
+      }
+      function showNoticeModal(idx) {
+        var n = studentNoticesCache[idx];
+        if (!n) return;
+        document.getElementById('noticeModalTitle').innerText = n.title || '공지사항';
+        document.getElementById('noticeModalContent').innerText = n.content || '';
+        document.getElementById('noticeModalMeta').innerText = (n.teacher ? n.teacher + ' 선생님' : '') + (n.date ? ' · ' + n.date : '');
+        new bootstrap.Modal(document.getElementById('noticeModal')).show();
       }
       function renderTeacherNotices(notices) {
         var el = document.getElementById('teacherNoticeList');
