@@ -63,7 +63,7 @@
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석부</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab">📢 제보함</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab">💌 칭찬</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#useTab">🎁 교환</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#noticeTab">📢 공지사항</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab">📊 통계</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#rentalTab">📦 대여</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#surveyTab">📝 설문</button></li>
@@ -109,7 +109,18 @@
 
           <div class="tab-pane fade" id="praiseTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabPraisePending">승인 대기</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabPraiseHistory">승인 내역</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabPraisePending"><div class="alert alert-info small mb-3"><i class="bi bi-heart-fill"></i> 승인하면 학생들에게 5점이 지급됩니다.</div><div class="d-flex justify-content-between align-items-center mb-2 px-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAllPraise" onchange="toggleAllPraises()"><label class="form-check-label small fw-bold" for="checkAllPraise">전체 선택</label></div><div><button class="btn btn-danger btn-sm me-1" onclick="rejectSelectedPraises()">선택 일괄 반려</button><button class="btn btn-primary btn-sm" onclick="approveSelectedPraises()">선택 일괄 승인</button></div></div><div id="teacherPraiseListPending"></div></div><div class="tab-pane fade" id="tabPraiseHistory"><div id="teacherPraiseListHistory"></div></div></div></div>
 
-          <div class="tab-pane fade" id="useTab"><div class="card p-3 border-0 shadow-sm mb-3"><label class="form-label fw-bold">학생 학번 입력</label><input type="number" id="redeemSearch" class="form-control form-control-lg" placeholder="학번 5자리 (예: 10101)" onkeyup="selectRedeemUser()"><div id="redeemStudentInfo" class="mt-3 p-3 bg-light rounded text-center" style="display:none;"><h5 class="fw-bold" id="rName"></h5><div class="fs-4 fw-bold text-school"><span id="rPoint">0</span> P</div><input type="hidden" id="rId"></div></div><h5 class="fw-bold mb-3 text-school">교환할 물품</h5><div id="rewardListTeacher" class="d-grid gap-2"></div></div>
+          <div class="tab-pane fade" id="noticeTab">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-white fw-bold"><i class="bi bi-megaphone"></i> 새 공지사항 작성</div>
+              <div class="card-body p-3 bg-light">
+                <input type="text" id="newNoticeTitle" class="form-control mb-2 fw-bold" placeholder="제목 (선택)">
+                <textarea id="newNoticeContent" class="form-control mb-2" rows="4" placeholder="공지 내용을 입력하세요."></textarea>
+                <button class="btn btn-school w-100 fw-bold" onclick="createNotice()"><i class="bi bi-send"></i> 공지사항 등록</button>
+              </div>
+            </div>
+            <h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">등록된 공지사항</h6>
+            <div id="teacherNoticeList"></div>
+          </div>
 
           <div class="tab-pane fade" id="statsTab"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
 
@@ -157,6 +168,7 @@
         <div id="studentPointCard" class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
+        <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li></ul>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="historyTab"><ul class="list-group list-group-flush" id="logList"></ul></div>
@@ -303,6 +315,9 @@
         if(data.myUmbrella === '대여중') document.getElementById('umbrellaBadge').style.display = 'inline-block';
         if(data.myBall === '대여중') document.getElementById('ballBadge').style.display = 'inline-block';
 
+        // 공지사항 표시
+        renderStudentNotices(data.notices || []);
+
         var hHtml = "";
         if(data.history && data.history.length > 0) {
             data.history.forEach(h => {
@@ -367,8 +382,7 @@
         var itemHtml = ""; (data.items || []).forEach(i=>{ var c = i.points>0?"btn-outline-primary":"btn-outline-danger"; itemHtml += `<button class="btn ${c} py-3 shadow-sm" onclick="confirmGivePoints('${i.name}', ${i.points})"><div class="d-flex justify-content-between"><span class="fw-bold">${i.name}</span><span class="badge bg-secondary rounded-pill">${i.points}</span></div></button>`; });
         itemHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmGivePoints('기타', 0)"><div class="d-flex justify-content-between"><span class="fw-bold">✏️ 기타 (사유입력)</span><span class="badge bg-secondary rounded-pill">직접입력</span></div></button>`;
         document.getElementById('itemList').innerHTML = itemHtml;
-        var rHtml = ""; (data.rewards || []).forEach(r=>{ rHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmRedeem('${r.name}', ${r.price})"><div class="d-flex justify-content-between"><span class="fw-bold">${r.name}</span><span class="badge bg-secondary rounded-pill">-${r.price}</span></div></button>`; });
-        document.getElementById('rewardListTeacher').innerHTML = rHtml;
+        renderTeacherNotices(data.notices || []);
 
         var rt=document.getElementById('teacherReportTable'); rt.innerHTML="";
         if (data.reportList && data.reportList.length > 0) {
@@ -378,7 +392,7 @@
            });
         } else { rt.innerHTML = "<tr><td colspan='4' class='text-center text-muted'>접수된 제보가 없습니다.</td></tr>"; }
 
-        var sHtml = ""; if(data.surveyList && data.surveyList.length > 0) { data.surveyList.forEach((s, idx) => { sHtml += `<div class="accordion-item mb-2 shadow-sm border-0 overflow-hidden" style="border-radius:10px;"><h2 class="accordion-header" id="heading${idx}"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">${s.title} <span class="badge bg-danger ms-2" onclick="deleteSurveyAction('${s.id}'); event.stopPropagation();">삭제</span></button></h2><div id="collapse${idx}" class="accordion-collapse collapse" data-bs-parent="#teacherSurveyList"><div class="accordion-body bg-light">${s.stats}</div></div></div>`; }); } else { sHtml = "<div class='text-center text-muted py-3'>진행 중인 설문이 없습니다.</div>"; } document.getElementById('teacherSurveyList').innerHTML = sHtml;
+        var sHtml = ""; if(data.surveyList && data.surveyList.length > 0) { data.surveyList.forEach((s, idx) => { var isClosed = s.status === 'C'; var stateBadge = isClosed ? '<span class="badge bg-secondary ms-2">마감됨</span>' : ''; var actionBtn = isClosed ? `<span class="badge bg-success ms-1" onclick="reopenSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">다시 게시</span><span class="badge bg-danger ms-1" onclick="deleteSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">완전 삭제</span>` : `<span class="badge bg-warning text-dark ms-2" onclick="closeSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">마감</span>`; sHtml += `<div class="accordion-item mb-2 shadow-sm border-0 overflow-hidden" style="border-radius:10px;"><h2 class="accordion-header" id="heading${idx}"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">${s.title}${stateBadge} ${actionBtn}</button></h2><div id="collapse${idx}" class="accordion-collapse collapse" data-bs-parent="#teacherSurveyList"><div class="accordion-body bg-light">${s.stats}</div></div></div>`; }); } else { sHtml = "<div class='text-center text-muted py-3'>등록된 설문이 없습니다.</div>"; } document.getElementById('teacherSurveyList').innerHTML = sHtml;
         renderMbtiStats();
         var pHtml = ""; if(data.pendingPraises && data.pendingPraises.length > 0) { data.pendingPraises.forEach(p => { pHtml += `<div class="card mb-2 border-warning"><div class="card-body p-2"><div class="form-check"><input class="form-check-input praise-checkbox" type="checkbox" value="${p.id}" id="praise${p.id}"><label class="form-check-label w-100" for="praise${p.id}"><div class="d-flex justify-content-between small mb-1"><span class="text-muted">${p.date}</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></label></div></div></div>`; }); } else { pHtml = "<div class='text-center text-muted py-3'>대기 중인 칭찬 없음</div>"; } document.getElementById('teacherPraiseListPending').innerHTML = pHtml;
         var phHtml = ""; if(data.approvedPraises && data.approvedPraises.length > 0) { data.approvedPraises.forEach(p => { phHtml += `<div class="card mb-2 border-success"><div class="card-body p-2"><div class="d-flex justify-content-between small text-muted mb-1"><span>${p.date}</span><span class="badge bg-success">승인완료</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></div></div>`; }); } else { phHtml = "<div class='text-center text-muted py-3'>승인 내역 없음</div>"; } document.getElementById('teacherPraiseListHistory').innerHTML = phHtml;
@@ -641,7 +655,7 @@
         alert(r.msg);
         if (r.success) { bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide(); loadDashboard(); }
       }
-      function renderStats() { var gr=document.getElementById('statGrade').value; var cl=document.getElementById('statClass').value; var sv=document.getElementById('statSearch').value; var so=document.querySelector('input[name="sortOpt"]:checked').id; var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&(s.name.includes(sv)||String(s.id).includes(sv)); }); if(so=='sortPoint') f.sort((a,b)=>b.points-a.points); else if(so=='sortId') f.sort((a,b)=>a.id-b.id); else f.sort((a,b)=>a.name.localeCompare(b.name)); document.getElementById('statCount').innerText=f.length; document.getElementById('statAvg').innerText=f.length?Math.round(f.reduce((a,b)=>a+b.points,0)/f.length):0; var h=""; f.forEach(s=>{ var penaltyBadge = (s.penaltyTotal>0) ? `<span class="badge bg-danger ms-1" title="교내봉사 ${s.penaltyEarned}/${s.penaltyTotal}">🚨</span>` : ''; h+=`<tr><td>${s.id}</td><td onclick="viewStudentHistory('${s.id}', '${s.name}')" style="cursor:pointer; color:var(--school-blue); text-decoration:underline; font-weight:bold;">${s.name}${penaltyBadge} ${getTierBadge(s.points)}</td><td class="text-end fw-bold">${s.points}</td></tr>`; }); document.getElementById('statTableBody').innerHTML=h; }
+      function renderStats() { var gr=document.getElementById('statGrade').value; var cl=document.getElementById('statClass').value; var sv=document.getElementById('statSearch').value; var so=document.querySelector('input[name="sortOpt"]:checked').id; var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&(s.name.includes(sv)||String(s.id).includes(sv)); }); if(so=='sortPoint') f.sort((a,b)=>b.points-a.points); else if(so=='sortId') f.sort((a,b)=>a.id-b.id); else f.sort((a,b)=>a.name.localeCompare(b.name)); document.getElementById('statCount').innerText=f.length; document.getElementById('statAvg').innerText=f.length?Math.round(f.reduce((a,b)=>a+b.points,0)/f.length):0; var h=""; f.forEach(s=>{ var penaltyBadge = (s.penaltyTotal>0) ? `<span class="badge bg-danger ms-1" title="교내봉사 ${s.penaltyEarned}/${s.penaltyTotal}">🚨</span>` : ''; h+=`<tr><td>${s.id}</td><td onclick="viewStudentHistory('${s.id}', '${s.name}')" style="cursor:pointer; color:var(--school-blue); text-decoration:none; font-weight:bold;">${s.name}${penaltyBadge} ${getTierBadge(s.points)}</td><td class="text-end fw-bold">${s.points}</td></tr>`; }); document.getElementById('statTableBody').innerHTML=h; }
       function renderMbtiStats() { var gr=document.getElementById('mbtiGrade').value; var cl=document.getElementById('mbtiClass').value; var ty=document.getElementById('mbtiSearchType').value.toUpperCase(); var f=allStudents.filter(s=>{ var g=String(s.id).substring(0,1); var c=parseInt(String(s.id).substring(1,3)); return (!gr||gr==g)&&(!cl||cl==c)&&s.mbti&&(ty?s.mbti.includes(ty):true); }); document.getElementById('mbtiCount').innerText=f.length; var h=""; f.forEach(s=>{ h+=`<tr><td>${s.id}</td><td>${s.name}</td><td class="text-primary fw-bold">${s.mbti}</td></tr>`; }); document.getElementById('mbtiTableBody').innerHTML=h; }
       function toggleGiveMode(m) { currentGiveMode=m; document.getElementById('viewSingle').style.display=m=='single'?'block':'none'; document.getElementById('viewMulti').style.display=m=='multi'?'block':'none'; }
       function logout() { location.reload(); }
@@ -844,12 +858,106 @@
               showLoading(false); alert(r.msg); loadDashboard(); document.getElementById('newSurveyTitle').value=""; document.getElementById('questionsContainer').innerHTML=""; document.getElementById('newSurveyAllowPhoto').checked=false;
           }
       }
+      async function closeSurveyAction(id) {
+          if(confirm("이 설문을 마감하시겠습니까?\n학생 화면에서 숨겨지지만 응답 데이터는 그대로 보관됩니다.")) {
+              showLoading(true);
+              var r = await apiCall('/survey', { action: 'close', id: id });
+              showLoading(false); alert(r.msg); loadDashboard();
+          }
+      }
+      async function reopenSurveyAction(id) {
+          if(confirm("이 설문을 다시 학생에게 공개하시겠습니까?")) {
+              showLoading(true);
+              var r = await apiCall('/survey', { action: 'reopen', id: id });
+              showLoading(false); alert(r.msg); loadDashboard();
+          }
+      }
       async function deleteSurveyAction(id) {
-          if(confirm("삭제하시겠습니까?")) {
+          if(confirm("응답 데이터 포함 완전히 삭제됩니다. 계속하시겠습니까?")) {
               showLoading(true);
               var r = await apiCall('/survey', { action: 'delete', id: id });
               showLoading(false); alert(r.msg); loadDashboard();
           }
+      }
+
+      // ========== 공지사항 ==========
+      function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+      function renderStudentNotices(notices) {
+        var area = document.getElementById('studentNoticeArea');
+        if (!area) return;
+        if (!notices || notices.length === 0) { area.innerHTML = ''; return; }
+        var html = '<div class="card border-0 shadow-sm"><div class="card-header bg-warning text-dark fw-bold py-2"><i class="bi bi-megaphone-fill"></i> 공지사항</div><div class="card-body p-0"><div class="list-group list-group-flush">';
+        notices.forEach(function(n) {
+          var title = n.title ? `<div class="fw-bold">${escapeHtml(n.title)}</div>` : '';
+          html += `<div class="list-group-item">
+            ${title}
+            <div class="small" style="white-space:pre-wrap;">${escapeHtml(n.content)}</div>
+            <div class="d-flex justify-content-between small text-muted mt-1">
+              <span>${n.teacher ? escapeHtml(n.teacher) + ' 선생님' : ''}</span>
+              <span>${escapeHtml(n.date || '')}</span>
+            </div>
+          </div>`;
+        });
+        html += '</div></div></div>';
+        area.innerHTML = html;
+      }
+      function renderTeacherNotices(notices) {
+        var el = document.getElementById('teacherNoticeList');
+        if (!el) return;
+        if (!notices || notices.length === 0) { el.innerHTML = "<div class='text-center text-muted py-3'>등록된 공지사항이 없습니다.</div>"; return; }
+        var html = '';
+        notices.forEach(function(n) {
+          var isClosed = n.status === 'C';
+          var stateBadge = isClosed ? '<span class="badge bg-secondary ms-1">숨김</span>' : '<span class="badge bg-success ms-1">게시중</span>';
+          var titleLine = n.title ? `<div class="fw-bold">${escapeHtml(n.title)} ${stateBadge}</div>` : `<div>${stateBadge}</div>`;
+          var actionBtn = isClosed
+            ? `<button class="btn btn-sm btn-outline-success" onclick="reopenNotice(${n.id})">다시 게시</button>`
+            : `<button class="btn btn-sm btn-outline-warning" onclick="closeNotice(${n.id})">숨기기</button>`;
+          html += `<div class="card mb-2 border-0 shadow-sm"><div class="card-body p-3">
+            ${titleLine}
+            <div class="small mt-1" style="white-space:pre-wrap;">${escapeHtml(n.content)}</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <span class="small text-muted">${n.teacher ? escapeHtml(n.teacher) + ' · ' : ''}${escapeHtml(n.date || '')}</span>
+              <div>
+                ${actionBtn}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteNotice(${n.id})">삭제</button>
+              </div>
+            </div>
+          </div></div>`;
+        });
+        el.innerHTML = html;
+      }
+      async function createNotice() {
+        var title = document.getElementById('newNoticeTitle').value.trim();
+        var content = document.getElementById('newNoticeContent').value.trim();
+        if (!content) return alert("공지 내용을 입력하세요.");
+        if (!confirm("공지사항을 등록하시겠습니까?")) return;
+        showLoading(true);
+        var r = await apiCall('/notice', { action: 'create', teacher: currentUser.name, title: title, content: content });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) {
+          document.getElementById('newNoticeTitle').value = '';
+          document.getElementById('newNoticeContent').value = '';
+          loadDashboard();
+        }
+      }
+      async function closeNotice(id) {
+        if (!confirm("학생 화면에서 숨기시겠습니까?\n(데이터는 보관됩니다)")) return;
+        showLoading(true);
+        var r = await apiCall('/notice', { action: 'close', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
+      }
+      async function reopenNotice(id) {
+        showLoading(true);
+        var r = await apiCall('/notice', { action: 'reopen', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
+      }
+      async function deleteNotice(id) {
+        if (!confirm("완전히 삭제합니다. 계속하시겠습니까?")) return;
+        showLoading(true);
+        var r = await apiCall('/notice', { action: 'delete', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
       }
 
       window.onload = function() {

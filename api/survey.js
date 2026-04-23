@@ -82,5 +82,17 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '삭제되었습니다.' });
   }
 
+  if (action === 'close') {
+    const { id } = req.body;
+    await supabase.from('surveys').update({ status: 'C' }).eq('id', id);
+    return res.json({ success: true, msg: '마감되었습니다. 학생 화면에서 숨겨집니다.' });
+  }
+
+  if (action === 'reopen') {
+    const { id } = req.body;
+    await supabase.from('surveys').update({ status: 'O' }).eq('id', id);
+    return res.json({ success: true, msg: '다시 공개되었습니다.' });
+  }
+
   return res.json({ success: false, msg: '알 수 없는 action' });
 };

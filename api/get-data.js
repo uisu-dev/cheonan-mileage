@@ -151,8 +151,11 @@ module.exports = async (req, res) => {
       result.receivedPraises.reverse();
     }
 
-    // Surveys
-    const { data: surveys } = await supabase.from('surveys').select('*').eq('status', 'O');
+    // Surveys (교사: 전체, 학생: 진행중만)
+    const isTeacher = (role === 'teacher' || role === 'admin');
+    let surveysQuery = supabase.from('surveys').select('*');
+    if (!isTeacher) surveysQuery = surveysQuery.eq('status', 'O');
+    const { data: surveys } = await surveysQuery;
     const { data: surveyLogs } = await supabase.from('survey_logs').select('*');
 
     for (const s of (surveys || [])) {
@@ -160,7 +163,7 @@ module.exports = async (req, res) => {
       if (role !== 'teacher') {
         myVoted = (surveyLogs || []).some(sl => String(sl.vote_id) === String(s.id) && String(sl.student_id) === String(userId));
       }
-      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted, allowPhoto: !!s.allow_photo };
+      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted, allowPhoto: !!s.allow_photo, status: s.status || 'O' };
       if (role === 'teacher' || role === 'admin') {
         sv.stats = getSurveyStats(s.id, s.questions, surveyLogs || [], !!s.allow_photo);
       }
@@ -186,6 +189,21 @@ module.exports = async (req, res) => {
       result.quizList.push({ id: q.id, teacherName: q.teacher, title: q.title, questions: qc, isSolved: mySolved });
     }
     result.quizList.reverse();
+
+    // Announcements (공지사항)
+    try {
+      let noticeQuery = supabase.from('announcements').select('*').order('id', { ascending: false }).limit(20);
+      if (role !== 'teacher' && role !== 'admin') noticeQuery = noticeQuery.eq('status', 'O');
+      const { data: notices } = await noticeQuery;
+      result.notices = (notices || []).map(n => ({
+        id: n.id,
+        teacher: n.teacher || '',
+        title: n.title || '',
+        content: n.content || '',
+        date: formatDate(n.created_at || n.date),
+        status: n.status || 'O'
+      }));
+    } catch (e) { result.notices = []; }
 
     // Lunch
     try { result.lunchMenu = await getNeisLunch(); } catch (e) { result.lunchMenu = '정보 없음'; }
