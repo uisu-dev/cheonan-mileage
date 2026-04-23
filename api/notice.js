@@ -18,6 +18,15 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '공지사항이 등록되었습니다.' });
   }
 
+  if (action === 'update') {
+    const { id, title, content } = req.body;
+    if (!content || !content.trim()) return res.json({ success: false, msg: '내용을 입력하세요' });
+    const { error } = await supabase.from('announcements')
+      .update({ title: title || '', content: content.trim() }).eq('id', id);
+    if (error) return res.json({ success: false, msg: '수정 실패: ' + error.message });
+    return res.json({ success: true, msg: '수정되었습니다.' });
+  }
+
   if (action === 'close') {
     const { id } = req.body;
     const { error } = await supabase.from('announcements').update({ status: 'C' }).eq('id', id);

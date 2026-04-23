@@ -219,6 +219,28 @@
       </div>
     </div>
 
+    <div class="modal fade" id="editNoticeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> 공지사항 수정</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editNoticeId">
+            <label class="form-label small fw-bold">제목 (선택)</label>
+            <input type="text" id="editNoticeTitle" class="form-control mb-3 fw-bold" placeholder="제목">
+            <label class="form-label small fw-bold">내용</label>
+            <textarea id="editNoticeContent" class="form-control" rows="6" placeholder="내용"></textarea>
+          </div>
+          <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+            <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveEditNotice()">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="noticeModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -925,12 +947,14 @@
         document.getElementById('noticeModalMeta').innerText = (n.teacher ? n.teacher + ' 선생님' : '') + (n.date ? ' · ' + n.date : '');
         new bootstrap.Modal(document.getElementById('noticeModal')).show();
       }
+      var teacherNoticesCache = [];
       function renderTeacherNotices(notices) {
         var el = document.getElementById('teacherNoticeList');
         if (!el) return;
+        teacherNoticesCache = notices || [];
         if (!notices || notices.length === 0) { el.innerHTML = "<div class='text-center text-muted py-3'>등록된 공지사항이 없습니다.</div>"; return; }
         var html = '';
-        notices.forEach(function(n) {
+        notices.forEach(function(n, idx) {
           var isClosed = n.status === 'C';
           var stateBadge = isClosed ? '<span class="badge bg-secondary ms-1">숨김</span>' : '<span class="badge bg-success ms-1">게시중</span>';
           var titleLine = n.title ? `<div class="fw-bold">${escapeHtml(n.title)} ${stateBadge}</div>` : `<div>${stateBadge}</div>`;
@@ -942,14 +966,37 @@
             <div class="small mt-1" style="white-space:pre-wrap;">${escapeHtml(n.content)}</div>
             <div class="d-flex justify-content-between align-items-center mt-2">
               <span class="small text-muted">${n.teacher ? escapeHtml(n.teacher) + ' · ' : ''}${escapeHtml(n.date || '')}</span>
-              <div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="openEditNotice(${idx})"><i class="bi bi-pencil"></i> 수정</button>
                 ${actionBtn}
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteNotice(${n.id})">삭제</button>
+                <button class="btn btn-outline-danger" onclick="deleteNotice(${n.id})">삭제</button>
               </div>
             </div>
           </div></div>`;
         });
         el.innerHTML = html;
+      }
+      function openEditNotice(idx) {
+        var n = teacherNoticesCache[idx];
+        if (!n) return;
+        document.getElementById('editNoticeId').value = n.id;
+        document.getElementById('editNoticeTitle').value = n.title || '';
+        document.getElementById('editNoticeContent').value = n.content || '';
+        new bootstrap.Modal(document.getElementById('editNoticeModal')).show();
+      }
+      async function saveEditNotice() {
+        var id = document.getElementById('editNoticeId').value;
+        var title = document.getElementById('editNoticeTitle').value.trim();
+        var content = document.getElementById('editNoticeContent').value.trim();
+        if (!content) return alert("내용을 입력하세요.");
+        showLoading(true);
+        var r = await apiCall('/notice', { action: 'update', id: Number(id), title: title, content: content });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) {
+          bootstrap.Modal.getInstance(document.getElementById('editNoticeModal')).hide();
+          loadDashboard();
+        }
       }
       async function createNotice() {
         var title = document.getElementById('newNoticeTitle').value.trim();
