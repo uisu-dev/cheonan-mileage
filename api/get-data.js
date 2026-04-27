@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
         .order('id', { ascending: false })
         .limit(30);
       result.reportList = (reports || []).map(r => ({
-        date: formatDate(r.date), reporterName: r.reporter_name, content: r.content, fileLink: r.file_link || ''
+        date: formatDate(r.date), reporterId: r.reporter_id || '', reporterName: r.reporter_name, content: r.content, fileLink: r.file_link || ''
       }));
 
       // Teacher Logs
