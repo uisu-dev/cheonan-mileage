@@ -319,7 +319,120 @@
       var currentUser = {}; var allStudents = []; var allTeachers = []; var myClubList = []; var clubLogs = []; var currentGiveMode = 'single'; var selectedSingleUserId = null; var selectedClubMembers = [];
       var currentEditingLogIndex = -1;
 
-      var MBTI_INFO = { "ISTJ": { s_study: "계획적이고 체계적인 학습 선호. 벼락치기보다 꾸준한 복습 추천.", s_rel: "약속을 잘 지키는 신중한 친구." }, "ISFJ": { s_study: "꼼꼼한 필기와 반복 학습 강점. 모범생 스타일.", s_rel: "타인을 잘 배려하고 경청하는 따뜻한 친구." }, "INFJ": { s_study: "전체 흐름 파악 중시. '왜'라는 질문을 던지며 학습.", s_rel: "깊은 유대감을 선호하며 고민 상담을 잘해줌." }, "INTJ": { s_study: "논리적 분석과 목표 설정 탁월. 독립적 탐구형.", s_rel: "지적 호기심을 공유하는 친구와 잘 통함." }, "ISTP": { s_study: "효율 중시. 체험/실습 위주 학습에서 두각.", s_rel: "행동으로 보여주는 쿨한 성격. 함께 활동하기 좋음." }, "ISFP": { s_study: "자유로운 분위기 선호. 예술적 감각 활용 추천.", s_rel: "다정하고 온화하며 갈등을 싫어하는 평화주의자." }, "INFP": { s_study: "자신만의 의미 찾기 중요. 문학/예술 분야 강점.", s_rel: "마음이 통하는 친구와 깊은 대화 선호." }, "INTP": { s_study: "원리 이해와 논리적 추론 선호. 탐구형 학습자.", s_rel: "관심사가 같은 친구와 밤새 토론 가능." }, "ESTP": { s_study: "활동적, 경험 중심. 경쟁이나 퀴즈 활용 추천.", s_rel: "유머 감각이 뛰어나고 에너지가 넘치는 분위기 메이커." }, "ESFP": { s_study: "즐거운 분위기 선호. 스터디 그룹 추천.", s_rel: "사교성 좋고 정이 많아 모두와 친하게 지냄." }, "ENFP": { s_study: "창의적 학습 선호. 반복 암기보다 토론/프로젝트.", s_rel: "사람을 좋아하고 리액션이 좋아 인기 많음." }, "ENTP": { s_study: "토론과 논쟁을 통한 학습 즐김. 질문왕.", s_rel: "다재다능하고 아이디어 넘치는 친구." }, "ESTJ": { s_study: "계획 실천형. 목표 지향적이며 성실함.", s_rel: "책임감 강하고 리더십 있어 학급 임원 적합." }, "ESFJ": { s_study: "설명 잘 듣고 정리 잘함. 협력 학습 시너지.", s_rel: "친구들 잘 챙기고 세심하게 배려함." }, "ENFJ": { s_study: "함께 성장하는 것 중시. 가르쳐주며 공부하기.", s_rel: "따뜻한 리더십으로 친구들 화합 이끎." }, "ENTJ": { s_study: "큰 그림 그리고 체계적 목표 달성. 분석력 탁월.", s_rel: "주도적으로 모임을 이끄는 결단력 있는 친구." } };
+      var MBTI_INFO = {
+        "ISTJ": {
+          s_study: "체계적·계획적 학습을 선호합니다. 정해진 절차와 명확한 기준이 있을 때 가장 능률이 높고, 노트 정리·반복 복습이 강점입니다. 갑작스러운 변경이나 모호한 과제에는 스트레스를 받기 쉽습니다.",
+          s_rel: "약속과 책임을 잘 지키는 신중한 유형입니다. 소수의 친한 친구와 깊고 안정적인 관계를 맺으며, 들뜨고 시끄러운 분위기는 부담스러워합니다.",
+          s_strength: "책임감, 꼼꼼함, 끈기, 신뢰성",
+          s_caution: "융통성 부족, 새로운 시도 회피, 비판에 예민",
+          s_tip: "명확한 기준과 마감일을 제시하면 능률이 크게 오릅니다. 변화는 미리 예고하고 적응 시간을 충분히 주세요."
+        },
+        "ISFJ": {
+          s_study: "꼼꼼한 필기와 반복 학습이 강점인 모범생 스타일입니다. 교사의 설명을 충실히 따라가며 안정적으로 수행하고, 시험 전 정리 노트를 만들어 친구들과 공유하기도 합니다.",
+          s_rel: "친구를 세심하게 챙기는 따뜻한 유형입니다. 타인의 부탁을 거절하기 어려워하고, 친한 그룹 안에서 분위기를 부드럽게 만드는 역할을 합니다.",
+          s_strength: "배려심, 성실함, 인내심, 책임감",
+          s_caution: "자기 의견 표현이 약함, 부담을 혼자 떠안기, 갈등 회피",
+          s_tip: "1:1 면담으로 본인 의사를 확인하고, '거절해도 괜찮다'는 신호를 자주 보내주세요."
+        },
+        "INFJ": {
+          s_study: "의미와 목적을 중요시하며 '왜?'라는 질문을 자주 던집니다. 큰 그림을 파악한 뒤 세부로 들어가는 스타일이라 글쓰기·인문 분야에서 두각을 보입니다.",
+          s_rel: "깊이 있는 1:1 관계를 선호하며 친구의 감정을 직관적으로 알아챕니다. 표면적인 관계나 가벼운 잡담에 피로감을 느낍니다.",
+          s_strength: "통찰력, 공감 능력, 신념, 창의력",
+          s_caution: "완벽주의로 인한 번아웃, 갈등 시 위축, 혼자 짊어지기",
+          s_tip: "'정답'을 강요하기보다 본인 생각을 이끌어내는 질문이 효과적입니다. 회복할 시간을 충분히 인정해 주세요."
+        },
+        "INTJ": {
+          s_study: "논리·구조를 중시하여 외워서 푸는 문제보다 원리 이해 문제에 강합니다. 흥미 없는 과목에는 무관심해질 수 있고, 자기주도 학습을 가장 선호합니다.",
+          s_rel: "지적 호기심을 공유할 수 있는 친구와 잘 통합니다. 의례적 인사·잡담을 부담스러워하고, 직설적인 표현으로 오해를 사기도 합니다.",
+          s_strength: "분석력, 독립성, 목표지향성, 장기적 비전",
+          s_caution: "강한 자존심, 대인 표현 부족, 비판적 톤",
+          s_tip: "도전적 과제·심화 질문을 제공하세요. 비판은 논리적 근거와 함께 전달해야 수용도가 높습니다."
+        },
+        "ISTP": {
+          s_study: "직접 만지고 해보는 체험·실습 학습에서 두각을 보입니다. 이론보다 실험을 선호하고, 흥미가 없으면 빠르게 포기하는 경향이 있습니다.",
+          s_rel: "말은 적지만 행동으로 보여주는 유형입니다. 함께 운동하거나 활동하는 친구와 가까워지고, 감정적인 대화는 어색해합니다.",
+          s_strength: "위기 대처력, 손재주, 합리성, 침착함",
+          s_caution: "장기 계획 약함, 규율에 반발, 감정 표현 부족",
+          s_tip: "강의식보다 활동·과제 중심으로. 규칙을 강요하기보다 그 이유를 함께 설명해 주세요."
+        },
+        "ISFP": {
+          s_study: "자유롭고 부드러운 분위기에서 능률이 오릅니다. 예술·체육·실습에 강점이 있고, 압박이 강한 환경에서는 쉽게 위축됩니다.",
+          s_rel: "다정하고 온화한 평화주의자로 갈등을 매우 싫어합니다. 가까운 친구에게는 깊은 정을 드러내지만 표현은 조용한 편입니다.",
+          s_strength: "감수성, 친절함, 미적 감각, 적응력",
+          s_caution: "자기주장 약함, 갈등 시 회피, 기약 없는 미루기",
+          s_tip: "비교·경쟁 분위기는 자제하고, 본인이 즐길 수 있는 표현 기회(미술·음악 등)를 마련해 주세요."
+        },
+        "INFP": {
+          s_study: "자신에게 의미 있는 주제에 깊이 몰입합니다. 문학·예술·인문 분야에서 빛나며, 흥미 없는 반복 작업은 어려워합니다.",
+          s_rel: "마음이 통하는 소수와 깊은 관계를 맺습니다. 갈등을 매우 싫어하고, 친구의 고민을 진지하게 들어주는 상담사 역할을 자주 합니다.",
+          s_strength: "상상력, 진정성, 공감 능력, 확고한 가치관",
+          s_caution: "비판에 매우 예민, 현실 회피, 미루기, 자기 비난",
+          s_tip: "잘한 점을 구체적으로 짚어주세요. 큰 과제는 작은 단위로 나누어 부담을 줄여줍니다."
+        },
+        "INTP": {
+          s_study: "원리·이론 탐구를 즐깁니다. 관심 분야는 자기주도로 깊이 파고들지만 반복 암기·반복 풀이는 지루해합니다. 수학·과학·논리에 강점이 있습니다.",
+          s_rel: "관심사가 같은 친구와 토론을 즐깁니다. 사교적 잡담은 약하고 단체 활동에서 쉽게 피로해집니다.",
+          s_strength: "분석력, 창의성, 독립성, 객관성",
+          s_caution: "마감·발표 부담, 결과물 완성 회피, 사회성 부족",
+          s_tip: "흥미 영역을 깊이 파고들 자유를 주되, 작은 산출물을 정해진 시점에 제출하도록 가이드해 주세요."
+        },
+        "ESTP": {
+          s_study: "활동적·경쟁적인 학습이 효과적입니다. 책상 앞 정적 학습은 금방 지치고, 실생활 사례·게임·퀴즈 형식에서 강점을 보입니다.",
+          s_rel: "분위기 메이커이자 친구가 많은 유형입니다. 즉흥적이라 약속·과제를 잊기도 하지만, 갈등도 직설적으로 시원하게 풀어냅니다.",
+          s_strength: "사교성, 추진력, 위기 대응력, 재치",
+          s_caution: "충동적 결정, 규율 부담, 장기 목표 약함",
+          s_tip: "즉시 피드백과 작은 보상 시스템이 효과적입니다. 장기 목표는 잘게 쪼개어 단기 미션으로 제시하세요."
+        },
+        "ESFP": {
+          s_study: "즐거운 분위기에서 능률이 크게 오릅니다. 스터디 그룹·발표·역할극에서 빛나며, 따분한 환경에서는 집중이 어려워집니다.",
+          s_rel: "사교성이 매우 좋고 정이 많아 친구가 많습니다. 분위기에 따라 행동이 달라지고, 관심을 받고 싶어 하는 마음이 큽니다.",
+          s_strength: "친화력, 표현력, 긍정성, 현재를 즐기는 에너지",
+          s_caution: "산만함, 규칙 무시, 비판에 위축, 충동 소비/행동",
+          s_tip: "칭찬·격려를 자주, 그리고 책임 있는 행동에 대해서는 구체적으로 짚어 주세요."
+        },
+        "ENFP": {
+          s_study: "창의적·자유로운 학습 환경을 좋아합니다. 토론·프로젝트에서 빛나며, 반복 암기는 어려워하고 흥미가 자주 옮겨가 미완 과제가 잦습니다.",
+          s_rel: "사람을 좋아하고 리액션이 좋아 어디서나 인기가 많습니다. 다양한 그룹과 친하지만, 깊은 관계도 빠르게 형성합니다.",
+          s_strength: "상상력, 열정, 친화력, 동기부여 능력",
+          s_caution: "산만함, 끝까지 마무리 약함, 거절 어려움",
+          s_tip: "시작은 자유롭게, 마감 체크는 단호하게. 학습 내용과 본인의 흥미를 연결할 고리를 자주 보여주세요."
+        },
+        "ENTP": {
+          s_study: "토론·논쟁을 통한 학습을 즐깁니다. 정답을 강요받으면 반발하지만 흥미로운 질문을 잘 던지는 '질문왕'이며, 편식 학습 경향이 있습니다.",
+          s_rel: "재치와 아이디어가 풍부해 인기가 많습니다. 직설적인 농담으로 오해가 생기기도 합니다.",
+          s_strength: "통찰, 순발력, 창의성, 도전 정신",
+          s_caution: "끝맺음 약함, 규칙 무시, 비꼬는 태도, 완성도 부족",
+          s_tip: "도전적·열린 과제를 제시하세요. 행동 결과를 사실과 데이터 기반으로 짚어 주는 것이 효과적입니다."
+        },
+        "ESTJ": {
+          s_study: "계획적·체계적인 목표 달성형입니다. 명확한 기준과 평가 체계를 선호하며, 학급 임원·리더 역할에 적합합니다.",
+          s_rel: "책임감 강하고 리더십이 있어 팀을 이끕니다. 규칙을 어기는 친구에게는 직설적이며, 효율 중시로 감정에 무심해 보일 수 있습니다.",
+          s_strength: "리더십, 책임감, 추진력, 조직력",
+          s_caution: "융통성 부족, 비판적 태도, 감정 표현 약함",
+          s_tip: "역할을 부여하면 능률이 크게 오릅니다. 다른 스타일 친구를 이해하도록 돕는 코칭이 필요합니다."
+        },
+        "ESFJ": {
+          s_study: "설명을 잘 듣고 정리하는 협력 학습형입니다. 친구들과 함께 공부할 때 시너지가 크고, 칭찬·인정 받을 때 동기가 크게 오릅니다.",
+          s_rel: "친구들을 잘 챙기고 분위기를 조율합니다. 평판에 신경을 많이 쓰며, 인정받지 못하면 쉽게 위축됩니다.",
+          s_strength: "책임감, 사교성, 헌신, 조직력",
+          s_caution: "평가에 민감, 자기 의견 약함, 갈등 부담",
+          s_tip: "구체적이고 진심 어린 칭찬을 자주 해주세요. 본인 의견을 내도 안전하다는 분위기를 만들어 주는 것이 중요합니다."
+        },
+        "ENFJ": {
+          s_study: "함께 성장하는 것을 중시합니다. 친구를 가르치며 본인도 학습하고, 의미·가치 있는 주제에 깊이 몰입하며 글쓰기·발표가 강점입니다.",
+          s_rel: "따뜻한 리더십으로 친구들의 화합을 이끕니다. 책임감으로 인한 부담이 크고, 본인의 감정은 뒤로 미루는 경향이 있습니다.",
+          s_strength: "공감 능력, 리더십, 표현력, 헌신",
+          s_caution: "번아웃, 거절 못함, 갈등 회피",
+          s_tip: "본인의 컨디션을 점검하도록 격려하고, '거절과 휴식도 책임의 일부'라는 메시지를 전해 주세요."
+        },
+        "ENTJ": {
+          s_study: "큰 그림과 체계적 목표 달성을 동시에 추구합니다. 주도적 학습을 선호하며 비효율을 견디기 어려워하고, 토론·발표에 자신감이 큽니다.",
+          s_rel: "결단력과 추진력으로 모임을 주도합니다. 직설적인 표현으로 친구에게 상처를 줄 수 있고, 인정·존중 욕구가 큰 편입니다.",
+          s_strength: "리더십, 분석력, 결단력, 비전",
+          s_caution: "권위적·강압적 태도, 감정 무시, 비판적 톤",
+          s_tip: "도전 과제와 리더 역할을 부여하세요. 상대의 감정을 고려한 표현법을 함께 코칭해 주는 것이 좋습니다."
+        }
+      };
       var mbtiQuestions = [{ dim: 'EI', q: "주말에 나는?", a: "친구들과 신나게 논다", b: "집에서 쉰다", typeA: 'E', typeB: 'I' }, { dim: 'EI', q: "새 친구 사귈 때", a: "내가 먼저 말 건다", b: "말 걸어주길 기다린다", typeA: 'E', typeB: 'I' }, { dim: 'EI', q: "에너지 충전은?", a: "사람들과 함께", b: "혼자만의 시간", typeA: 'E', typeB: 'I' }, { dim: 'SN', q: "나는 주로", a: "현실을 본다", b: "상상을 한다", typeA: 'S', typeB: 'N' }, { dim: 'SN', q: "설명 들을 때", a: "구체적 예시 필요", b: "전체 흐름 중요", typeA: 'S', typeB: 'N' }, { dim: 'SN', q: "나는", a: "꼼꼼하다", b: "독창적이다", typeA: 'S', typeB: 'N' }, { dim: 'TF', q: "고민 상담 시", a: "해결책 제시", b: "공감과 위로", typeA: 'T', typeB: 'F' }, { dim: 'TF', q: "결정할 때", a: "논리가 중요", b: "감정이 중요", typeA: 'T', typeB: 'F' }, { dim: 'TF', q: "듣고 싶은 말", a: "똑똑하다", b: "착하다", typeA: 'T', typeB: 'F' }, { dim: 'JP', q: "여행 갈 때", a: "철저한 계획", b: "즉흥적", typeA: 'J', typeB: 'P' }, { dim: 'JP', q: "책상 정리", a: "깔끔하다", b: "어수선하지만 위치는 암", typeA: 'J', typeB: 'P' }, { dim: 'JP', q: "과제", a: "미리미리", b: "몰아서", typeA: 'J', typeB: 'P' }];
       var currentQIndex = 0; var mbtiScores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
 
@@ -670,7 +783,18 @@
       function nextQuestion(c) { var q=mbtiQuestions[currentQIndex]; if(c=='A') mbtiScores[q.typeA]++; else mbtiScores[q.typeB]++; currentQIndex++; if(currentQIndex<mbtiQuestions.length) showQuestion(); else finishMbtiTest(); }
       async function finishMbtiTest() { var r=""; r+=(mbtiScores.E>=mbtiScores.I)?"E":"I"; r+=(mbtiScores.S>=mbtiScores.N)?"S":"N"; r+=(mbtiScores.T>=mbtiScores.F)?"T":"F"; r+=(mbtiScores.J>=mbtiScores.P)?"J":"P"; showLoading(true); var res = await apiCall('/student', { action: 'mbti', id: currentUser.id, mbti: r }); showLoading(false); alert(res.msg); document.getElementById('mbtiTestView').style.display='none'; document.getElementById('mbtiResultView').style.display='block'; document.getElementById('myMbtiResultText').innerText=r; loadDashboard(); }
       var currentHistStudentId = '';
-      async function viewStudentHistory(id, name) { currentHistStudentId = id; document.getElementById('histModalName').innerText = name; document.getElementById('histModalBody').innerHTML = '<tr><td colspan="3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>'; var s = allStudents.find(x => String(x.id) === String(id)); var mbtiDiv = document.getElementById('histModalMbtiInfo'); if(s && s.mbti && typeof MBTI_INFO !== 'undefined' && MBTI_INFO[s.mbti]) { var info = MBTI_INFO[s.mbti]; mbtiDiv.style.display = 'block'; mbtiDiv.innerHTML = `<div class="d-flex align-items-center mb-3"><span class="badge bg-primary fs-6 me-2">${s.mbti}</span><span class="fw-bold text-dark">학생 지도 가이드</span></div><div class="row g-3 text-start small"><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-primary"><i class="bi bi-emoji-smile"></i> 생활/학습</strong><br>${info.s_study}</div></div><div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-warning text-opacity-75" style="color:#d68c00!important"><i class="bi bi-people"></i> 교우 관계</strong><br>${info.s_rel}</div></div></div>`; } else { mbtiDiv.style.display = 'none'; }
+      async function viewStudentHistory(id, name) { currentHistStudentId = id; document.getElementById('histModalName').innerText = name; document.getElementById('histModalBody').innerHTML = '<tr><td colspan="3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>'; var s = allStudents.find(x => String(x.id) === String(id)); var mbtiDiv = document.getElementById('histModalMbtiInfo'); if(s && s.mbti && typeof MBTI_INFO !== 'undefined' && MBTI_INFO[s.mbti]) {
+          var info = MBTI_INFO[s.mbti];
+          mbtiDiv.style.display = 'block';
+          mbtiDiv.innerHTML = `<div class="d-flex align-items-center mb-3"><span class="badge bg-primary fs-6 me-2">${s.mbti}</span><span class="fw-bold text-dark">학생 지도 가이드</span></div>
+            <div class="row g-2 text-start small">
+              <div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-primary"><i class="bi bi-emoji-smile"></i> 학습/생활 스타일</strong><br>${info.s_study}</div></div>
+              <div class="col-12"><div class="p-2 bg-white border rounded"><strong style="color:#d68c00"><i class="bi bi-people"></i> 교우 관계</strong><br>${info.s_rel}</div></div>
+              <div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-success"><i class="bi bi-stars"></i> 강점</strong><br>${info.s_strength || '-'}</div></div>
+              <div class="col-12"><div class="p-2 bg-white border rounded"><strong class="text-danger"><i class="bi bi-exclamation-triangle"></i> 주의할 점</strong><br>${info.s_caution || '-'}</div></div>
+              <div class="col-12"><div class="p-2 border rounded" style="background:#fff8e1; border-color:#ffd54f !important;"><strong style="color:#b45309"><i class="bi bi-lightbulb-fill"></i> 지도 팁</strong><br>${info.s_tip || '-'}</div></div>
+            </div>`;
+        } else { mbtiDiv.style.display = 'none'; }
         // 징계 섹션 렌더링
         var pT = s ? (Number(s.penaltyTotal)||0) : 0;
         var pE = s ? (Number(s.penaltyEarned)||0) : 0;
