@@ -170,6 +170,12 @@
                   <div class="app-tile-name">PDF 변환,<br>병합, 나누기</div>
                 </div>
               </a>
+              <a href="https://gemini.google.com/gem/1bdELxnU4uXOKN964OrVu1ydPyYVGfjBX?usp=sharing" target="_blank" class="app-tile text-decoration-none">
+                <div class="app-tile-inner">
+                  <i class="bi bi-newspaper app-tile-icon"></i>
+                  <div class="app-tile-name">보도자료<br>작성 도우미</div>
+                </div>
+              </a>
             </div>
           </div>
         </div>
@@ -570,7 +576,7 @@
 
       function renderClubMembers() { var l=document.getElementById('clubMemberList'); l.innerHTML=""; var al=document.getElementById('attendanceCheckList'); al.innerHTML=""; if(selectedClubMembers.length==0) l.innerHTML="<li class='list-group-item'>학생 없음</li>"; else selectedClubMembers.forEach(m=>{ l.innerHTML+=`<li class='list-group-item d-flex justify-content-between'>${m.name}(${m.id}) <button class='btn btn-close btn-sm' onclick='removeMember("${m.id}")'></button></li>`; al.innerHTML+=`<div class='club-member-item'><span>${m.name}</span><div><input type='radio' class='btn-check' name='att_${m.id}' id='o_${m.id}' value='O' checked><label class='btn btn-outline-success btn-sm' for='o_${m.id}'>출</label><input type='radio' class='btn-check' name='att_${m.id}' id='l_${m.id}' value='L'><label class='btn btn-outline-warning btn-sm' for='l_${m.id}'>지</label><input type='radio' class='btn-check' name='att_${m.id}' id='x_${m.id}' value='X'><label class='btn btn-outline-danger btn-sm' for='x_${m.id}'>결</label></div></div>`; }); document.getElementById('attDate').valueAsDate = new Date(); }
       function createGrid(id, cnt) { var c=document.getElementById(id); c.innerHTML=""; for(var i=1;i<=cnt;i++){ c.innerHTML+=`<div class="grid-item"><div class="grid-num">${i}</div><div style="flex-grow:1;text-align:center"><input type="text" class="grid-input" placeholder="학번/이름" oninput="checkStudentName(this)"><div class="student-name-display"></div></div></div>`; } }
-      function createMultiGrid() { createGrid('multiGrid',15); } function createUmbrellaGrid(){ createGrid('umbrellaGrid',15); } function createBallGrid(){ createGrid('ballGrid',15); } function createClubGrid(){ createGrid('clubMemberGrid',35); }
+      function createMultiGrid() { createGrid('multiGrid',15); } function createUmbrellaGrid(){ createGrid('umbrellaGrid',10); } function createBallGrid(){ createGrid('ballGrid',10); } function createClubGrid(){ createGrid('clubMemberGrid',35); }
       function resetGrid() { document.querySelectorAll('#multiGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
       function checkStudentName(i) {
         var v = i.value.trim();
