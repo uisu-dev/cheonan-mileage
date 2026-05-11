@@ -559,10 +559,30 @@
         // 감사 메시지: 교사 드롭다운 채우기
         var teacherSel = document.getElementById('thanksTeacherSelect');
         if (teacherSel) {
+          // 직책 매핑 (특정 이름에 호칭 부여)
+          var TEACHER_TITLES = {
+            '김은숙': '행정실장님',
+            '허해룡': '교장선생님',
+            '김성제': '교감선생님'
+          };
+          // 드롭다운 제외 명단
+          var TEACHER_EXCLUDE = ['대여', '테스트', '학생회'];
           var opts = '<option value="">-- 선생님 선택 --</option>';
-          (data.teachersList || []).forEach(function(t) {
-            opts += '<option value="' + t.id + '" data-name="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + ' 선생님</option>';
-          });
+          (data.teachersList || [])
+            .filter(function(t) { return TEACHER_EXCLUDE.indexOf(t.name) === -1; })
+            .sort(function(a, b) {
+              // 교장/교감/행정실장을 맨 위로
+              var order = { '허해룡': 0, '김성제': 1, '김은숙': 2 };
+              var oa = order[a.name] !== undefined ? order[a.name] : 99;
+              var ob = order[b.name] !== undefined ? order[b.name] : 99;
+              if (oa !== ob) return oa - ob;
+              return a.name.localeCompare(b.name);
+            })
+            .forEach(function(t) {
+              var title = TEACHER_TITLES[t.name] || '선생님';
+              var label = t.name + ' ' + title;
+              opts += '<option value="' + t.id + '" data-name="' + escapeHtml(t.name) + '" data-title="' + escapeHtml(title) + '">' + escapeHtml(label) + '</option>';
+            });
           teacherSel.innerHTML = opts;
         }
 
@@ -1285,10 +1305,11 @@
         var teacherId = sel.value;
         if (!teacherId) return alert("선생님을 선택해주세요.");
         var teacherName = sel.options[sel.selectedIndex].getAttribute('data-name') || '';
+        var teacherTitle = sel.options[sel.selectedIndex].getAttribute('data-title') || '선생님';
         var content = document.getElementById('thanksContent').value.trim();
         if (!content) return alert("메시지 내용을 입력해주세요.");
         if (content.length < 5) return alert("조금 더 마음을 담아 5자 이상 적어주세요.");
-        if (!confirm(teacherName + " 선생님께 감사의 메시지를 보내시겠습니까?")) return;
+        if (!confirm(teacherName + " " + teacherTitle + "께 감사의 메시지를 보내시겠습니까?")) return;
         showLoading(true);
         var r = await apiCall('/message', {
           action: 'send',
