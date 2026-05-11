@@ -214,6 +214,14 @@
           <div class="tab-pane fade" id="reportTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger"></i> 학교 시설 고장 및 일탈 행위 제보</h6><div class="mb-3"><label class="form-label small text-muted">제보 내용</label><textarea id="reportContent" class="form-control" rows="4" placeholder="상세히 적어주세요."></textarea></div><div class="mb-3"><label class="form-label small text-muted">증거 사진 (선택)</label><input type="file" id="reportFile" class="form-control" accept="image/png, image/jpeg, image/gif"></div><button class="btn btn-danger w-100 fw-bold" onclick="submitReport()">제보하기</button><div class="mt-2 text-center"><small class="text-muted" style="font-size:0.75rem;">- 익명이 보장됩니다.</small></div></div></div></div>
           <div class="tab-pane fade" id="praiseTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3">💌 친구 칭찬하기</h6><label class="small text-muted">칭찬할 친구 학번 (5자리)</label><input type="number" id="praiseReceiverId" class="form-control mb-2" placeholder="예: 10101" onkeyup="searchPraiseUser()"><div id="praiseTargetName" class="text-primary fw-bold small mb-2" style="min-height:20px;"></div><label class="small text-muted">칭찬 내용</label><textarea id="praiseContent" class="form-control mb-3" rows="3" placeholder="예: 수업 시간에 지우개를 빌려줘서 고마워!"></textarea><button class="btn btn-primary w-100" onclick="sendPraiseMsg()">칭찬 엽서 보내기</button></div></div><h6 class="fw-bold mb-3 text-success">💚 내가 받은 칭찬</h6><div id="myPraiseListArea"></div></div>
           <div class="tab-pane fade" id="thanksTabStudent">
+            <div class="alert alert-warning small mb-3 shadow-sm border-0">
+              <div class="fw-bold mb-1"><i class="bi bi-gift-fill"></i> 마일리지 안내</div>
+              <ul class="mb-0 ps-3">
+                <li><strong>30자 이상</strong> 작성 시 건당 <strong>+20P</strong> 적립</li>
+                <li>같은 선생님께 여러 번 보내도 <strong>1회만</strong> 적립</li>
+                <li>마음을 담아 정성껏 적은 메시지일수록 의미 있어요 💌</li>
+              </ul>
+            </div>
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body p-3">
                 <h6 class="fw-bold mb-3"><i class="bi bi-envelope-heart-fill text-danger"></i> 선생님께 감사의 메시지 보내기</h6>
@@ -221,8 +229,11 @@
                 <select id="thanksTeacherSelect" class="form-select mb-3">
                   <option value="">-- 선생님 선택 --</option>
                 </select>
-                <label class="form-label small text-muted">메시지 내용</label>
-                <textarea id="thanksContent" class="form-control mb-3" rows="5" placeholder="평소 고마웠던 마음을 솔직하게 적어보세요."></textarea>
+                <div class="d-flex justify-content-between align-items-end">
+                  <label class="form-label small text-muted mb-1">메시지 내용</label>
+                  <span class="small" id="thanksCharCounter" style="color:#888;">0 / 30자</span>
+                </div>
+                <textarea id="thanksContent" class="form-control mb-3" rows="5" placeholder="평소 고마웠던 마음을 솔직하게 적어보세요. (30자 이상 +20P)" oninput="updateThanksCounter()"></textarea>
                 <button class="btn btn-danger w-100 fw-bold" onclick="sendThanksMessage()"><i class="bi bi-send-fill"></i> 메시지 보내기</button>
                 <div class="small text-center text-muted mt-2">- 보낸 메시지는 선생님께 학번과 이름이 함께 전달됩니다.</div>
               </div>
@@ -1300,6 +1311,15 @@
       }
 
       // ========== 감사 메시지 ==========
+      function updateThanksCounter() {
+        var t = document.getElementById('thanksContent');
+        var c = document.getElementById('thanksCharCounter');
+        if (!t || !c) return;
+        var len = t.value.trim().length;
+        c.innerText = len + ' / 30자';
+        if (len >= 30) { c.style.color = '#198754'; c.innerHTML = len + ' / 30자 ✓ <strong>+20P 적립 대상</strong>'; }
+        else { c.style.color = '#888'; }
+      }
       async function sendThanksMessage() {
         var sel = document.getElementById('thanksTeacherSelect');
         var teacherId = sel.value;
@@ -1322,6 +1342,8 @@
         if (r.success) {
           document.getElementById('thanksContent').value = '';
           document.getElementById('thanksTeacherSelect').value = '';
+          updateThanksCounter();
+          loadDashboard();
         }
       }
 
