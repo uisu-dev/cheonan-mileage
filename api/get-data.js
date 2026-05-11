@@ -54,6 +54,20 @@ module.exports = async (req, res) => {
       }));
     result.students = allStudentsData;
 
+    // 학생이 메시지 보낼 수 있도록 교사 목록 전달
+    if (role !== 'teacher' && role !== 'admin') {
+      result.teachersList = allUsers
+        .filter(u => { var r = String(u.role||'').toLowerCase().trim(); return r === 'teacher' || r === 'admin'; })
+        .map(u => ({ id: String(u.id).trim(), name: u.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // 교사용: 본인 미확인 메시지 카운트
+      const { count } = await supabase.from('teacher_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('teacher_id', String(userId)).eq('is_read', false);
+      result.unreadMessageCount = count || 0;
+    }
+
     if (role === 'teacher' || role === 'admin') {
       // Items
       const { data: items } = await supabase.from('items').select('*').eq('active', 'O');
