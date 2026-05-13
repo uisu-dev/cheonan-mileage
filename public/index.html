@@ -86,7 +86,8 @@
             <div class="d-flex justify-content-center mb-3"><div class="btn-group" role="group"><input type="radio" class="btn-check" name="giveMode" id="modeSingle" autocomplete="off" checked onclick="toggleGiveMode('single')"><label class="btn btn-outline-primary" for="modeSingle">👤 1명</label><input type="radio" class="btn-check" name="giveMode" id="modeMulti" autocomplete="off" onclick="toggleGiveMode('multi')"><label class="btn btn-outline-primary" for="modeMulti">👥 여러 명</label></div></div>
             <div id="viewSingle"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="form-label text-secondary fw-bold">학생 검색</label><div class="input-group mb-2"><input type="text" id="singleSearchInput" class="form-control form-control-lg" placeholder="예: 홍길동, 10101" onkeyup="if(window.event.keyCode==13){searchSingleUser()}"><button class="btn btn-primary" type="button" onclick="searchSingleUser()"><i class="bi bi-search"></i> 검색</button></div><div id="searchResultList" class="list-group mb-2"></div><div id="selectedStudentCard" class="mt-2 p-3 single-user-card shadow-sm" style="display:none;"><div class="d-flex justify-content-between align-items-center"><div><h4 class="fw-bold mb-1"><span id="selName"></span></h4><span class="badge bg-secondary" id="selId"></span></div><div class="text-end"><small class="text-muted">현재 점수</small><div class="fs-4 fw-bold text-primary"><span id="selPoint">0</span> P</div><div id="selTier"></div></div></div></div></div></div>
             <div id="viewMulti" style="display:none;"><div class="alert alert-primary py-2 small mb-2"><i class="bi bi-keyboard"></i> <b>학번 5자리</b> 또는 <b>이름</b>을 입력하세요. 동명이인이 있으면 드롭다운이 뜹니다.</div><div class="grid-container mb-3" id="multiGrid"></div><div class="text-end mb-2"><button class="btn btn-sm btn-outline-secondary" onclick="resetGrid()">초기화</button></div></div>
-            <hr><h5 class="fw-bold mb-3 text-school">어떤 점수를 줄까요?</h5><div id="itemList" class="d-grid gap-2 mb-4"></div><div class="card shadow-sm border-0 bg-light"><div class="card-body p-2"><h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-clock-history"></i> 내가 부여한 최근 내역 (삭제 가능)</h6><div class="table-responsive" style="max-height: 200px;"><table class="table table-sm table-bordered bg-white small mb-0"><thead class="table-light"><tr><th>시간</th><th>학번</th><th>항목</th><th>점수</th><th>관리</th></tr></thead><tbody id="myLogsTable"></tbody></table></div></div></div>
+            <hr><h5 class="fw-bold mb-3 text-school">어떤 점수를 줄까요?</h5><div id="itemList" class="d-grid gap-2 mb-3"></div>
+            <button class="btn btn-success w-100 fw-bold py-3 mb-4 shadow-sm" onclick="openExchangeModal()"><i class="bi bi-gift-fill"></i> 🎁 마일리지 상품 교환 (일괄 처리)</button><div class="card shadow-sm border-0 bg-light"><div class="card-body p-2"><h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-clock-history"></i> 내가 부여한 최근 내역 (삭제 가능)</h6><div class="table-responsive" style="max-height: 200px;"><table class="table table-sm table-bordered bg-white small mb-0"><thead class="table-light"><tr><th>시간</th><th>학번</th><th>항목</th><th>점수</th><th>관리</th></tr></thead><tbody id="myLogsTable"></tbody></table></div></div></div>
           </div>
 
           <div class="tab-pane fade" id="attendanceTab">
@@ -277,6 +278,39 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
             <button type="button" class="btn btn-primary" onclick="submitAttendanceEdit()">수정 완료</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="exchangeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-gift-fill"></i> 마일리지 상품 교환</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> 학번 5자리 또는 이름으로 검색하여 학생을 추가하세요. 하단 교환 버튼을 누르면 선택된 학생 모두에게 일괄 적용됩니다.</div>
+            <div class="input-group mb-2">
+              <input type="text" id="exchangeSearchInput" class="form-control" placeholder="학번 또는 이름 입력" onkeyup="if(window.event.keyCode===13){exchangeSearch()}">
+              <button class="btn btn-primary" onclick="exchangeSearch()"><i class="bi bi-search"></i> 검색</button>
+            </div>
+            <div id="exchangeSearchResult" class="list-group mb-3" style="max-height:180px; overflow-y:auto;"></div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0">교환 처리할 학생 (<span id="exchangeSelCount">0</span>명)</h6>
+              <button class="btn btn-sm btn-outline-secondary" onclick="clearExchangeList()">전체 해제</button>
+            </div>
+            <div id="exchangeSelectedList" class="mb-3"></div>
+          </div>
+          <div class="modal-footer flex-column">
+            <div class="w-100 mb-2 text-center small text-muted">아래 버튼 클릭 시 선택된 모든 학생에게 차감 적용됩니다.</div>
+            <div class="d-grid gap-2 w-100" style="grid-template-columns: 1fr 1fr 1fr; display:grid;">
+              <button class="btn btn-outline-success fw-bold py-2" onclick="doBulkExchange(300)">300 P 교환</button>
+              <button class="btn btn-success fw-bold py-2" onclick="doBulkExchange(500)">500 P 교환</button>
+              <button class="btn btn-warning fw-bold py-2" onclick="doBulkExchange(1000)">1000 P 교환</button>
+            </div>
           </div>
         </div>
       </div>
@@ -665,7 +699,7 @@
         allStudents.forEach(s=>{ var o = document.createElement('option'); o.value = `${s.id} ${s.name}`; listAll.appendChild(o); });
         createMultiGrid(); createUmbrellaGrid(); createBallGrid(); updateClubSelectOptions(); createClubGrid();
 
-        var itemHtml = ""; (data.items || []).forEach(i=>{ var c = i.points>0?"btn-outline-primary":"btn-outline-danger"; itemHtml += `<button class="btn ${c} py-3 shadow-sm" onclick="confirmGivePoints('${i.name}', ${i.points})"><div class="d-flex justify-content-between"><span class="fw-bold">${i.name}</span><span class="badge bg-secondary rounded-pill">${i.points}</span></div></button>`; });
+        var itemHtml = ""; (data.items || []).filter(i => !String(i.name||'').includes('교환')).forEach(i=>{ var c = i.points>0?"btn-outline-primary":"btn-outline-danger"; itemHtml += `<button class="btn ${c} py-3 shadow-sm" onclick="confirmGivePoints('${i.name}', ${i.points})"><div class="d-flex justify-content-between"><span class="fw-bold">${i.name}</span><span class="badge bg-secondary rounded-pill">${i.points}</span></div></button>`; });
         itemHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmGivePoints('기타', 0)"><div class="d-flex justify-content-between"><span class="fw-bold">✏️ 기타 (사유입력)</span><span class="badge bg-secondary rounded-pill">직접입력</span></div></button>`;
         document.getElementById('itemList').innerHTML = itemHtml;
         renderTeacherNotices(data.notices || []);
@@ -1308,6 +1342,110 @@
         showLoading(true);
         var r = await apiCall('/notice', { action: 'delete', id: id });
         showLoading(false); alert(r.msg); loadDashboard();
+      }
+
+      // ========== 마일리지 상품 교환 (일괄) ==========
+      var exchangeSelected = []; // {id, name, points}
+      function openExchangeModal() {
+        exchangeSelected = [];
+        document.getElementById('exchangeSearchInput').value = '';
+        document.getElementById('exchangeSearchResult').innerHTML = '';
+        renderExchangeSelected();
+        var modalEl = document.getElementById('exchangeModal');
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+      function exchangeSearch() {
+        var v = document.getElementById('exchangeSearchInput').value.trim();
+        var list = document.getElementById('exchangeSearchResult');
+        list.innerHTML = '';
+        if (!v) return;
+        var matches;
+        if (/^\d{5}$/.test(v)) {
+          matches = allStudents.filter(s => String(s.id) === v);
+        } else {
+          matches = allStudents.filter(s => s.name.includes(v) || String(s.id).includes(v));
+        }
+        if (matches.length === 0) { list.innerHTML = '<div class="list-group-item text-muted small">검색결과 없음</div>'; return; }
+        matches.slice(0, 30).forEach(function(s) {
+          var already = exchangeSelected.some(x => x.id === s.id);
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+          btn.disabled = already;
+          btn.innerHTML = '<span><strong>' + escapeHtml(s.name) + '</strong> <span class="text-muted small">(' + s.id + ')</span></span>' +
+            '<span class="badge bg-primary rounded-pill">' + s.points + ' P</span>' +
+            (already ? ' <span class="badge bg-secondary">추가됨</span>' : '');
+          btn.onclick = function() { addExchangeStudent(s); };
+          list.appendChild(btn);
+        });
+      }
+      function addExchangeStudent(s) {
+        if (exchangeSelected.some(x => x.id === s.id)) return;
+        exchangeSelected.push({ id: s.id, name: s.name, points: s.points });
+        renderExchangeSelected();
+        // 검색 결과 갱신
+        exchangeSearch();
+      }
+      function removeExchangeStudent(id) {
+        exchangeSelected = exchangeSelected.filter(s => s.id !== id);
+        renderExchangeSelected();
+        exchangeSearch();
+      }
+      function clearExchangeList() {
+        if (exchangeSelected.length === 0) return;
+        if (!confirm('전체 해제하시겠습니까?')) return;
+        exchangeSelected = [];
+        renderExchangeSelected();
+        exchangeSearch();
+      }
+      function renderExchangeSelected() {
+        document.getElementById('exchangeSelCount').innerText = exchangeSelected.length;
+        var el = document.getElementById('exchangeSelectedList');
+        if (exchangeSelected.length === 0) {
+          el.innerHTML = '<div class="text-center text-muted small py-3">위에서 학생을 검색하여 추가해주세요.</div>';
+          return;
+        }
+        var html = '<div class="list-group">';
+        exchangeSelected.forEach(function(s) {
+          var lowCls = s.points < 300 ? 'text-danger' : (s.points < 1000 ? 'text-warning' : 'text-success');
+          html += '<div class="list-group-item d-flex justify-content-between align-items-center py-2">' +
+            '<div><strong>' + escapeHtml(s.name) + '</strong> <span class="text-muted small">(' + s.id + ')</span></div>' +
+            '<div class="d-flex align-items-center gap-2">' +
+              '<span class="fw-bold ' + lowCls + '">' + s.points + ' P</span>' +
+              '<button class="btn btn-sm btn-outline-danger" onclick="removeExchangeStudent(\'' + s.id + '\')"><i class="bi bi-x-lg"></i></button>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+      }
+      async function doBulkExchange(cost) {
+        if (exchangeSelected.length === 0) return alert('학생을 먼저 추가해주세요.');
+        // 미리 차감 가능 여부 확인
+        var insufficient = exchangeSelected.filter(s => s.points < cost);
+        if (insufficient.length > 0) {
+          return alert('포인트가 부족한 학생이 있습니다:\n' +
+            insufficient.map(s => `${s.name}(${s.id}): ${s.points}P`).join('\n'));
+        }
+        var msg = `[${cost}P 상품 교환]\n선택된 ${exchangeSelected.length}명에게 각 -${cost}P 차감합니다.\n\n` +
+          exchangeSelected.map(s => `· ${s.name}(${s.id}) ${s.points} → ${s.points - cost}`).join('\n') +
+          '\n\n진행하시겠습니까?';
+        if (!confirm(msg)) return;
+        showLoading(true);
+        var r = await apiCall('/points', {
+          action: 'bulkRedeem',
+          teacher: currentUser.name,
+          studentIds: exchangeSelected.map(s => s.id),
+          cost: cost,
+          rewardName: cost + 'P 상품'
+        });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) {
+          exchangeSelected = [];
+          bootstrap.Modal.getInstance(document.getElementById('exchangeModal')).hide();
+          loadDashboard();
+        }
       }
 
       // ========== 감사 메시지 ==========

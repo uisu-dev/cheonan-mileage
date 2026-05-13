@@ -74,6 +74,29 @@ module.exports = async (req, res) => {
     return res.json((logs || []).map(l => ({ date: formatDate(l.date), item: l.item, point: Number(l.point) })));
   }
 
+  if (action === 'bulkRedeem') {
+    const { teacher, studentIds, cost, rewardName } = req.body;
+    const ids = (studentIds || []).map(s => String(s).trim()).filter(Boolean);
+    if (ids.length === 0) return res.json({ success: false, msg: '선택된 학생이 없습니다.' });
+    const c = Number(cost);
+    const { data: users } = await supabase.from('users').select('id, name, points').in('id', ids);
+    if (!users || users.length === 0) return res.json({ success: false, msg: '학생을 찾을 수 없습니다.' });
+    const insufficient = users.filter(u => (Number(u.points) || 0) < c);
+    if (insufficient.length > 0) {
+      return res.json({
+        success: false,
+        msg: '포인트 부족 학생: ' + insufficient.map(u => `${u.name}(${u.points}P)`).join(', ')
+      });
+    }
+    await supabase.from('logs').insert(users.map(u => ({
+      teacher, student_id: u.id, item: '교환: ' + (rewardName || c + 'P 교환'), point: -c
+    })));
+    await Promise.all(users.map(u =>
+      supabase.from('users').update({ points: Number(u.points) - c }).eq('id', u.id)
+    ));
+    return res.json({ success: true, msg: users.length + '명 교환 완료 (각 -' + c + 'P)' });
+  }
+
   if (action === 'redeem') {
     const { teacher, studentId, rewardName, cost } = req.body;
     const { data: user } = await supabase.from('users').select('points').eq('id', String(studentId).trim()).single();
