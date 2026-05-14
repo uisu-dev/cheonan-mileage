@@ -140,7 +140,20 @@
 
           <div class="tab-pane fade" id="rentalTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#subUmbrella">☂️ 우산</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#subBall">⚽ 공</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="subUmbrella"><div class="alert alert-info py-2 small mb-3"><b>학번 5자리</b> 입력 후 우산 관리</div><div class="grid-container mb-3" id="umbrellaGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetUmbrellaGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-primary shadow-sm" onclick="processUmbrella('rent')"><i class="bi bi-umbrella"></i> <b>우산 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processUmbrella('return')"><i class="bi bi-arrow-return-left"></i> <b>우산 반납</b> 처리</button></div><div id="unreturnedUmbrellaList"></div></div><div class="tab-pane fade" id="subBall"><div class="alert alert-success py-2 small mb-3"><b>학번 5자리</b> 입력 후 공 관리</div><div class="grid-container mb-3" id="ballGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetBallGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-success shadow-sm" onclick="processBall('rent')"><i class="bi bi-circle"></i> <b>공 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processBall('return')"><i class="bi bi-arrow-return-left"></i> <b>공 반납</b> 처리</button></div><div id="unreturnedBallList"></div></div></div></div>
 
-          <div class="tab-pane fade" id="surveyTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGen">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbti">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGen"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white fw-bold"><i class="bi bi-plus-circle"></i> 새 설문 만들기</div><div class="card-body p-3 bg-light"><input type="text" id="newSurveyTitle" class="form-control mb-3 fw-bold" placeholder="설문 제목 (예: 이번 달 급식 만족도)"><div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="newSurveyAllowPhoto"><label class="form-check-label small" for="newSurveyAllowPhoto">📷 학생들이 사진을 첨부할 수 있도록 허용</label></div><div id="questionsContainer"></div><button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="addQuestionField()"><i class="bi bi-plus"></i> 문항 추가</button><button class="btn btn-school w-100" onclick="makeSurvey()">설문 등록하기</button></div></div><h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">진행 중인 설문 결과 (삭제 가능)</h6><div class="accordion" id="teacherSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyMbti"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="row g-2 mb-2"><div class="col-6"><select id="mbtiGrade" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체학년</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><select id="mbtiClass" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div></div><input type="text" id="mbtiSearchType" class="form-control form-control-sm" placeholder="유형 검색 (예: ENFP)" onkeyup="renderMbtiStats()"></div></div><div class="alert alert-primary py-2 small">검사 완료: <strong id="mbtiCount">0</strong>명</div><div class="table-responsive bg-white border rounded" style="max-height:400px;overflow-y:auto;"><table class="table table-hover mb-0 small"><thead class="table-light sticky-top"><tr><th>학번</th><th>이름</th><th>MBTI</th></tr></thead><tbody id="mbtiTableBody"></tbody></table></div></div></div></div>
+          <div class="tab-pane fade" id="surveyTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGen">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyQuiz">💡 퀴즈</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbti">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGen"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white fw-bold"><i class="bi bi-plus-circle"></i> 새 설문 만들기</div><div class="card-body p-3 bg-light"><input type="text" id="newSurveyTitle" class="form-control mb-3 fw-bold" placeholder="설문 제목 (예: 이번 달 급식 만족도)"><div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="newSurveyAllowPhoto"><label class="form-check-label small" for="newSurveyAllowPhoto">📷 학생들이 사진을 첨부할 수 있도록 허용</label></div><div id="questionsContainer"></div><button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="addQuestionField()"><i class="bi bi-plus"></i> 문항 추가</button><button class="btn btn-school w-100" onclick="makeSurvey()">설문 등록하기</button></div></div><h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">진행 중인 설문 결과 (삭제 가능)</h6><div class="accordion" id="teacherSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyQuiz">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white fw-bold"><i class="bi bi-lightbulb"></i> 새 퀴즈 만들기 (정답 시 학생에게 +50P)</div>
+              <div class="card-body p-3 bg-light">
+                <input type="text" id="newQuizTitle" class="form-control mb-3 fw-bold" placeholder="퀴즈 제목 (예: 5월 역사 퀴즈)">
+                <div id="quizQuestionsContainer"></div>
+                <button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="addQuizQuestionField()"><i class="bi bi-plus"></i> 문항 추가</button>
+                <button class="btn btn-school w-100" onclick="makeQuiz()">퀴즈 등록하기</button>
+              </div>
+            </div>
+            <h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">등록된 퀴즈</h6>
+            <div id="teacherQuizList"></div>
+          </div>
+          <div class="tab-pane fade" id="tabSurveyMbti"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="row g-2 mb-2"><div class="col-6"><select id="mbtiGrade" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체학년</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><select id="mbtiClass" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div></div><input type="text" id="mbtiSearchType" class="form-control form-control-sm" placeholder="유형 검색 (예: ENFP)" onkeyup="renderMbtiStats()"></div></div><div class="alert alert-primary py-2 small">검사 완료: <strong id="mbtiCount">0</strong>명</div><div class="table-responsive bg-white border rounded" style="max-height:400px;overflow-y:auto;"><table class="table table-hover mb-0 small"><thead class="table-light sticky-top"><tr><th>학번</th><th>이름</th><th>MBTI</th></tr></thead><tbody id="mbtiTableBody"></tbody></table></div></div></div></div>
         </div>
 
         <div class="mt-4 mb-2">
@@ -207,7 +220,7 @@
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
         <div id="studentNoticeArea" class="mb-3"></div>
-        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li></ul>
+        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="historyTab"><ul class="list-group list-group-flush" id="logList"></ul></div>
           <div class="tab-pane fade" id="shopTab"><div class="alert alert-warning text-center small mb-3 shadow-sm border-0"><i class="bi bi-info-circle-fill"></i> 교환은 학생부에 문의하세요.</div><div class="row g-2" id="rewardListStudent"></div></div>
@@ -239,6 +252,16 @@
                 <div class="small text-center text-muted mt-2">- 보낸 메시지는 선생님께 학번과 이름이 함께 전달됩니다.</div>
               </div>
             </div>
+          </div>
+          <div class="tab-pane fade" id="quizTabStudent">
+            <div class="alert alert-warning small mb-3 shadow-sm border-0">
+              <div class="fw-bold mb-1"><i class="bi bi-lightbulb-fill"></i> 퀴즈 안내</div>
+              <ul class="mb-0 ps-3">
+                <li>모든 문제를 맞추면 <strong>+50P</strong> 적립 (퀴즈당 1회)</li>
+                <li>틀려도 다시 풀 수 있어요 — 정답을 맞출 때까지 도전!</li>
+              </ul>
+            </div>
+            <div id="studentQuizList"></div>
           </div>
           <div class="tab-pane fade" id="rankTabStudent"><h6 class="fw-bold text-center mb-3">🏆 명예의 전당 (TOP 10)</h6><ul class="nav nav-pills justify-content-center mb-3" id="rankPills" role="tablist"><li class="nav-item" role="presentation"><button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#rank1">1학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank2">2학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank3">3학년</button></li></ul><div class="tab-content text-center"><div class="tab-pane fade show active" id="rank1"><ul class="list-group" id="rankList1"></ul></div><div class="tab-pane fade" id="rank2"><ul class="list-group" id="rankList2"></ul></div><div class="tab-pane fade" id="rank3"><ul class="list-group" id="rankList3"></ul></div></div></div>
         </div>
@@ -368,6 +391,23 @@
           </div>
           <div class="modal-footer p-2">
             <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="quizModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-school text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-lightbulb-fill"></i> <span id="quizModalTitle">퀴즈</span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="quizModalBody"></div>
+          <div class="modal-footer">
+            <div id="quizModalFeedback" class="w-100 mb-2 small"></div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            <button type="button" class="btn btn-primary fw-bold" onclick="submitQuiz()"><i class="bi bi-check2-circle"></i> 제출</button>
           </div>
         </div>
       </div>
@@ -601,6 +641,9 @@
         // 공지사항 표시
         renderStudentNotices(data.notices || []);
 
+        // 학생 퀴즈 목록
+        renderStudentQuizzes(data.quizList || []);
+
         // 감사 메시지: 교사 드롭다운 채우기
         var teacherSel = document.getElementById('thanksTeacherSelect');
         if (teacherSel) {
@@ -703,6 +746,7 @@
         itemHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmGivePoints('기타', 0)"><div class="d-flex justify-content-between"><span class="fw-bold">✏️ 기타 (사유입력)</span><span class="badge bg-secondary rounded-pill">직접입력</span></div></button>`;
         document.getElementById('itemList').innerHTML = itemHtml;
         renderTeacherNotices(data.notices || []);
+        renderTeacherQuizzes(data.quizList || []);
 
         var rt=document.getElementById('teacherReportTable'); rt.innerHTML="";
         if (data.reportList && data.reportList.length > 0) {
@@ -1341,6 +1385,205 @@
         if (!confirm("완전히 삭제합니다. 계속하시겠습니까?")) return;
         showLoading(true);
         var r = await apiCall('/notice', { action: 'delete', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
+      }
+
+      // ========== 퀴즈 (학생) ==========
+      var studentQuizCache = [];
+      function renderStudentQuizzes(list) {
+        studentQuizCache = list || [];
+        var el = document.getElementById('studentQuizList');
+        if (!el) return;
+        if (!list || list.length === 0) {
+          el.innerHTML = "<div class='text-center text-muted py-3'>진행 중인 퀴즈가 없습니다.</div>";
+          return;
+        }
+        var html = '';
+        list.forEach(function(q, idx) {
+          if (q.isSolved) {
+            html += `<div class="alert alert-secondary mb-2 small"><i class="bi bi-check-circle-fill"></i> ${escapeHtml(q.title)} (정답 완료)</div>`;
+          } else {
+            html += `<div class="card mb-2 border-warning">
+              <div class="card-body p-2">
+                <h6 class="fw-bold mb-1">💡 ${escapeHtml(q.title)}</h6>
+                <div class="small text-muted mb-2">출제: ${escapeHtml(q.teacherName || '')} 선생님 · 문항 ${q.questions.length}개</div>
+                <button class="btn btn-warning btn-sm w-100 fw-bold" onclick="openQuiz(${idx})">도전하기 (정답 시 +50P)</button>
+              </div>
+            </div>`;
+          }
+        });
+        el.innerHTML = html;
+      }
+      var currentQuiz = null;
+      function openQuiz(idx) {
+        var q = studentQuizCache[idx];
+        if (!q) return;
+        currentQuiz = q;
+        document.getElementById('quizModalTitle').innerText = q.title;
+        document.getElementById('quizModalFeedback').innerHTML = '';
+        var html = '';
+        q.questions.forEach(function(qq, i) {
+          html += '<div class="mb-4" data-qbox="' + i + '"><h6 class="fw-bold">Q' + (i+1) + '. ' + escapeHtml(qq.q) + '</h6>';
+          if (qq.hint) html += '<div class="small text-muted mb-2">힌트: ' + escapeHtml(qq.hint) + '</div>';
+          if (qq.type === 'radio' && qq.opts && qq.opts.length > 0) {
+            qq.opts.forEach(function(opt, j) {
+              html += '<div class="form-check mb-2">' +
+                '<input class="form-check-input" type="radio" name="quizQ_' + i + '" id="quizQ_' + i + '_' + j + '" value="' + escapeHtml(opt) + '">' +
+                '<label class="form-check-label" for="quizQ_' + i + '_' + j + '">' + escapeHtml(opt) + '</label></div>';
+            });
+          } else {
+            html += '<input type="text" class="form-control quiz-text-input" placeholder="정답 입력" data-qi="' + i + '">';
+          }
+          html += '</div>';
+        });
+        document.getElementById('quizModalBody').innerHTML = html;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('quizModal')).show();
+      }
+      async function submitQuiz() {
+        if (!currentQuiz) return;
+        var answers = [];
+        var valid = true;
+        currentQuiz.questions.forEach(function(qq, i) {
+          if (qq.type === 'radio' && qq.opts && qq.opts.length > 0) {
+            var sel = document.querySelector('input[name="quizQ_' + i + '"]:checked');
+            if (!sel) { valid = false; answers.push(''); } else { answers.push(sel.value); }
+          } else {
+            var inp = document.querySelector('.quiz-text-input[data-qi="' + i + '"]');
+            if (!inp || !inp.value.trim()) { valid = false; answers.push(''); } else { answers.push(inp.value.trim()); }
+          }
+        });
+        if (!valid) return alert("모든 문항에 답을 입력해주세요.");
+        showLoading(true);
+        var r = await apiCall('/quiz', { action: 'submit', studentId: currentUser.id, quizId: currentQuiz.id, answers: answers });
+        showLoading(false);
+        var fb = document.getElementById('quizModalFeedback');
+        if (r.success && r.allCorrect) {
+          fb.innerHTML = '<div class="alert alert-success py-2 mb-0">' + r.msg.replace(/\n/g, '<br>') + '</div>';
+          setTimeout(function() {
+            bootstrap.Modal.getInstance(document.getElementById('quizModal')).hide();
+            loadDashboard();
+          }, 1800);
+        } else if (r.success === false && r.allCorrect === false && r.wrongQuestions) {
+          fb.innerHTML = '<div class="alert alert-warning py-2 mb-0">' + r.msg.replace(/\n/g, '<br>') + '</div>';
+          // 틀린 문제 박스 하이라이트
+          document.querySelectorAll('[data-qbox]').forEach(function(box) {
+            var i = Number(box.getAttribute('data-qbox')) + 1;
+            if (r.wrongQuestions.indexOf(i) !== -1) box.style.background = '#fff3cd';
+            else box.style.background = '#d4edda';
+          });
+        } else {
+          fb.innerHTML = '<div class="alert alert-danger py-2 mb-0">' + (r.msg || '오류') + '</div>';
+        }
+      }
+
+      // ========== 퀴즈 (교사) ==========
+      function addQuizQuestionField() {
+        var c = document.getElementById('quizQuestionsContainer');
+        var idx = c.children.length + 1;
+        var div = document.createElement('div');
+        div.className = "mb-3 p-2 border rounded bg-white";
+        div.innerHTML =
+          '<div class="d-flex justify-content-between align-items-center mb-1">' +
+            '<label class="form-label small fw-bold mb-0">문항 ' + idx + '</label>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger py-0" onclick="this.closest(\'.mb-3\').remove()"><i class="bi bi-x"></i></button>' +
+          '</div>' +
+          '<select class="form-select mb-1 q-type" onchange="toggleQuizOpts(this)">' +
+            '<option value="radio">객관식</option>' +
+            '<option value="text">주관식 (단답형)</option>' +
+          '</select>' +
+          '<input type="text" class="form-control mb-1 q-title" placeholder="문제 내용">' +
+          '<input type="text" class="form-control mb-1 q-opts" placeholder="객관식 보기 (콤마로 구분)">' +
+          '<input type="text" class="form-control mb-1 q-answer fw-bold" placeholder="정답 (객관식은 보기 중 하나, 주관식은 단답형)" style="background:#fff7d6;">' +
+          '<input type="text" class="form-control q-hint" placeholder="힌트 (선택)">';
+        c.appendChild(div);
+      }
+      function toggleQuizOpts(sel) {
+        var box = sel.closest('.mb-3');
+        var opts = box.querySelector('.q-opts');
+        if (sel.value === 'text') { opts.style.display = 'none'; opts.value = ''; }
+        else { opts.style.display = 'block'; }
+      }
+      async function makeQuiz() {
+        var title = document.getElementById('newQuizTitle').value.trim();
+        if (!title) return alert("퀴즈 제목을 입력하세요.");
+        var qs = [];
+        var invalid = '';
+        document.querySelectorAll('#quizQuestionsContainer > div').forEach(function(d, i) {
+          var type = d.querySelector('.q-type').value;
+          var q = d.querySelector('.q-title').value.trim();
+          var opts = d.querySelector('.q-opts').value;
+          var a = d.querySelector('.q-answer').value.trim();
+          var hint = d.querySelector('.q-hint').value.trim();
+          if (!q) { invalid = (i+1) + '번 문제의 내용이 비었습니다.'; return; }
+          if (!a) { invalid = (i+1) + '번 문제의 정답이 비었습니다.'; return; }
+          var qObj = { type: type, q: q, a: a };
+          if (hint) qObj.hint = hint;
+          if (type === 'radio') {
+            qObj.opts = opts.split(',').map(x => x.trim()).filter(Boolean);
+            if (qObj.opts.length < 2) { invalid = (i+1) + '번 객관식 보기를 2개 이상 입력하세요.'; return; }
+            // 정답이 보기에 포함되는지 확인
+            if (!qObj.opts.some(o => o.toLowerCase() === a.toLowerCase())) {
+              invalid = (i+1) + '번 정답이 보기에 없습니다. 정답을 보기 중 하나로 입력하세요.'; return;
+            }
+          }
+          qs.push(qObj);
+        });
+        if (invalid) return alert(invalid);
+        if (qs.length === 0) return alert("문제를 최소 1개 이상 등록하세요.");
+        if (!confirm(qs.length + "문항의 퀴즈를 등록하시겠습니까?")) return;
+        showLoading(true);
+        var r = await apiCall('/quiz', { action: 'create', teacherName: currentUser.name, title: title, questions: qs });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) {
+          document.getElementById('newQuizTitle').value = '';
+          document.getElementById('quizQuestionsContainer').innerHTML = '';
+          loadDashboard();
+        }
+      }
+      function renderTeacherQuizzes(list) {
+        var el = document.getElementById('teacherQuizList');
+        if (!el) return;
+        if (!list || list.length === 0) { el.innerHTML = "<div class='text-center text-muted py-3'>등록된 퀴즈가 없습니다.</div>"; return; }
+        var html = '';
+        list.forEach(function(q) {
+          var isClosed = q.status === 'C';
+          var stateBadge = isClosed ? '<span class="badge bg-secondary ms-1">마감됨</span>' : '<span class="badge bg-success ms-1">진행중</span>';
+          var actionBtn = isClosed
+            ? `<button class="btn btn-sm btn-outline-success" onclick="reopenQuiz('${q.id}')">다시 게시</button>`
+            : `<button class="btn btn-sm btn-outline-warning" onclick="closeQuiz('${q.id}')">마감</button>`;
+          var qList = (q.questions || []).map((qq, i) => {
+            var ans = qq.a ? `<span class="badge bg-info text-dark">정답: ${escapeHtml(qq.a)}</span>` : '';
+            return `<div class="small mb-1"><strong>Q${i+1}.</strong> ${escapeHtml(qq.q)} ${ans}</div>`;
+          }).join('');
+          html += `<div class="card mb-2 border-0 shadow-sm"><div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="fw-bold">${escapeHtml(q.title)} ${stateBadge}</div>
+              <div class="btn-group btn-group-sm">
+                ${actionBtn}
+                <button class="btn btn-outline-danger" onclick="deleteQuiz('${q.id}')">삭제</button>
+              </div>
+            </div>
+            <div class="border-top pt-2">${qList}</div>
+          </div></div>`;
+        });
+        el.innerHTML = html;
+      }
+      async function closeQuiz(id) {
+        if (!confirm("이 퀴즈를 마감하시겠습니까?\n학생 화면에서 숨겨집니다.")) return;
+        showLoading(true);
+        var r = await apiCall('/quiz', { action: 'close', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
+      }
+      async function reopenQuiz(id) {
+        showLoading(true);
+        var r = await apiCall('/quiz', { action: 'reopen', id: id });
+        showLoading(false); alert(r.msg); loadDashboard();
+      }
+      async function deleteQuiz(id) {
+        if (!confirm("응답 데이터 포함 완전히 삭제됩니다. 계속하시겠습니까?")) return;
+        showLoading(true);
+        var r = await apiCall('/quiz', { action: 'delete', id: id });
         showLoading(false); alert(r.msg); loadDashboard();
       }
 

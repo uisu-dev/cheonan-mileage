@@ -185,8 +185,10 @@ module.exports = async (req, res) => {
     }
     result.surveyList.reverse();
 
-    // Quizzes
-    const { data: quizzes } = await supabase.from('quizzes').select('*').eq('status', 'O');
+    // Quizzes (교사: 전체, 학생: 진행중만)
+    let quizzesQuery = supabase.from('quizzes').select('*');
+    if (!(role === 'teacher' || role === 'admin')) quizzesQuery = quizzesQuery.eq('status', 'O');
+    const { data: quizzes } = await quizzesQuery;
     const { data: quizLogs } = await supabase.from('quiz_logs').select('*');
 
     for (const q of (quizzes || [])) {
@@ -200,7 +202,7 @@ module.exports = async (req, res) => {
       if (role !== 'teacher') {
         qc = qc.map(x => ({ type: x.type, q: x.q, opts: x.opts, hint: x.hint || '' }));
       }
-      result.quizList.push({ id: q.id, teacherName: q.teacher, title: q.title, questions: qc, isSolved: mySolved });
+      result.quizList.push({ id: q.id, teacherName: q.teacher, title: q.title, questions: qc, isSolved: mySolved, status: q.status || 'O' });
     }
     result.quizList.reverse();
 
