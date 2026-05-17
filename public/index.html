@@ -62,7 +62,7 @@
         <span class="navbar-brand mb-0 h1 fw-bold">👨‍🏫 <span id="tName"></span> 선생님</span>
         <div>
           <button onclick="openTeacherMessages()" class="btn btn-sm btn-warning fw-bold me-1 position-relative" title="감사 메시지함">
-            🌹 <i class="bi bi-envelope-heart-fill"></i> 스승의 날 감사 메시지 🌹
+            <i class="bi bi-envelope-heart-fill"></i> 감사 메시지
             <span id="teacherMsgBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size:0.6rem;">0</span>
           </button>
           <button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button>
@@ -238,7 +238,7 @@
             </div>
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body p-3">
-                <h6 class="fw-bold mb-3"><i class="bi bi-envelope-heart-fill text-danger"></i> 선생님께 감사의 메시지 보내기</h6>
+                <h6 class="fw-bold mb-3"><i class="bi bi-envelope-heart-fill text-danger"></i> 선생님께 감사 메시지 보내기</h6>
                 <label class="form-label small text-muted">받는 선생님</label>
                 <select id="thanksTeacherSelect" class="form-select mb-3">
                   <option value="">-- 선생님 선택 --</option>
@@ -1711,7 +1711,7 @@
         var content = document.getElementById('thanksContent').value.trim();
         if (!content) return alert("메시지 내용을 입력해주세요.");
         if (content.length < 5) return alert("조금 더 마음을 담아 5자 이상 적어주세요.");
-        if (!confirm(teacherName + " " + teacherTitle + "께 감사의 메시지를 보내시겠습니까?")) return;
+        if (!confirm(teacherName + " " + teacherTitle + "께 감사 메시지를 보내시겠습니까?")) return;
         showLoading(true);
         var r = await apiCall('/message', {
           action: 'send',

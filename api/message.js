@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
       rewardMsg = '\n(30자 이상 작성 시 +20P 적립되는데, 이번엔 적립되지 않았어요.)';
     }
 
-    return res.json({ success: true, msg: '감사의 메시지가 전달되었습니다 💌' + rewardMsg });
+    return res.json({ success: true, msg: '감사 메시지가 전달되었습니다 💌' + rewardMsg });
   }
 
   if (action === 'list') {
