@@ -1,6 +1,6 @@
 const { getSupabase, cors, formatDate } = require('../lib/supabase');
 
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_BYTES = 100 * 1024 * 1024; // 100MB
 
 module.exports = async (req, res) => {
   cors(res);
