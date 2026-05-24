@@ -19,8 +19,10 @@
       .nav-tabs { display: flex; flex-wrap: wrap; border-bottom: none; }
       .nav-tabs .nav-link { border: 1px solid transparent; border-top-left-radius: .25rem; border-top-right-radius: .25rem; background-color: #f8f9fa; margin-bottom: 2px; font-size: 0.9rem; padding: 8px 5px; }
       .nav-tabs .nav-item { flex: 0 0 25%; text-align: center; max-width: 25%; flex-grow: 1; }
-      /* 비활성 탭 패널은 확실히 레이아웃에서 제외 */
-      .tab-content > .tab-pane:not(.active) { display: none !important; }
+      /* 비활성 탭 패널은 확실히 레이아웃에서 제외 (3단 안전망) */
+      .tab-content > .tab-pane { display: none !important; }
+      .tab-content > .tab-pane.active { display: block !important; }
+      .tab-content > .tab-pane.show { display: block !important; }
       .nav-link.active { color: var(--school-blue) !important; border-bottom: 4px solid var(--school-blue); background-color: #fff; font-weight: bold; }
       @media (max-width: 576px) { .nav-link { font-size: 0.8rem; padding: 5px 2px; } }
 
@@ -72,7 +74,7 @@
           <button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button>
         </div>
       </nav>
-      <div class="container pb-5">
+      <div class="container pb-3">
         <ul class="nav nav-tabs mb-3" role="tablist">
           <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab">💯 점수</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석부</button></li>
@@ -180,7 +182,7 @@
           <div class="tab-pane fade" id="tabSurveyMbti"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="row g-2 mb-2"><div class="col-6"><select id="mbtiGrade" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체학년</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><select id="mbtiClass" class="form-select form-select-sm" onchange="renderMbtiStats()"><option value="">전체반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`)</script></select></div></div><input type="text" id="mbtiSearchType" class="form-control form-control-sm" placeholder="유형 검색 (예: ENFP)" onkeyup="renderMbtiStats()"></div></div><div class="alert alert-primary py-2 small">검사 완료: <strong id="mbtiCount">0</strong>명</div><div class="table-responsive bg-white border rounded" style="max-height:400px;overflow-y:auto;"><table class="table table-hover mb-0 small"><thead class="table-light sticky-top"><tr><th>학번</th><th>이름</th><th>MBTI</th></tr></thead><tbody id="mbtiTableBody"></tbody></table></div></div></div></div>
         </div>
 
-        <div class="mt-4 mb-2">
+        <div class="mt-3 mb-2">
           <a href="https://script.google.com/macros/s/AKfycbxto6yNcdypwbkdzx0DOYDIMaQk6JE7uYaoDSrif-EkPiST1Q4Jsj8icCRXxPe060wf6A/exec" target="_blank" class="text-decoration-none">
             <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #00c6ff, #0072ff);">
               <div class="card-body d-flex align-items-center justify-content-between p-3">
