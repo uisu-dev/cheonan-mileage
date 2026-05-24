@@ -206,6 +206,14 @@ module.exports = async (req, res) => {
     }
     result.quizList.reverse();
 
+    // 영상 응모 수 (교사 대시보드 표시용)
+    if (role === 'teacher' || role === 'admin') {
+      try {
+        const { count } = await supabase.from('submissions').select('id', { count: 'exact', head: true });
+        result.submissionCount = count || 0;
+      } catch (e) { result.submissionCount = 0; }
+    }
+
     // Announcements (공지사항)
     try {
       let noticeQuery = supabase.from('announcements').select('*').order('id', { ascending: false }).limit(20);

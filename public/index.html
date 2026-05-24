@@ -65,6 +65,10 @@
             <i class="bi bi-envelope-heart-fill"></i> 감사 메시지
             <span id="teacherMsgBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size:0.6rem;">0</span>
           </button>
+          <button onclick="openTeacherEntries()" class="btn btn-sm btn-info fw-bold me-1 position-relative" title="응모 영상 보기">
+            <i class="bi bi-camera-video-fill"></i> 응모 영상
+            <span id="teacherEntryBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" style="display:none; font-size:0.6rem;">0</span>
+          </button>
           <button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button>
           <button onclick="loadDashboard()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
           <button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button>
@@ -220,12 +224,69 @@
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
         <div id="studentNoticeArea" class="mb-3"></div>
-        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
+        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 응모/제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="historyTab"><ul class="list-group list-group-flush" id="logList"></ul></div>
           <div class="tab-pane fade" id="shopTab"><div class="alert alert-warning text-center small mb-3 shadow-sm border-0"><i class="bi bi-info-circle-fill"></i> 교환은 학생부에 문의하세요.</div><div class="row g-2" id="rewardListStudent"></div></div>
           <div class="tab-pane fade" id="surveyTabStudent"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGenStu">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbtiStu">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGenStu"><div id="studentSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyMbtiStu"><div id="mbtiResultView" style="display:none;" class="text-center py-4"><h5 class="text-muted mb-3">나의 성격 유형은?</h5><h1 class="display-1 fw-bold text-school mb-3" id="myMbtiResultText">----</h1><p class="lead mb-4">자신의 성향을 잘 이해하고 활용해보세요!</p><div id="mbtiStudentDesc" class="text-start mb-4"></div><button class="btn btn-outline-secondary btn-sm" onclick="startMbtiTest()">다시 검사하기</button></div><div id="mbtiTestView" style="display:none;"><div class="progress mb-4" style="height: 5px;"><div class="progress-bar bg-school" role="progressbar" style="width: 0%" id="mbtiProgress"></div></div><div class="card border-0 shadow-sm"><div class="card-body text-center py-5"><h5 class="fw-bold mb-4" id="mbtiQuestion">질문</h5><div class="d-grid gap-3"><button class="btn btn-outline-primary py-3 mbti-card" onclick="nextQuestion('A')"><span id="mbtiOptionA">A</span></button><button class="btn btn-outline-primary py-3 mbti-card" onclick="nextQuestion('B')"><span id="mbtiOptionB">B</span></button></div></div></div></div><div id="mbtiStartView" class="text-center py-5"><div class="display-1 mb-3">🧩</div><h4 class="fw-bold">간단 MBTI 검사</h4><p class="text-muted mb-4">20개의 질문으로 알아보는 나의 성격 유형</p><div class="alert alert-success d-inline-block py-2 px-3 mb-4 rounded-pill small">🎁 완료 시 100P 지급! (최초 1회)</div><br><button class="btn btn-school btn-lg px-5 rounded-pill" onclick="startMbtiTest()">검사 시작</button></div></div></div></div>
-          <div class="tab-pane fade" id="reportTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger"></i> 학교 시설 고장 및 일탈 행위 제보</h6><div class="mb-3"><label class="form-label small text-muted">제보 내용</label><textarea id="reportContent" class="form-control" rows="4" placeholder="상세히 적어주세요."></textarea></div><div class="mb-3"><label class="form-label small text-muted">증거 사진 (선택)</label><input type="file" id="reportFile" class="form-control" accept="image/png, image/jpeg, image/gif"></div><button class="btn btn-danger w-100 fw-bold" onclick="submitReport()">제보하기</button><div class="mt-2 text-center"><small class="text-muted" style="font-size:0.75rem;">- 익명이 보장됩니다.</small></div></div></div></div>
+          <div class="tab-pane fade" id="reportTabStudent">
+            <ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1">
+              <li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#subEntry">🎬 응모</a></li>
+              <li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#subReport">📢 제보</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="subEntry">
+                <div class="alert alert-warning small mb-3 shadow-sm border-0">
+                  <div class="fw-bold mb-1"><i class="bi bi-camera-video-fill"></i> 영상 응모 안내</div>
+                  <ul class="mb-0 ps-3">
+                    <li>응모 1건당 <strong>+50P</strong> 적립</li>
+                    <li><strong>최대 50MB</strong>까지 업로드 가능 (가급적 가로 영상, 압축 권장)</li>
+                    <li>방송부에서 활용될 수 있는 좋은 영상이라면 더욱 환영!</li>
+                  </ul>
+                </div>
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-cloud-upload-fill text-primary"></i> 영상 응모하기</h6>
+                    <div class="mb-3">
+                      <label class="form-label small text-muted">제목 (선택)</label>
+                      <input type="text" id="entryTitle" class="form-control" placeholder="영상 제목 또는 설명">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small text-muted">영상 파일</label>
+                      <input type="file" id="entryFile" class="form-control" accept="video/*" onchange="onEntryFileChange()">
+                      <div id="entryFileInfo" class="small text-muted mt-1"></div>
+                    </div>
+                    <div id="entryProgress" style="display:none;" class="mb-3">
+                      <div class="progress mb-1" style="height: 20px;">
+                        <div id="entryProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary fw-bold" style="width:0%">0%</div>
+                      </div>
+                      <div id="entryProgressText" class="small text-center text-muted"></div>
+                    </div>
+                    <button id="entrySubmitBtn" class="btn btn-primary w-100 fw-bold" onclick="submitEntry()">
+                      <i class="bi bi-upload"></i> 영상 응모하기 (+50P)
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="subReport">
+                <div class="card shadow-sm border-0">
+                  <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger"></i> 학교 시설 고장 및 일탈 행위 제보</h6>
+                    <div class="mb-3">
+                      <label class="form-label small text-muted">제보 내용</label>
+                      <textarea id="reportContent" class="form-control" rows="4" placeholder="상세히 적어주세요."></textarea>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small text-muted">증거 사진 (선택)</label>
+                      <input type="file" id="reportFile" class="form-control" accept="image/png, image/jpeg, image/gif">
+                    </div>
+                    <button class="btn btn-danger w-100 fw-bold" onclick="submitReport()">제보하기</button>
+                    <div class="mt-2 text-center"><small class="text-muted" style="font-size:0.75rem;">- 익명이 보장됩니다.</small></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="tab-pane fade" id="praiseTabStudent"><div class="card shadow-sm border-0 mb-3"><div class="card-body"><h6 class="fw-bold mb-3">💌 친구 칭찬하기</h6><label class="small text-muted">칭찬할 친구 학번 (5자리)</label><input type="number" id="praiseReceiverId" class="form-control mb-2" placeholder="예: 10101" onkeyup="searchPraiseUser()"><div id="praiseTargetName" class="text-primary fw-bold small mb-2" style="min-height:20px;"></div><label class="small text-muted">칭찬 내용</label><textarea id="praiseContent" class="form-control mb-3" rows="3" placeholder="예: 수업 시간에 지우개를 빌려줘서 고마워!"></textarea><button class="btn btn-primary w-100" onclick="sendPraiseMsg()">칭찬 엽서 보내기</button></div></div><h6 class="fw-bold mb-3 text-success">💚 내가 받은 칭찬</h6><div id="myPraiseListArea"></div></div>
           <div class="tab-pane fade" id="thanksTabStudent">
             <div class="alert alert-warning small mb-3 shadow-sm border-0">
@@ -302,6 +363,23 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
             <button type="button" class="btn btn-primary" onclick="submitAttendanceEdit()">수정 완료</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="entryListModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-camera-video-fill"></i> 학생 응모 영상</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-2" id="entryListModalBody">
+            <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div> 불러오는 중...</div>
+          </div>
+          <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button>
           </div>
         </div>
       </div>
@@ -737,6 +815,12 @@
         if (badge) {
           if (unread > 0) { badge.style.display = 'inline-block'; badge.innerText = unread > 99 ? '99+' : unread; }
           else { badge.style.display = 'none'; }
+        }
+        var subCnt = Number(data.submissionCount) || 0;
+        var subBadge = document.getElementById('teacherEntryBadge');
+        if (subBadge) {
+          if (subCnt > 0) { subBadge.style.display = 'inline-block'; subBadge.innerText = subCnt > 99 ? '99+' : subCnt; }
+          else { subBadge.style.display = 'none'; }
         }
         allStudents = data.students || []; myClubList = data.myClubs || [];
         var listAll = document.getElementById('studentDataListAll'); listAll.innerHTML = "";
@@ -1387,6 +1471,147 @@
         showLoading(true);
         var r = await apiCall('/notice', { action: 'delete', id: id });
         showLoading(false); alert(r.msg); loadDashboard();
+      }
+
+      // ========== 영상 응모 (학생) ==========
+      var ENTRY_MAX_BYTES = 50 * 1024 * 1024; // 50MB
+      function formatBytes(b) {
+        if (!b) return '0 KB';
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+        return (b / 1024 / 1024).toFixed(1) + ' MB';
+      }
+      function onEntryFileChange() {
+        var f = document.getElementById('entryFile').files[0];
+        var info = document.getElementById('entryFileInfo');
+        if (!f) { info.innerHTML = ''; return; }
+        var sizeOk = f.size <= ENTRY_MAX_BYTES;
+        info.innerHTML = (sizeOk ? '<span class="text-success">' : '<span class="text-danger">') +
+          f.name + ' · ' + formatBytes(f.size) + (sizeOk ? '' : ' (한도 초과!)') + '</span>';
+      }
+      async function submitEntry() {
+        var file = document.getElementById('entryFile').files[0];
+        if (!file) return alert("영상 파일을 선택해주세요.");
+        if (!file.type.startsWith('video/')) return alert("영상 파일만 업로드 가능합니다.");
+        if (file.size > ENTRY_MAX_BYTES) {
+          return alert("파일 크기가 너무 큽니다.\n최대 50MB까지 업로드 가능합니다.\n현재: " + formatBytes(file.size));
+        }
+        var title = document.getElementById('entryTitle').value.trim();
+        if (!confirm("이 영상을 응모하시겠습니까?\n파일명: " + file.name + " (" + formatBytes(file.size) + ")")) return;
+
+        var btn = document.getElementById('entrySubmitBtn');
+        var prog = document.getElementById('entryProgress');
+        var bar = document.getElementById('entryProgressBar');
+        var ptext = document.getElementById('entryProgressText');
+        btn.disabled = true;
+        prog.style.display = 'block';
+        bar.style.width = '0%'; bar.innerText = '0%';
+        ptext.innerText = '업로드 준비 중...';
+
+        try {
+          // 1단계: 업로드 정보 발급
+          var info = await apiCall('/submission', {
+            action: 'getUploadInfo',
+            studentId: currentUser.id,
+            fileName: file.name,
+            fileSize: file.size
+          });
+          if (!info.success) throw new Error(info.msg || '업로드 준비 실패');
+
+          // 2단계: 파일을 Supabase Storage에 직접 업로드 (XHR로 진행률 표시)
+          ptext.innerText = '영상 업로드 중...';
+          await new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', info.uploadUrl);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + info.anonKey);
+            xhr.setRequestHeader('apikey', info.anonKey);
+            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+            xhr.setRequestHeader('x-upsert', 'false');
+            xhr.upload.onprogress = function(e) {
+              if (e.lengthComputable) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                bar.style.width = pct + '%';
+                bar.innerText = pct + '%';
+                ptext.innerText = formatBytes(e.loaded) + ' / ' + formatBytes(e.total);
+              }
+            };
+            xhr.onload = function() {
+              if (xhr.status >= 200 && xhr.status < 300) resolve();
+              else reject(new Error('업로드 실패 (' + xhr.status + ') ' + (xhr.responseText || '').slice(0, 200)));
+            };
+            xhr.onerror = function() { reject(new Error('네트워크 오류')); };
+            xhr.send(file);
+          });
+
+          // 3단계: 메타데이터 등록 + 50P 적립
+          ptext.innerText = '응모 등록 중...';
+          var reg = await apiCall('/submission', {
+            action: 'register',
+            studentId: currentUser.id,
+            studentName: currentUser.name,
+            title: title,
+            path: info.path,
+            fileName: file.name,
+            fileSize: file.size
+          });
+          alert(reg.msg);
+          if (reg.success) {
+            document.getElementById('entryFile').value = '';
+            document.getElementById('entryTitle').value = '';
+            document.getElementById('entryFileInfo').innerHTML = '';
+            loadDashboard();
+          }
+        } catch (err) {
+          alert("응모 오류: " + (err.message || err) + "\n\n네트워크 또는 파일 문제일 수 있습니다.");
+        } finally {
+          btn.disabled = false;
+          prog.style.display = 'none';
+        }
+      }
+
+      // ========== 응모 영상 (교사) ==========
+      async function openTeacherEntries() {
+        var modalEl = document.getElementById('entryListModal');
+        var body = document.getElementById('entryListModalBody');
+        body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div> 불러오는 중...</div>';
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        var r = await apiCall('/submission', { action: 'list' });
+        if (!r.success) { body.innerHTML = '<div class="text-center py-4 text-danger">불러오기 실패</div>'; return; }
+        renderEntryList(r.submissions || []);
+      }
+      function renderEntryList(list) {
+        var body = document.getElementById('entryListModalBody');
+        if (list.length === 0) {
+          body.innerHTML = '<div class="text-center py-5 text-muted"><div style="font-size:2.5rem;">🎬</div>아직 응모된 영상이 없습니다.</div>';
+          return;
+        }
+        var html = '';
+        list.forEach(function(s) {
+          var titleLine = s.title ? '<div class="fw-bold mb-1">' + escapeHtml(s.title) + '</div>' : '';
+          html += '<div class="card mb-2"><div class="card-body p-3">' +
+            titleLine +
+            '<div class="d-flex justify-content-between small mb-2">' +
+              '<div><strong>' + escapeHtml(s.studentName) + '</strong> <span class="text-muted">(' + escapeHtml(s.studentId) + ')</span></div>' +
+              '<div class="text-muted">' + escapeHtml(s.date || '') + '</div>' +
+            '</div>' +
+            '<div class="small text-muted mb-2">' + escapeHtml(s.fileName) + ' · ' + formatBytes(s.fileSize) + '</div>' +
+            '<video src="' + s.videoUrl + '" controls preload="metadata" style="width:100%; max-height:300px; background:#000; border-radius:6px;"></video>' +
+            '<div class="d-flex gap-2 mt-2">' +
+              '<a href="' + s.videoUrl + '" download="' + escapeHtml(s.fileName) + '" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-download"></i> 다운로드</a>' +
+              '<button class="btn btn-sm btn-outline-danger" onclick="deleteEntry(' + s.id + ')"><i class="bi bi-trash"></i> 삭제</button>' +
+            '</div>' +
+          '</div></div>';
+        });
+        body.innerHTML = html;
+      }
+      async function deleteEntry(id) {
+        if (!confirm("이 응모 영상을 완전히 삭제하시겠습니까?\nStorage의 파일도 함께 삭제됩니다.")) return;
+        showLoading(true);
+        var r = await apiCall('/submission', { action: 'delete', id: id });
+        showLoading(false);
+        alert(r.msg);
+        // 본문만 새로고침
+        var lr = await apiCall('/submission', { action: 'list' });
+        if (lr.success) renderEntryList(lr.submissions || []);
       }
 
       // ========== 퀴즈 (학생) ==========
