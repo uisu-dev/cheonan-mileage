@@ -1,5 +1,7 @@
 const { getSupabase, cors } = require('../lib/supabase');
 
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
+
 module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -9,21 +11,49 @@ module.exports = async (req, res) => {
   const supabase = getSupabase();
 
   if (action === 'create') {
-    const { title, questions, allowPhoto } = req.body;
-    const row = { id: String(Date.now()), title, questions, status: 'O', allow_photo: !!allowPhoto };
+    const { title, questions, allowPhoto, allowVideo } = req.body;
+    const row = { id: String(Date.now()), title, questions, status: 'O', allow_photo: !!allowPhoto, allow_video: !!allowVideo };
+
     let { error } = await supabase.from('surveys').insert(row);
-    // allow_photo 컬럼이 없으면 fallback
-    if (error && String(error.message || '').toLowerCase().includes('allow_photo')) {
-      delete row.allow_photo;
+    // 컬럼이 없는 경우 단계적 fallback
+    if (error && String(error.message || '').toLowerCase().includes('allow_video')) {
+      delete row.allow_video;
       const r2 = await supabase.from('surveys').insert(row);
       error = r2.error;
+    }
+    if (error && String(error.message || '').toLowerCase().includes('allow_photo')) {
+      delete row.allow_photo;
+      const r3 = await supabase.from('surveys').insert(row);
+      error = r3.error;
     }
     if (error) return res.json({ success: false, msg: '등록 실패: ' + error.message });
     return res.json({ success: true, msg: '등록' });
   }
 
+  // 영상 직접 업로드용 정보 발급 (학생 클라이언트가 Storage에 PUT)
+  if (action === 'getVideoUploadInfo') {
+    const { studentId, surveyId, fileName, fileSize } = req.body;
+    if (!studentId || !surveyId) return res.json({ success: false, msg: '정보 누락' });
+    if (Number(fileSize) > MAX_VIDEO_BYTES) {
+      return res.json({ success: false, msg: '영상은 최대 100MB까지 업로드 가능합니다.' });
+    }
+    const supaUrl = process.env.SUPABASE_URL || '';
+    const anonKey = process.env.SUPABASE_ANON_KEY || '';
+    if (!supaUrl || !anonKey) {
+      return res.json({ success: false, msg: '서버 설정 오류 (SUPABASE_ANON_KEY 필요)' });
+    }
+    const ext = String(fileName || 'mp4').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'mp4';
+    const path = `videos/survey_${surveyId}_${studentId}_${Date.now()}.${ext}`;
+    return res.json({
+      success: true,
+      uploadUrl: `${supaUrl}/storage/v1/object/survey-photos/${encodeURIComponent(path)}`,
+      anonKey: anonKey,
+      path: path
+    });
+  }
+
   if (action === 'vote') {
-    const { studentId, surveyId, answers, fileData } = req.body;
+    const { studentId, surveyId, answers, fileData, videoPath } = req.body;
 
     // 중복 체크
     const { data: existing } = await supabase
@@ -35,7 +65,7 @@ module.exports = async (req, res) => {
       return res.json({ success: false, msg: '이미 참여함' });
     }
 
-    // 사진 업로드 (있는 경우)
+    // 사진 업로드 (작은 이미지는 서버 경유로 그대로 진행)
     let photoUrl = '';
     if (fileData && fileData.data) {
       try {
@@ -55,8 +85,21 @@ module.exports = async (req, res) => {
       }
     }
 
-    const logRow = { vote_id: surveyId, student_id: studentId, answer: answers, photo_url: photoUrl };
+    // 영상은 클라이언트가 이미 직접 업로드함 → 경로만 받아서 publicUrl 생성
+    let videoUrl = '';
+    if (videoPath) {
+      const { data: urlData } = supabase.storage.from('survey-photos').getPublicUrl(videoPath);
+      videoUrl = urlData.publicUrl;
+    }
+
+    const logRow = { vote_id: surveyId, student_id: studentId, answer: answers, photo_url: photoUrl, video_url: videoUrl };
     let { error: logErr } = await supabase.from('survey_logs').insert(logRow);
+    // 컬럼 단계적 fallback
+    if (logErr && String(logErr.message || '').toLowerCase().includes('video_url')) {
+      delete logRow.video_url;
+      const r2 = await supabase.from('survey_logs').insert(logRow);
+      logErr = r2.error;
+    }
     if (logErr && String(logErr.message || '').toLowerCase().includes('photo_url')) {
       delete logRow.photo_url;
       await supabase.from('survey_logs').insert(logRow);

@@ -177,9 +177,9 @@ module.exports = async (req, res) => {
       if (role !== 'teacher') {
         myVoted = (surveyLogs || []).some(sl => String(sl.vote_id) === String(s.id) && String(sl.student_id) === String(userId));
       }
-      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted, allowPhoto: !!s.allow_photo, status: s.status || 'O' };
+      const sv = { id: s.id, title: s.title, questions: s.questions, voted: myVoted, allowPhoto: !!s.allow_photo, allowVideo: !!s.allow_video, status: s.status || 'O' };
       if (role === 'teacher' || role === 'admin') {
-        sv.stats = getSurveyStats(s.id, s.questions, surveyLogs || [], !!s.allow_photo);
+        sv.stats = getSurveyStats(s.id, s.questions, surveyLogs || [], !!s.allow_photo, !!s.allow_video);
       }
       result.surveyList.push(sv);
     }
@@ -232,10 +232,11 @@ module.exports = async (req, res) => {
   return res.json(result);
 };
 
-function getSurveyStats(vid, qs, logs, allowPhoto) {
+function getSurveyStats(vid, qs, logs, allowPhoto, allowVideo) {
   if (!logs) return '-';
   const st = qs.map(q => (q.type === 'text' ? [] : {}));
   const photos = [];
+  const videos = [];
   let count = 0;
   for (const log of logs) {
     if (String(log.vote_id) === String(vid)) {
@@ -248,6 +249,7 @@ function getSurveyStats(vid, qs, logs, allowPhoto) {
         });
       } catch (e) { }
       if (log.photo_url) photos.unshift({ url: log.photo_url, sid: log.student_id });
+      if (log.video_url) videos.unshift({ url: log.video_url, sid: log.student_id });
     }
   }
   let h = `<div style='max-height:500px;overflow-y:auto;padding-right:6px;'>`;
@@ -285,6 +287,25 @@ function getSurveyStats(vid, qs, logs, allowPhoto) {
           <img src='${p.url}' style='width:100px;height:100px;object-fit:cover;border:1px solid #ddd;border-radius:6px;'>
           <div class='text-center small text-muted'>${p.sid}</div>
         </a>`;
+      });
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
+  if (allowVideo) {
+    h += `<div class='mt-3 pt-2 border-top'><strong>🎬 업로드된 영상 (${videos.length})</strong>`;
+    if (videos.length === 0) {
+      h += `<div class='text-muted small mt-1'>업로드된 영상이 없습니다.</div>`;
+    } else {
+      h += `<div class='d-flex flex-column gap-2 mt-2'>`;
+      videos.forEach(v => {
+        h += `<div class='d-flex align-items-center justify-content-between p-2 bg-light rounded small'>
+          <span><i class='bi bi-camera-video-fill text-primary'></i> 학번 <strong>${v.sid}</strong></span>
+          <div class='d-flex gap-1'>
+            <a href='${v.url}' target='_blank' class='btn btn-sm btn-outline-primary'>▶ 재생</a>
+            <a href='${v.url}' download class='btn btn-sm btn-outline-secondary'>⬇ 다운로드</a>
+          </div>
+        </div>`;
       });
       h += `</div>`;
     }
