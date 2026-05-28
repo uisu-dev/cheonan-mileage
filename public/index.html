@@ -287,19 +287,47 @@
                     <label class="form-label small fw-bold mb-1">상담 유형</label>
                     <div>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="counselType" id="ctype1" value="일반 상담" checked>
+                        <input class="form-check-input" type="radio" name="counselType" id="ctype1" value="일반 상담" checked onchange="toggleCounselTypeForm()">
                         <label class="form-check-label" for="ctype1">일반 상담</label>
                       </div>
                       <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="counselType" id="ctype2" value="회복적 상담">
+                        <input class="form-check-input" type="radio" name="counselType" id="ctype2" value="회복적 상담" onchange="toggleCounselTypeForm()">
                         <label class="form-check-label" for="ctype2">회복적 상담</label>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="mb-2">
+                <div id="counselGeneralBox" class="mb-2">
                   <label class="form-label small fw-bold mb-1">상담 내용</label>
                   <textarea id="counselContentInput" class="form-control" rows="4" placeholder="상담 일시·진행 과정·학생 반응·후속 조치 등을 자세히 적어주세요."></textarea>
+                </div>
+                <div id="counselRestorativeBox" class="mb-2" style="display:none;">
+                  <div class="alert alert-warning small mb-2 py-2"><i class="bi bi-info-circle"></i> 회복적 상담은 아래 5단계 절차에 따라 기록합니다.</div>
+                  <div class="mb-2 p-2 border-start border-4 border-primary bg-light rounded">
+                    <label class="form-label small fw-bold mb-1">1단계: 상황 이해</label>
+                    <div class="small text-muted mb-1">"무슨 일이 있었나요?" — 사실 관계 파악</div>
+                    <textarea id="counselStage1" class="form-control form-control-sm" rows="2"></textarea>
+                  </div>
+                  <div class="mb-2 p-2 border-start border-4 border-info bg-light rounded">
+                    <label class="form-label small fw-bold mb-1">2단계: 생각과 감정 파악</label>
+                    <div class="small text-muted mb-1">"그때 무슨 생각이 들었나요?", "그때 기분이 어땠나요?"</div>
+                    <textarea id="counselStage2" class="form-control form-control-sm" rows="2"></textarea>
+                  </div>
+                  <div class="mb-2 p-2 border-start border-4 border-warning bg-light rounded">
+                    <label class="form-label small fw-bold mb-1">3단계: 영향 파악</label>
+                    <div class="small text-muted mb-1">"이 일이 누구에게 어떤 영향을 미쳤나요?"</div>
+                    <textarea id="counselStage3" class="form-control form-control-sm" rows="2"></textarea>
+                  </div>
+                  <div class="mb-2 p-2 border-start border-4 border-success bg-light rounded">
+                    <label class="form-label small fw-bold mb-1">4단계: 필요 욕구 탐색</label>
+                    <div class="small text-muted mb-1">"무엇이 필요했나요?" — 욕구 발견</div>
+                    <textarea id="counselStage4" class="form-control form-control-sm" rows="2"></textarea>
+                  </div>
+                  <div class="mb-2 p-2 border-start border-4 border-danger bg-light rounded">
+                    <label class="form-label small fw-bold mb-1">5단계: 해결책 모색</label>
+                    <div class="small text-muted mb-1">"상황을 바로잡기 위해 무엇을 해야 한다고 생각하나요?"</div>
+                    <textarea id="counselStage5" class="form-control form-control-sm" rows="2"></textarea>
+                  </div>
                 </div>
                 <div class="mb-2">
                   <label class="form-label small fw-bold mb-1">첨부파일 (선택, 최대 3MB)</label>
@@ -381,11 +409,12 @@
             <div id="exchangeSelectedList" class="mb-3"></div>
           </div>
           <div class="modal-footer flex-column">
-            <div class="w-100 mb-2 text-center small text-muted">아래 버튼 클릭 시 선택된 모든 학생에게 차감 적용됩니다.</div>
-            <div class="d-grid gap-2 w-100" style="grid-template-columns: 1fr 1fr 1fr; display:grid;">
-              <button class="btn btn-outline-success fw-bold py-2" onclick="doBulkExchange(300)">300 P 교환</button>
-              <button class="btn btn-success fw-bold py-2" onclick="doBulkExchange(500)">500 P 교환</button>
-              <button class="btn btn-warning fw-bold py-2" onclick="doBulkExchange(1000)">1000 P 교환</button>
+            <div class="w-100 mb-2 small text-center">
+              <span class="text-muted">합계:</span> <strong id="exchangeTotalCount">0</strong>명 · <strong class="text-danger" id="exchangeTotalCost">0</strong>P 차감 예정
+            </div>
+            <div class="d-flex w-100 gap-2">
+              <button type="button" class="btn btn-secondary flex-grow-1" data-bs-dismiss="modal">취소</button>
+              <button type="button" class="btn btn-success fw-bold flex-grow-1" onclick="doMixedExchange()"><i class="bi bi-cart-check-fill"></i> 교환 처리</button>
             </div>
           </div>
         </div>
@@ -1717,6 +1746,12 @@
       }
 
       // ========== 상담 기록 ==========
+      function toggleCounselTypeForm() {
+        var ctype = (document.querySelector('input[name="counselType"]:checked') || {}).value;
+        var isRestorative = ctype === '회복적 상담';
+        document.getElementById('counselGeneralBox').style.display = isRestorative ? 'none' : 'block';
+        document.getElementById('counselRestorativeBox').style.display = isRestorative ? 'block' : 'none';
+      }
       async function openCounselingModal() {
         if (!currentHistStudentId) return;
         var s = allStudents.find(x => String(x.id) === String(currentHistStudentId));
@@ -1724,7 +1759,11 @@
         // 입력 폼 초기화
         document.getElementById('counselContentInput').value = '';
         document.getElementById('counselFileInput').value = '';
+        ['counselStage1','counselStage2','counselStage3','counselStage4','counselStage5'].forEach(function(id){
+          var el = document.getElementById(id); if (el) el.value = '';
+        });
         document.querySelector('input[name="counselType"][value="일반 상담"]').checked = true;
+        toggleCounselTypeForm();
         // 상담일시 기본값: 현재시각
         var now = new Date();
         var pad = function(n) { return String(n).padStart(2, '0'); };
@@ -1770,7 +1809,20 @@
         var date = document.getElementById('counselDateInput').value;
         var typeEl = document.querySelector('input[name="counselType"]:checked');
         var ctype = typeEl ? typeEl.value : '일반 상담';
-        var content = document.getElementById('counselContentInput').value.trim();
+        var content = '';
+        if (ctype === '회복적 상담') {
+          var stages = [
+            { title: '1단계: 상황 이해', val: document.getElementById('counselStage1').value.trim() },
+            { title: '2단계: 생각과 감정 파악', val: document.getElementById('counselStage2').value.trim() },
+            { title: '3단계: 영향 파악', val: document.getElementById('counselStage3').value.trim() },
+            { title: '4단계: 필요 욕구 탐색', val: document.getElementById('counselStage4').value.trim() },
+            { title: '5단계: 해결책 모색', val: document.getElementById('counselStage5').value.trim() }
+          ];
+          if (!stages.some(s => s.val)) return alert("5단계 중 최소 1단계는 작성해주세요.");
+          content = stages.map(s => '[' + s.title + ']\n' + (s.val || '(작성 없음)')).join('\n\n');
+        } else {
+          content = document.getElementById('counselContentInput').value.trim();
+        }
         if (!date) return alert("상담 일시를 입력해주세요.");
         if (!content) return alert("상담 내용을 입력해주세요.");
         var fileInput = document.getElementById('counselFileInput');
@@ -1879,41 +1931,60 @@
         var el = document.getElementById('exchangeSelectedList');
         if (exchangeSelected.length === 0) {
           el.innerHTML = '<div class="text-center text-muted small py-3">위에서 학생을 검색하여 추가해주세요.</div>';
+          updateExchangeTotals();
           return;
         }
         var html = '<div class="list-group">';
-        exchangeSelected.forEach(function(s) {
+        exchangeSelected.forEach(function(s, idx) {
           var lowCls = s.points < 300 ? 'text-danger' : (s.points < 1000 ? 'text-warning' : 'text-success');
-          html += '<div class="list-group-item d-flex justify-content-between align-items-center py-2">' +
-            '<div><strong>' + escapeHtml(s.name) + '</strong> <span class="text-muted small">(' + s.id + ')</span></div>' +
-            '<div class="d-flex align-items-center gap-2">' +
-              '<span class="fw-bold ' + lowCls + '">' + s.points + ' P</span>' +
+          var costOptions = [300, 500, 1000].map(function(c) {
+            var disabled = s.points < c ? 'disabled' : '';
+            var active = (s.cost === c) ? 'btn-primary text-white' : 'btn-outline-primary';
+            return '<button type="button" class="btn btn-sm ' + active + '" ' + disabled +
+                   ' onclick="setExchangeCost(' + idx + ', ' + c + ')">' + c + 'P</button>';
+          }).join('');
+          html += '<div class="list-group-item py-2">' +
+            '<div class="d-flex justify-content-between align-items-center mb-1">' +
+              '<div><strong>' + escapeHtml(s.name) + '</strong> <span class="text-muted small">(' + s.id + ')</span> <span class="fw-bold ' + lowCls + '">' + s.points + ' P</span></div>' +
               '<button class="btn btn-sm btn-outline-danger" onclick="removeExchangeStudent(\'' + s.id + '\')"><i class="bi bi-x-lg"></i></button>' +
+            '</div>' +
+            '<div class="d-flex gap-1 small align-items-center">' +
+              '<span class="text-muted me-1">교환 금액:</span>' +
+              '<div class="btn-group btn-group-sm" role="group">' + costOptions + '</div>' +
+              (s.cost ? '<span class="ms-auto small text-danger fw-bold">→ 잔액 ' + (s.points - s.cost) + 'P</span>' : '<span class="ms-auto small text-muted">선택 필요</span>') +
             '</div>' +
           '</div>';
         });
         html += '</div>';
         el.innerHTML = html;
+        updateExchangeTotals();
       }
-      async function doBulkExchange(cost) {
-        if (exchangeSelected.length === 0) return alert('학생을 먼저 추가해주세요.');
-        // 미리 차감 가능 여부 확인
-        var insufficient = exchangeSelected.filter(s => s.points < cost);
-        if (insufficient.length > 0) {
-          return alert('포인트가 부족한 학생이 있습니다:\n' +
-            insufficient.map(s => `${s.name}(${s.id}): ${s.points}P`).join('\n'));
+      function setExchangeCost(idx, cost) {
+        if (exchangeSelected[idx]) {
+          exchangeSelected[idx].cost = cost;
+          renderExchangeSelected();
         }
-        var msg = `[${cost}P 상품 교환]\n선택된 ${exchangeSelected.length}명에게 각 -${cost}P 차감합니다.\n\n` +
-          exchangeSelected.map(s => `· ${s.name}(${s.id}) ${s.points} → ${s.points - cost}`).join('\n') +
+      }
+      function updateExchangeTotals() {
+        var withCost = exchangeSelected.filter(s => s.cost);
+        var totalCost = withCost.reduce((acc, s) => acc + s.cost, 0);
+        var el1 = document.getElementById('exchangeTotalCount');
+        var el2 = document.getElementById('exchangeTotalCost');
+        if (el1) el1.innerText = withCost.length;
+        if (el2) el2.innerText = totalCost;
+      }
+      async function doMixedExchange() {
+        var items = exchangeSelected.filter(s => s.cost);
+        if (items.length === 0) return alert('각 학생의 교환 금액을 선택해주세요.');
+        var msg = '[마일리지 상품 교환]\n' + items.length + '명 처리\n\n' +
+          items.map(s => `· ${s.name}(${s.id}) -${s.cost}P  →  잔액 ${s.points - s.cost}P`).join('\n') +
           '\n\n진행하시겠습니까?';
         if (!confirm(msg)) return;
         showLoading(true);
         var r = await apiCall('/points', {
-          action: 'bulkRedeem',
+          action: 'mixedRedeem',
           teacher: currentUser.name,
-          studentIds: exchangeSelected.map(s => s.id),
-          cost: cost,
-          rewardName: cost + 'P 상품'
+          items: items.map(s => ({ studentId: s.id, cost: s.cost }))
         });
         showLoading(false);
         alert(r.msg);

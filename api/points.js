@@ -97,6 +97,42 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: users.length + '명 교환 완료 (각 -' + c + 'P)' });
   }
 
+  if (action === 'mixedRedeem') {
+    const { teacher, items } = req.body; // [{studentId, cost}, ...]
+    const list = (items || []).filter(x => x && x.studentId && Number(x.cost) > 0);
+    if (list.length === 0) return res.json({ success: false, msg: '교환할 학생/금액이 없습니다.' });
+    const ids = list.map(x => String(x.studentId).trim());
+    const { data: users } = await supabase.from('users').select('id, name, points').in('id', ids);
+    if (!users || users.length === 0) return res.json({ success: false, msg: '학생을 찾을 수 없습니다.' });
+    const userMap = {};
+    users.forEach(u => { userMap[String(u.id).trim()] = u; });
+    // 부족 학생 사전 검출
+    const insufficient = list.filter(x => {
+      const u = userMap[String(x.studentId).trim()];
+      return !u || (Number(u.points) || 0) < Number(x.cost);
+    });
+    if (insufficient.length > 0) {
+      return res.json({
+        success: false,
+        msg: '포인트 부족: ' + insufficient.map(x => {
+          const u = userMap[String(x.studentId).trim()];
+          return (u ? u.name : x.studentId) + '(' + (u ? u.points : '?') + 'P / 필요 ' + x.cost + 'P)';
+        }).join(', ')
+      });
+    }
+    // 로그 일괄 + 점수 차감 병렬
+    const logRows = list.map(x => ({
+      teacher, student_id: String(x.studentId).trim(),
+      item: '교환: ' + Number(x.cost) + 'P 상품', point: -Number(x.cost)
+    }));
+    await supabase.from('logs').insert(logRows);
+    await Promise.all(list.map(x => {
+      const u = userMap[String(x.studentId).trim()];
+      return supabase.from('users').update({ points: Number(u.points) - Number(x.cost) }).eq('id', u.id);
+    }));
+    return res.json({ success: true, msg: list.length + '명 교환 완료' });
+  }
+
   if (action === 'redeem') {
     const { teacher, studentId, rewardName, cost } = req.body;
     const { data: user } = await supabase.from('users').select('points').eq('id', String(studentId).trim()).single();
