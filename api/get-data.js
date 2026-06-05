@@ -232,9 +232,13 @@ module.exports = async (req, res) => {
           const { data: mp } = await supabase.from('roulette_picks')
             .select('word').eq('round_id', round.id).eq('student_id', String(userId)).limit(1);
           if (mp && mp.length) myPick = mp[0].word;
-          result.roulette = { roundId: round.id, status: round.status, winnerWord: round.winner_word || '', myPick: myPick };
+          // 회차 번호(=전체 회차 수, 최신 회차의 순번)
+          let roundNo = 0;
+          const { count } = await supabase.from('roulette_rounds').select('id', { count: 'exact', head: true });
+          roundNo = count || 0;
+          result.roulette = { roundId: round.id, roundNo: roundNo, status: round.status, winnerWord: round.winner_word || '', myPick: myPick };
         } else {
-          result.roulette = { roundId: null, status: null, winnerWord: '', myPick: '' };
+          result.roulette = { roundId: null, roundNo: 0, status: null, winnerWord: '', myPick: '' };
         }
       } catch (e) {
         result.roulette = { roundId: null, status: null, winnerWord: '', myPick: '' };

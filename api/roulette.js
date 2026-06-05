@@ -40,9 +40,14 @@ module.exports = async (req, res) => {
     const round = await openRound();
     if (!round) return res.json({ success: false, msg: '진행 중인 돌림판이 없습니다.' });
     if (round.winner_word) return res.json({ success: false, msg: '이미 추첨이 시작되어 선택할 수 없습니다.' });
-    const { error } = await supabase.from('roulette_picks').upsert(
-      { round_id: round.id, student_id: String(studentId), student_name: studentName || '', word: word },
-      { onConflict: 'round_id,student_id' }
+    // 회차당 1번만 선택 (변경 불가)
+    const { data: existing } = await supabase.from('roulette_picks')
+      .select('word').eq('round_id', round.id).eq('student_id', String(studentId)).limit(1);
+    if (existing && existing.length) {
+      return res.json({ success: false, msg: "이미 이번 회차에 '" + existing[0].word + "'을(를) 선택하셨습니다. 회차당 한 번만 선택할 수 있어요." });
+    }
+    const { error } = await supabase.from('roulette_picks').insert(
+      { round_id: round.id, student_id: String(studentId), student_name: studentName || '', word: word }
     );
     if (error) return res.json({ success: false, msg: '선택 실패: ' + error.message });
     return res.json({ success: true, msg: "'" + word + "' 선택 완료! 추첨을 기다려주세요." });

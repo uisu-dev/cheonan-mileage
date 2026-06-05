@@ -1990,9 +1990,10 @@
           body.innerHTML = '<div class="text-center py-4 text-muted"><div style="font-size:2.5rem;">🎡</div>현재 진행 중인 행운의 돌림판이 없습니다.<br>선생님이 회차를 시작하면 참여할 수 있어요!</div>';
           return;
         }
+        var roundLabel = d.roundNo ? ('<div class="text-center mb-2"><span class="badge" style="background:#f5576c;">' + d.roundNo + '회차</span></div>') : '';
         if (d.winnerWord) {
           var won = d.myPick && d.myPick === d.winnerWord;
-          var h = '<div class="text-center py-3">';
+          var h = roundLabel + '<div class="text-center py-3">';
           h += '<div class="mb-2 text-muted">당첨 단어</div><div class="display-5 fw-bold mb-3" style="color:#f5576c;">' + escapeHtml(d.winnerWord) + '</div>';
           if (!d.myPick) h += '<div class="alert alert-secondary">이번 회차에 선택하지 않으셨어요.</div>';
           else if (won) h += '<div class="alert alert-success fw-bold">🎉 축하합니다! 당첨되어 100P가 적립됩니다!<br><span class="small fw-normal">(선생님이 지급 처리하면 내역에 반영돼요)</span></div>';
@@ -2001,16 +2002,25 @@
           body.innerHTML = h;
           return;
         }
-        studentPickTemp = d.myPick || '';
-        var html = '<div class="text-center small text-muted mb-3">행운의 단어 하나를 선택하세요! 추첨에서 뽑히면 <strong class="text-danger">100P</strong> 획득 🎉</div>';
+        // 이미 선택함 → 변경 불가
+        if (d.myPick) {
+          body.innerHTML = roundLabel
+            + '<div class="text-center py-4">'
+            + '<div class="text-muted mb-2">내가 선택한 단어</div>'
+            + '<div class="display-5 fw-bold mb-3" style="color:#f5576c;">' + escapeHtml(d.myPick) + '</div>'
+            + '<div class="alert alert-info small mb-0">회차당 <strong>한 번만</strong> 선택할 수 있어요.<br>추첨 결과를 기다려주세요! 🍀</div>'
+            + '</div>';
+          return;
+        }
+        // 선택 단계
+        studentPickTemp = '';
+        var html = roundLabel + '<div class="text-center small text-muted mb-3">행운의 단어 하나를 선택하세요! 추첨에서 뽑히면 <strong class="text-danger">100P</strong> 획득 🎉<br><span class="text-danger">⚠️ 한 번 선택하면 변경할 수 없어요.</span></div>';
         html += '<div class="row g-2 mb-3" id="rouletteWordGrid">';
         ROULETTE_WORDS.forEach(function (w) {
-          var sel = (studentPickTemp === w) ? ' selected' : '';
-          html += '<div class="col-6"><div class="roulette-word-card' + sel + '" data-word="' + escapeHtml(w) + '" onclick="selectRouletteWord(\'' + w + '\')">' + escapeHtml(w) + '</div></div>';
+          html += '<div class="col-6"><div class="roulette-word-card" data-word="' + escapeHtml(w) + '" onclick="selectRouletteWord(\'' + w + '\')">' + escapeHtml(w) + '</div></div>';
         });
         html += '</div>';
-        if (d.myPick) html += '<div class="alert alert-info small text-center mb-2 py-2">현재 선택: <strong>' + escapeHtml(d.myPick) + '</strong> (변경 가능)</div>';
-        html += '<button class="btn w-100 fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="submitRoulettePick()"><i class="bi bi-check-circle"></i> 이 단어로 선택!</button>';
+        html += '<button class="btn w-100 fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="submitRoulettePick()"><i class="bi bi-check-circle"></i> 이 단어로 선택! (변경 불가)</button>';
         body.innerHTML = html;
       }
       function selectRouletteWord(w) {
@@ -2022,6 +2032,7 @@
       }
       async function submitRoulettePick() {
         if (!studentPickTemp) return alert('단어를 선택해주세요.');
+        if (!confirm("'" + studentPickTemp + "'(으)로 선택하시겠습니까?\n한 번 선택하면 변경할 수 없습니다.")) return;
         showLoading(true);
         var r = await apiCall('/roulette', { action: 'pick', studentId: currentUser.id, studentName: currentUser.name, word: studentPickTemp });
         showLoading(false);
