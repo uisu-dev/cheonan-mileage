@@ -1887,7 +1887,15 @@
         setTimeout(onEnd, 5200);
       }
 
+      var ROULETTE_ADMIN_PW = '01082969060';
+      var rouletteAdminUnlocked = false;
       async function openRouletteAdmin() {
+        if (!rouletteAdminUnlocked) {
+          var pw = prompt('행운의 돌림판 관리 비밀번호를 입력하세요.');
+          if (pw === null) return; // 취소
+          if (pw !== ROULETTE_ADMIN_PW) { alert('비밀번호가 일치하지 않습니다.'); return; }
+          rouletteAdminUnlocked = true; // 세션 동안 재입력 생략
+        }
         bootstrap.Modal.getOrCreateInstance(document.getElementById('rouletteAdminModal')).show();
         loadRouletteAdmin();
       }
