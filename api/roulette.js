@@ -111,6 +111,14 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '당첨자 ' + winners.length + '명 중 ' + paid + '명에게 100P 지급 후 마감했습니다.', winnerCount: winners.length });
   }
 
+  // 교사: 추첨 결과 초기화 (당첨 단어만 지움, 회차/선택 유지)
+  if (action === 'resetSpin') {
+    const round = await openRound();
+    if (!round) return res.json({ success: false, msg: '진행 중인 회차가 없습니다.' });
+    await supabase.from('roulette_rounds').update({ winner_word: '' }).eq('id', round.id);
+    return res.json({ success: true, msg: '추첨이 초기화되었습니다. 다시 돌릴 수 있습니다.' });
+  }
+
   // 교사: 그냥 마감(취소)
   if (action === 'cancel') {
     const round = await openRound();

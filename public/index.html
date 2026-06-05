@@ -1932,7 +1932,10 @@
             + '<div class="small mt-1">당첨자 ' + winners.length + '명' + (winners.length ? ': ' + winners.map(function (x) { return escapeHtml(x.name) + '(' + x.id + ')'; }).join(', ') : '') + '</div></div>';
           html += '<div class="d-grid gap-2">'
             + '<button class="btn btn-success fw-bold" onclick="rewardRoulette()"><i class="bi bi-coin"></i> 당첨자에게 100P 지급 & 회차 마감</button>'
-            + '<button class="btn btn-outline-secondary btn-sm" onclick="doRouletteSpin()">다시 돌리기</button>'
+            + '<div class="d-flex gap-2">'
+            + '<button class="btn btn-outline-secondary btn-sm flex-grow-1" onclick="doRouletteSpin()"><i class="bi bi-arrow-repeat"></i> 다시 돌리기</button>'
+            + '<button class="btn btn-outline-danger btn-sm flex-grow-1" onclick="resetRouletteSpin()"><i class="bi bi-x-circle"></i> 초기화</button>'
+            + '</div>'
             + '</div>';
         } else {
           html += '<div class="d-grid gap-2">'
@@ -1966,6 +1969,13 @@
         var r = await apiCall('/roulette', { action: 'cancel' });
         showLoading(false); alert(r.msg);
         if (r.success) loadRouletteAdmin();
+      }
+      async function resetRouletteSpin() {
+        if (!confirm('추첨 결과를 초기화할까요?\n당첨 단어가 지워지고, 학생 선택은 그대로 유지되어 다시 돌릴 수 있습니다.')) return;
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'resetSpin' });
+        showLoading(false); alert(r.msg);
+        if (r.success) { rouletteTotalRot = 0; loadRouletteAdmin(); }
       }
 
       // 학생 측
