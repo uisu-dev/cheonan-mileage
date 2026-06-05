@@ -39,6 +39,13 @@
       .club-member-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; }
       .mbti-card { cursor: pointer; transition: transform 0.2s; border: 2px solid transparent; }
       .mbti-card:hover { transform: scale(1.02); }
+      /* 행운의 돌림판 */
+      .roulette-wrap { position: relative; width: 300px; height: 300px; margin: 0 auto; max-width: 80vw; }
+      .roulette-pointer { position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 28px solid #dc3545; z-index: 5; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+      #rouletteCanvas, #rouletteStudentCanvas { width: 100%; height: 100%; transition: transform 4.5s cubic-bezier(0.15, 0.6, 0.1, 1); border-radius: 50%; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+      .roulette-word-card { cursor: pointer; border: 2px solid #dee2e6; border-radius: 12px; padding: 14px 8px; text-align: center; font-weight: 700; transition: all 0.15s; background: #fff; }
+      .roulette-word-card:hover { border-color: var(--school-blue); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+      .roulette-word-card.selected { border-color: var(--school-blue); background: var(--school-blue); color: #fff; }
     </style>
   </head>
   <body>
@@ -214,6 +221,12 @@
                   <div class="app-tile-name">훈화 이야기<br>보따리</div>
                 </div>
               </a>
+              <a href="javascript:void(0)" onclick="openRouletteAdmin()" class="app-tile text-decoration-none">
+                <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#ffe6f0);">
+                  <i class="bi bi-dice-5-fill app-tile-icon" style="color:#f5576c;"></i>
+                  <div class="app-tile-name">행운의 돌림판<br>관리</div>
+                </div>
+              </a>
             </div>
           </div>
         </div>
@@ -228,7 +241,7 @@
       <div class="container">
         <div id="studentPointCard" class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
-        <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a></div>
+        <div class="d-grid gap-2 mb-3"><a href="http://cheonan.caems.kr/foodList.do?m=020402&s=chonan" target="_blank" class="btn btn-lunch shadow-sm"><i class="bi bi-calendar-week"></i> 이번 달 급식표 보기</a><a href="http://www.xn--s39aj90b0nb2xw6xh.kr/" target="_blank" class="btn btn-info shadow-sm text-white fw-bold"><i class="bi bi-clock"></i> 오늘의 시간표 확인하기</a><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
         <div class="tab-content">
@@ -275,6 +288,38 @@
             <div id="studentQuizList"></div>
           </div>
           <div class="tab-pane fade" id="rankTabStudent"><h6 class="fw-bold text-center mb-3">🏆 명예의 전당 (TOP 10)</h6><ul class="nav nav-pills justify-content-center mb-3" id="rankPills" role="tablist"><li class="nav-item" role="presentation"><button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#rank1">1학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank2">2학년</button></li><li class="nav-item" role="presentation"><button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#rank3">3학년</button></li></ul><div class="tab-content text-center"><div class="tab-pane fade show active" id="rank1"><ul class="list-group" id="rankList1"></ul></div><div class="tab-pane fade" id="rank2"><ul class="list-group" id="rankList2"></ul></div><div class="tab-pane fade" id="rank3"><ul class="list-group" id="rankList3"></ul></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="rouletteStudentModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);">
+            <h5 class="modal-title fw-bold"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="rouletteStudentBody"></div>
+          <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="rouletteAdminModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);">
+            <h5 class="modal-title fw-bold"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판 관리</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="rouletteAdminBody">
+            <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div> 불러오는 중...</div>
+          </div>
+          <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button>
+          </div>
         </div>
       </div>
     </div>
@@ -747,6 +792,10 @@
 
         // 학생 퀴즈 목록
         renderStudentQuizzes(data.quizList || []);
+
+        // 행운의 돌림판 데이터
+        studentRouletteData = data.roulette || { roundId: null, status: null, winnerWord: '', myPick: '' };
+        if (document.getElementById('rouletteStudentModal').classList.contains('show')) renderRouletteStudent();
 
         // 감사 메시지: 교사 드롭다운 채우기
         var teacherSel = document.getElementById('thanksTeacherSelect');
@@ -1765,6 +1814,213 @@
         showLoading(true);
         var r = await apiCall('/quiz', { action: 'delete', id: id });
         showLoading(false); alert(r.msg); loadDashboard();
+      }
+
+      // ========== 행운의 돌림판 ==========
+      var ROULETTE_WORDS = ['학행일여', '지성', '우애', '단결', '향나무', '장미'];
+      var ROULETTE_COLORS = ['#f5576c', '#f093fb', '#5b8def', '#43c6ac', '#f9a825', '#7e57c2'];
+      var rouletteTotalRot = 0;
+      var rouletteSpinning = false;
+      var studentRouletteData = { roundId: null, status: null, winnerWord: '', myPick: '' };
+      var studentPickTemp = '';
+
+      function drawRouletteWheel(canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var size = 300;
+        canvas.width = size; canvas.height = size;
+        var ctx = canvas.getContext('2d');
+        var cx = size / 2, cy = size / 2, r = size / 2 - 4;
+        var n = ROULETTE_WORDS.length;
+        ctx.clearRect(0, 0, size, size);
+        for (var i = 0; i < n; i++) {
+          var a0 = (i * 60 - 30 - 90) * Math.PI / 180;
+          var a1 = (i * 60 + 30 - 90) * Math.PI / 180;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, r, a0, a1);
+          ctx.closePath();
+          ctx.fillStyle = ROULETTE_COLORS[i % ROULETTE_COLORS.length];
+          ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+          var mid = (i * 60 - 90) * Math.PI / 180;
+          ctx.save();
+          ctx.translate(cx + Math.cos(mid) * r * 0.62, cy + Math.sin(mid) * r * 0.62);
+          ctx.rotate(mid + Math.PI / 2);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ROULETTE_WORDS[i], 0, 0);
+          ctx.restore();
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, 18, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.stroke();
+      }
+
+      function doRouletteSpin() {
+        if (rouletteSpinning) return;
+        var canvas = document.getElementById('rouletteCanvas');
+        if (!canvas) return;
+        rouletteSpinning = true;
+        var btn = document.getElementById('rouletteSpinBtn'); if (btn) btn.disabled = true;
+        var idx = Math.floor(Math.random() * ROULETTE_WORDS.length);
+        var spins = 5;
+        var current = ((rouletteTotalRot % 360) + 360) % 360;
+        var want = (((360 - idx * 60) % 360) + 360) % 360;
+        var delta = (((want - current) % 360) + 360) % 360 + 360 * spins;
+        rouletteTotalRot += delta;
+        canvas.style.transition = 'transform 4.5s cubic-bezier(0.15, 0.6, 0.1, 1)';
+        canvas.style.transform = 'rotate(' + rouletteTotalRot + 'deg)';
+        var done = false;
+        var onEnd = async function () {
+          if (done) return; done = true;
+          canvas.removeEventListener('transitionend', onEnd);
+          rouletteSpinning = false;
+          var word = ROULETTE_WORDS[idx];
+          showLoading(true);
+          await apiCall('/roulette', { action: 'spin', word: word });
+          showLoading(false);
+          loadRouletteAdmin();
+        };
+        canvas.addEventListener('transitionend', onEnd);
+        setTimeout(onEnd, 5200);
+      }
+
+      async function openRouletteAdmin() {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('rouletteAdminModal')).show();
+        loadRouletteAdmin();
+      }
+      async function loadRouletteAdmin() {
+        var body = document.getElementById('rouletteAdminBody');
+        body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div> 불러오는 중...</div>';
+        var r = await apiCall('/roulette', { action: 'status' });
+        if (!r.success) { body.innerHTML = '<div class="text-danger text-center py-3">불러오기 실패: ' + (r.msg || '') + '</div>'; return; }
+        renderRouletteAdmin(r);
+      }
+      function renderRouletteAdmin(data) {
+        var body = document.getElementById('rouletteAdminBody');
+        var round = data.round;
+        var open = round && round.status === 'O';
+        var html = '';
+        if (!open) {
+          if (round && round.winnerWord) {
+            html += '<div class="alert alert-info small text-center">직전 회차(#' + round.id + ') 당첨 단어: <strong>' + escapeHtml(round.winnerWord) + '</strong></div>';
+          }
+          html += '<div class="text-center py-4">'
+            + '<div class="mb-3 text-muted small">새 회차를 시작하면 학생들이 단어를 선택할 수 있습니다.</div>'
+            + '<button class="btn btn-lg fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="startRouletteRound()"><i class="bi bi-play-circle-fill"></i> 새 회차 시작</button>'
+            + '</div>';
+          body.innerHTML = html;
+          return;
+        }
+        html += '<div class="d-flex justify-content-between align-items-center mb-2">'
+          + '<span class="badge bg-success">회차 진행 중 (#' + round.id + ')</span>'
+          + '<button class="btn btn-sm btn-outline-secondary" onclick="loadRouletteAdmin()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button></div>';
+        html += '<div class="row g-2 mb-2">';
+        ROULETTE_WORDS.forEach(function (w) {
+          var c = (data.counts && data.counts[w]) || 0;
+          var hl = (round.winnerWord === w) ? ' border-danger border-2' : '';
+          html += '<div class="col-4"><div class="border rounded text-center py-2 small' + hl + '"><div class="fw-bold">' + escapeHtml(w) + '</div><div class="text-primary fw-bold">' + c + '명</div></div></div>';
+        });
+        html += '</div>';
+        html += '<div class="small text-muted text-center mb-2">총 참여 ' + (data.total || 0) + '명</div>';
+        html += '<div class="roulette-wrap mb-3"><div class="roulette-pointer"></div><canvas id="rouletteCanvas"></canvas></div>';
+        if (round.winnerWord) {
+          var winners = data.winners || [];
+          html += '<div class="alert alert-warning text-center"><div class="fw-bold fs-5">🎉 당첨 단어: ' + escapeHtml(round.winnerWord) + '</div>'
+            + '<div class="small mt-1">당첨자 ' + winners.length + '명' + (winners.length ? ': ' + winners.map(function (x) { return escapeHtml(x.name) + '(' + x.id + ')'; }).join(', ') : '') + '</div></div>';
+          html += '<div class="d-grid gap-2">'
+            + '<button class="btn btn-success fw-bold" onclick="rewardRoulette()"><i class="bi bi-coin"></i> 당첨자에게 100P 지급 & 회차 마감</button>'
+            + '<button class="btn btn-outline-secondary btn-sm" onclick="doRouletteSpin()">다시 돌리기</button>'
+            + '</div>';
+        } else {
+          html += '<div class="d-grid gap-2">'
+            + '<button id="rouletteSpinBtn" class="btn btn-lg fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="doRouletteSpin()"><i class="bi bi-arrow-repeat"></i> 돌리기!</button>'
+            + '<button class="btn btn-outline-danger btn-sm" onclick="cancelRoulette()">회차 취소(마감)</button>'
+            + '</div>';
+        }
+        body.innerHTML = html;
+        setTimeout(function () {
+          drawRouletteWheel('rouletteCanvas');
+          var c = document.getElementById('rouletteCanvas');
+          if (c) { c.style.transition = 'none'; c.style.transform = 'rotate(' + rouletteTotalRot + 'deg)'; void c.offsetWidth; }
+        }, 30);
+      }
+      async function startRouletteRound() {
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'startRound', teacherName: currentUser.name });
+        showLoading(false); alert(r.msg);
+        if (r.success) { rouletteTotalRot = 0; loadRouletteAdmin(); }
+      }
+      async function rewardRoulette() {
+        if (!confirm('당첨자에게 100P를 지급하고 회차를 마감합니까?')) return;
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'reward', teacherName: currentUser.name });
+        showLoading(false); alert(r.msg);
+        if (r.success) loadRouletteAdmin();
+      }
+      async function cancelRoulette() {
+        if (!confirm('이 회차를 마감(취소)합니까? 지급은 이루어지지 않습니다.')) return;
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'cancel' });
+        showLoading(false); alert(r.msg);
+        if (r.success) loadRouletteAdmin();
+      }
+
+      // 학생 측
+      function openRouletteStudent() {
+        renderRouletteStudent();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('rouletteStudentModal')).show();
+      }
+      function renderRouletteStudent() {
+        var body = document.getElementById('rouletteStudentBody');
+        var d = studentRouletteData || {};
+        if (!d.roundId || d.status == null) {
+          body.innerHTML = '<div class="text-center py-4 text-muted"><div style="font-size:2.5rem;">🎡</div>현재 진행 중인 행운의 돌림판이 없습니다.<br>선생님이 회차를 시작하면 참여할 수 있어요!</div>';
+          return;
+        }
+        if (d.winnerWord) {
+          var won = d.myPick && d.myPick === d.winnerWord;
+          var h = '<div class="text-center py-3">';
+          h += '<div class="mb-2 text-muted">당첨 단어</div><div class="display-5 fw-bold mb-3" style="color:#f5576c;">' + escapeHtml(d.winnerWord) + '</div>';
+          if (!d.myPick) h += '<div class="alert alert-secondary">이번 회차에 선택하지 않으셨어요.</div>';
+          else if (won) h += '<div class="alert alert-success fw-bold">🎉 축하합니다! 당첨되어 100P가 적립됩니다!<br><span class="small fw-normal">(선생님이 지급 처리하면 내역에 반영돼요)</span></div>';
+          else h += '<div class="alert alert-warning">내 선택: <strong>' + escapeHtml(d.myPick) + '</strong><br>아쉽지만 다음 기회에! 🍀</div>';
+          h += '</div>';
+          body.innerHTML = h;
+          return;
+        }
+        studentPickTemp = d.myPick || '';
+        var html = '<div class="text-center small text-muted mb-3">행운의 단어 하나를 선택하세요! 추첨에서 뽑히면 <strong class="text-danger">100P</strong> 획득 🎉</div>';
+        html += '<div class="row g-2 mb-3" id="rouletteWordGrid">';
+        ROULETTE_WORDS.forEach(function (w) {
+          var sel = (studentPickTemp === w) ? ' selected' : '';
+          html += '<div class="col-6"><div class="roulette-word-card' + sel + '" data-word="' + escapeHtml(w) + '" onclick="selectRouletteWord(\'' + w + '\')">' + escapeHtml(w) + '</div></div>';
+        });
+        html += '</div>';
+        if (d.myPick) html += '<div class="alert alert-info small text-center mb-2 py-2">현재 선택: <strong>' + escapeHtml(d.myPick) + '</strong> (변경 가능)</div>';
+        html += '<button class="btn w-100 fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="submitRoulettePick()"><i class="bi bi-check-circle"></i> 이 단어로 선택!</button>';
+        body.innerHTML = html;
+      }
+      function selectRouletteWord(w) {
+        studentPickTemp = w;
+        document.querySelectorAll('#rouletteWordGrid .roulette-word-card').forEach(function (el) {
+          if (el.getAttribute('data-word') === w) el.classList.add('selected');
+          else el.classList.remove('selected');
+        });
+      }
+      async function submitRoulettePick() {
+        if (!studentPickTemp) return alert('단어를 선택해주세요.');
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'pick', studentId: currentUser.id, studentName: currentUser.name, word: studentPickTemp });
+        showLoading(false);
+        alert(r.msg);
+        if (r.success) {
+          studentRouletteData.myPick = studentPickTemp;
+          renderRouletteStudent();
+          loadDashboard();
+        }
       }
 
       // ========== 상담 기록 ==========

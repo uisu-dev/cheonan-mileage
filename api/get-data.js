@@ -221,6 +221,26 @@ module.exports = async (req, res) => {
       }));
     } catch (e) { result.notices = []; }
 
+    // 행운의 돌림판 (학생용 현황)
+    if (role !== 'teacher' && role !== 'admin') {
+      try {
+        const { data: rounds } = await supabase.from('roulette_rounds')
+          .select('*').order('id', { ascending: false }).limit(1);
+        const round = rounds && rounds[0];
+        if (round) {
+          let myPick = '';
+          const { data: mp } = await supabase.from('roulette_picks')
+            .select('word').eq('round_id', round.id).eq('student_id', String(userId)).limit(1);
+          if (mp && mp.length) myPick = mp[0].word;
+          result.roulette = { roundId: round.id, status: round.status, winnerWord: round.winner_word || '', myPick: myPick };
+        } else {
+          result.roulette = { roundId: null, status: null, winnerWord: '', myPick: '' };
+        }
+      } catch (e) {
+        result.roulette = { roundId: null, status: null, winnerWord: '', myPick: '' };
+      }
+    }
+
     // Lunch
     try { result.lunchMenu = await getNeisLunch(); } catch (e) { result.lunchMenu = '정보 없음'; }
 
