@@ -1948,7 +1948,8 @@
         } else {
           html += '<div class="d-grid gap-2">'
             + '<button id="rouletteSpinBtn" class="btn btn-lg fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="doRouletteSpin()"><i class="bi bi-arrow-repeat"></i> 돌리기!</button>'
-            + '<button class="btn btn-outline-danger btn-sm" onclick="cancelRoulette()">회차 취소(마감)</button>'
+            + '<button class="btn btn-outline-danger btn-sm" onclick="cancelRoulette()"><i class="bi bi-lock-fill"></i> 회차 마감</button>'
+            + '<button class="btn btn-outline-primary btn-sm" onclick="startNewRouletteRound()"><i class="bi bi-play-circle"></i> 새 회차 시작</button>'
             + '</div>';
         }
         // 참여자 추첨(선물용) 카드
@@ -1984,11 +1985,19 @@
         if (r.success) loadRouletteAdmin();
       }
       async function cancelRoulette() {
-        if (!confirm('이 회차를 마감(취소)합니까? 지급은 이루어지지 않습니다.')) return;
+        if (!confirm('이 회차를 마감합니까?\n마감하면 학생들이 더 이상 이번 회차에 응모할 수 없습니다.')) return;
         showLoading(true);
         var r = await apiCall('/roulette', { action: 'cancel' });
         showLoading(false); alert(r.msg);
         if (r.success) loadRouletteAdmin();
+      }
+      async function startNewRouletteRound() {
+        if (!confirm('현재 회차를 마감하고 새 회차를 시작합니까?\n현재 회차는 응모가 종료되고, 새 회차가 시작됩니다.')) return;
+        showLoading(true);
+        await apiCall('/roulette', { action: 'cancel' });
+        var r = await apiCall('/roulette', { action: 'startRound', teacherName: currentUser.name });
+        showLoading(false); alert(r.msg);
+        if (r.success) { rouletteTotalRot = 0; loadRouletteAdmin(); }
       }
       async function drawRaffle() {
         var n = Number(document.getElementById('raffleCount').value) || 1;
