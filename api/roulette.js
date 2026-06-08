@@ -116,6 +116,24 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '당첨자 ' + winners.length + '명 중 ' + paid + '명에게 100P 지급 후 마감했습니다.', winnerCount: winners.length });
   }
 
+  // 교사: 참여자 중 무작위 추첨 (선물용, 점수 미지급 - 단순 명단 추출)
+  if (action === 'drawParticipants') {
+    const n = Math.max(1, Number(req.body.count) || 1);
+    const round = await latestRound();
+    if (!round) return res.json({ success: false, msg: '회차가 없습니다.' });
+    const { data: picks } = await supabase.from('roulette_picks').select('*').eq('round_id', round.id);
+    const list = picks || [];
+    if (list.length === 0) return res.json({ success: false, msg: '참여한 학생이 없습니다.' });
+    const arr = list.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    const drawn = arr.slice(0, Math.min(n, arr.length))
+      .map(p => ({ id: p.student_id, name: p.student_name, word: p.word }));
+    return res.json({ success: true, drawn: drawn, total: list.length });
+  }
+
   // 교사: 추첨 결과 초기화 (당첨 단어만 지움, 회차/선택 유지)
   if (action === 'resetSpin') {
     const round = await openRound();

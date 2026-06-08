@@ -1951,6 +1951,18 @@
             + '<button class="btn btn-outline-danger btn-sm" onclick="cancelRoulette()">회차 취소(마감)</button>'
             + '</div>';
         }
+        // 참여자 추첨(선물용) 카드
+        html += '<hr class="my-3">';
+        html += '<div class="card border-0 shadow-sm"><div class="card-body p-3">'
+          + '<h6 class="fw-bold mb-1">🎁 참여자 추첨 (선물용)</h6>'
+          + '<div class="small text-muted mb-2">단어 당첨과 별개로, 이번 회차에 참여한 학생 중 무작위로 뽑습니다.</div>'
+          + '<div class="input-group input-group-sm mb-2" style="max-width:280px;">'
+          + '<span class="input-group-text">뽑을 인원</span>'
+          + '<input type="number" id="raffleCount" class="form-control" value="1" min="1">'
+          + '<button class="btn btn-primary fw-bold" onclick="drawRaffle()"><i class="bi bi-gift"></i> 추첨하기</button>'
+          + '</div>'
+          + '<div id="raffleResult"></div>'
+          + '</div></div>';
         body.innerHTML = html;
         setTimeout(function () {
           drawRouletteWheel('rouletteCanvas');
@@ -1977,6 +1989,22 @@
         var r = await apiCall('/roulette', { action: 'cancel' });
         showLoading(false); alert(r.msg);
         if (r.success) loadRouletteAdmin();
+      }
+      async function drawRaffle() {
+        var n = Number(document.getElementById('raffleCount').value) || 1;
+        if (n < 1) return alert('1명 이상 입력하세요.');
+        showLoading(true);
+        var r = await apiCall('/roulette', { action: 'drawParticipants', count: n });
+        showLoading(false);
+        var box = document.getElementById('raffleResult');
+        if (!r.success) { box.innerHTML = '<div class="alert alert-warning small mb-0">' + (r.msg || '추첨 실패') + '</div>'; return; }
+        var html = '<div class="alert alert-success mb-0"><div class="fw-bold mb-2">🎉 추첨 결과 (' + r.drawn.length + '명 / 참여 ' + r.total + '명)</div>';
+        html += r.drawn.map(function (d) {
+          return '<div class="mb-1">🎁 <strong>' + escapeHtml(d.name) + '</strong> <span class="text-muted">(' + d.id + ')</span> <span class="badge bg-secondary">' + escapeHtml(d.word) + '</span></div>';
+        }).join('');
+        html += '<div class="small text-muted mt-2">다시 누르면 새로 추첨됩니다. (선물은 별도 전달, 마일리지 미지급)</div>';
+        html += '</div>';
+        box.innerHTML = html;
       }
       async function resetRouletteSpin() {
         if (!confirm('추첨 결과를 초기화할까요?\n당첨 단어가 지워지고, 학생 선택은 그대로 유지되어 다시 돌릴 수 있습니다.')) return;
