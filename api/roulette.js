@@ -16,17 +16,24 @@ module.exports = async (req, res) => {
       .select('*').order('id', { ascending: false }).limit(1);
     return (data && data[0]) || null;
   }
+  // 학생 응모 가능한 회차 (status 'O'만)
   async function openRound() {
     const { data } = await supabase.from('roulette_rounds')
       .select('*').eq('status', 'O').order('id', { ascending: false }).limit(1);
+    return (data && data[0]) || null;
+  }
+  // 교사가 관리하는 회차 (응모중 'O' 또는 응모마감 'L')
+  async function activeRound() {
+    const { data } = await supabase.from('roulette_rounds')
+      .select('*').in('status', ['O', 'L']).order('id', { ascending: false }).limit(1);
     return (data && data[0]) || null;
   }
 
   // 교사: 새 회차 시작
   if (action === 'startRound') {
     const { teacherName } = req.body;
-    const existing = await openRound();
-    if (existing) return res.json({ success: false, msg: '이미 진행 중인 회차가 있습니다. 먼저 마감해주세요.' });
+    const existing = await activeRound();
+    if (existing) return res.json({ success: false, msg: '이미 진행 중인 회차가 있습니다. 먼저 종료해주세요.' });
     const { data, error } = await supabase.from('roulette_rounds')
       .insert({ status: 'O', winner_word: '', teacher_name: teacherName || '' }).select().single();
     if (error) return res.json({ success: false, msg: '시작 실패: ' + error.message });
@@ -77,7 +84,7 @@ module.exports = async (req, res) => {
   if (action === 'spin') {
     const { word } = req.body;
     if (!WORDS.includes(word)) return res.json({ success: false, msg: '잘못된 단어입니다.' });
-    const round = await openRound();
+    const round = await activeRound();
     if (!round) return res.json({ success: false, msg: '진행 중인 회차가 없습니다.' });
     await supabase.from('roulette_rounds').update({ winner_word: word }).eq('id', round.id);
     const { data: picks } = await supabase.from('roulette_picks').select('*')
@@ -88,7 +95,7 @@ module.exports = async (req, res) => {
   // 교사: 당첨자 100P 지급 + 마감
   if (action === 'reward') {
     const { teacherName } = req.body;
-    const round = await openRound();
+    const round = await activeRound();
     if (!round) return res.json({ success: false, msg: '진행 중인 회차가 없습니다.' });
     if (!round.winner_word) return res.json({ success: false, msg: '먼저 돌림판을 돌려 당첨 단어를 정해주세요.' });
 
@@ -136,17 +143,26 @@ module.exports = async (req, res) => {
 
   // 교사: 추첨 결과 초기화 (당첨 단어만 지움, 회차/선택 유지)
   if (action === 'resetSpin') {
-    const round = await openRound();
+    const round = await activeRound();
     if (!round) return res.json({ success: false, msg: '진행 중인 회차가 없습니다.' });
     await supabase.from('roulette_rounds').update({ winner_word: '' }).eq('id', round.id);
     return res.json({ success: true, msg: '추첨이 초기화되었습니다. 다시 돌릴 수 있습니다.' });
   }
 
-  // 교사: 그냥 마감(취소)
+  // 교사: 응모 마감 (status O→L, 학생 응모 불가하지만 추첨/지급은 계속 가능)
+  if (action === 'lock') {
+    const round = await activeRound();
+    if (!round) return res.json({ success: false, msg: '진행 중인 회차가 없습니다.' });
+    if (round.status === 'L') return res.json({ success: true, msg: '이미 응모가 마감된 회차입니다.' });
+    await supabase.from('roulette_rounds').update({ status: 'L' }).eq('id', round.id);
+    return res.json({ success: true, msg: '응모가 마감되었습니다. 추첨과 지급은 계속 진행할 수 있어요.' });
+  }
+
+  // 교사: 회차 완전 종료 (새 회차 시작 시 내부적으로 사용)
   if (action === 'cancel') {
-    const round = await openRound();
+    const round = await activeRound();
     if (round) await supabase.from('roulette_rounds').update({ status: 'C' }).eq('id', round.id);
-    return res.json({ success: true, msg: '회차를 마감했습니다.' });
+    return res.json({ success: true, msg: '회차를 종료했습니다.' });
   }
 
   return res.json({ success: false, msg: '알 수 없는 action' });

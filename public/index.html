@@ -1909,9 +1909,10 @@
       function renderRouletteAdmin(data) {
         var body = document.getElementById('rouletteAdminBody');
         var round = data.round;
-        var open = round && round.status === 'O';
+        var active = round && (round.status === 'O' || round.status === 'L');
+        var locked = round && round.status === 'L';
         var html = '';
-        if (!open) {
+        if (!active) {
           if (round && round.winnerWord) {
             html += '<div class="alert alert-info small text-center">직전 회차(#' + round.id + ') 당첨 단어: <strong>' + escapeHtml(round.winnerWord) + '</strong></div>';
           }
@@ -1922,8 +1923,11 @@
           body.innerHTML = html;
           return;
         }
+        var stateBadge = locked
+          ? '<span class="badge bg-warning text-dark"><i class="bi bi-lock-fill"></i> 응모 마감 (추첨 대기)</span>'
+          : '<span class="badge bg-success">회차 진행 중 (응모 가능)</span>';
         html += '<div class="d-flex justify-content-between align-items-center mb-2">'
-          + '<span class="badge bg-success">회차 진행 중 (#' + round.id + ')</span>'
+          + stateBadge
           + '<button class="btn btn-sm btn-outline-secondary" onclick="loadRouletteAdmin()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button></div>';
         html += '<div class="row g-2 mb-2">';
         ROULETTE_WORDS.forEach(function (w) {
@@ -1948,7 +1952,7 @@
         } else {
           html += '<div class="d-grid gap-2">'
             + '<button id="rouletteSpinBtn" class="btn btn-lg fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);" onclick="doRouletteSpin()"><i class="bi bi-arrow-repeat"></i> 돌리기!</button>'
-            + '<button class="btn btn-outline-danger btn-sm" onclick="cancelRoulette()"><i class="bi bi-lock-fill"></i> 회차 마감</button>'
+            + (locked ? '' : '<button class="btn btn-outline-warning btn-sm" onclick="lockRoulette()"><i class="bi bi-lock-fill"></i> 회차 마감 (학생 응모 차단)</button>')
             + '<button class="btn btn-outline-primary btn-sm" onclick="startNewRouletteRound()"><i class="bi bi-play-circle"></i> 새 회차 시작</button>'
             + '</div>';
         }
@@ -1984,15 +1988,15 @@
         showLoading(false); alert(r.msg);
         if (r.success) loadRouletteAdmin();
       }
-      async function cancelRoulette() {
-        if (!confirm('이 회차를 마감합니까?\n마감하면 학생들이 더 이상 이번 회차에 응모할 수 없습니다.')) return;
+      async function lockRoulette() {
+        if (!confirm('이번 회차의 학생 응모를 마감합니까?\n마감 후에도 추첨과 당첨자 지급은 계속 진행할 수 있습니다.')) return;
         showLoading(true);
-        var r = await apiCall('/roulette', { action: 'cancel' });
+        var r = await apiCall('/roulette', { action: 'lock' });
         showLoading(false); alert(r.msg);
         if (r.success) loadRouletteAdmin();
       }
       async function startNewRouletteRound() {
-        if (!confirm('현재 회차를 마감하고 새 회차를 시작합니까?\n현재 회차는 응모가 종료되고, 새 회차가 시작됩니다.')) return;
+        if (!confirm('현재 회차를 종료하고 새 회차를 시작합니까?\n현재 회차는 완전히 종료되고, 새 회차에서 학생 응모가 다시 시작됩니다.')) return;
         showLoading(true);
         await apiCall('/roulette', { action: 'cancel' });
         var r = await apiCall('/roulette', { action: 'startRound', teacherName: currentUser.name });
@@ -2031,7 +2035,8 @@
       function renderRouletteStudent() {
         var body = document.getElementById('rouletteStudentBody');
         var d = studentRouletteData || {};
-        if (!d.roundId || d.status == null) {
+        // 진행 회차 없음 (없거나, 당첨 단어 없이 완전 종료된 경우)
+        if (!d.roundId || d.status == null || (d.status === 'C' && !d.winnerWord)) {
           body.innerHTML = '<div class="text-center py-4 text-muted"><div style="font-size:2.5rem;">🎡</div>현재 진행 중인 행운의 돌림판이 없습니다.<br>선생님이 회차를 시작하면 참여할 수 있어요!</div>';
           return;
         }
@@ -2057,7 +2062,15 @@
             + '</div>';
           return;
         }
-        // 선택 단계
+        // 응모 마감(L) 또는 종료 상태인데 선택 안 한 경우
+        if (d.status !== 'O') {
+          body.innerHTML = roundLabel
+            + '<div class="text-center py-4 text-muted">'
+            + '<div style="font-size:2.2rem;">🔒</div>이번 회차는 응모가 마감되었습니다.<br>다음 회차를 기다려주세요!'
+            + '</div>';
+          return;
+        }
+        // 선택 단계 (응모 가능)
         studentPickTemp = '';
         var html = roundLabel + '<div class="text-center small text-muted mb-3">행운의 단어 하나를 선택하세요! 추첨에서 뽑히면 <strong class="text-danger">100P</strong> 획득 🎉<br><span class="text-danger">⚠️ 한 번 선택하면 변경할 수 없어요.</span></div>';
         html += '<div class="row g-2 mb-3" id="rouletteWordGrid">';
