@@ -171,5 +171,58 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '해제 완료' });
   }
 
+  // 교내봉사 징계 이행 완료 학생 목록 (로그 재구성)
+  if (action === 'penaltyDoneList') {
+    // 징계 관련 로그를 모두 불러와 학생별 시간순으로 재구성
+    const { data: logs } = await supabase.from('logs')
+      .select('id, student_id, item, date')
+      .or('item.ilike.%교내봉사 징계 설정%,item.ilike.%징계 상쇄%,item.ilike.%교내봉사 징계 수동 해제%')
+      .order('id', { ascending: true });
+
+    const byStudent = {};
+    (logs || []).forEach(l => {
+      const sid = String(l.student_id).trim();
+      (byStudent[sid] = byStudent[sid] || []).push(l);
+    });
+
+    const episodes = [];
+    Object.keys(byStudent).forEach(sid => {
+      let active = null;
+      byStudent[sid].forEach(l => {
+        const item = String(l.item || '');
+        const mSet = item.match(/교내봉사 징계 설정: -(\d+)P(?:\s*\((.*)\))?/);
+        const mOff = item.match(/징계 상쇄: \+(\d+)P/);
+        const mClr = /교내봉사 징계 수동 해제/.test(item);
+        if (mSet) {
+          active = { total: Number(mSet[1]), earned: 0, reason: (mSet[2] || '').trim(), setDate: l.date };
+        } else if (mOff && active) {
+          active.earned += Number(mOff[1]);
+          if (active.earned >= active.total) {
+            episodes.push({
+              studentId: sid, total: active.total, reason: active.reason,
+              setDate: active.setDate, doneDate: l.date
+            });
+            active = null;
+          }
+        } else if (mClr && active) {
+          active = null; // 수동 해제는 이행 완료로 보지 않음
+        }
+      });
+    });
+
+    // 학생 이름 매핑
+    const ids = [...new Set(episodes.map(e => e.studentId))];
+    const nameMap = {};
+    if (ids.length) {
+      const { data: us } = await supabase.from('users').select('id, name').in('id', ids);
+      (us || []).forEach(u => { nameMap[String(u.id).trim()] = u.name; });
+    }
+    episodes.forEach(e => { e.name = nameMap[e.studentId] || e.studentId; });
+    // 완료일 최신순
+    episodes.sort((a, b) => new Date(b.doneDate) - new Date(a.doneDate));
+
+    return res.json({ success: true, list: episodes });
+  }
+
   return res.json({ success: false, msg: '알 수 없는 action' });
 };
