@@ -79,6 +79,20 @@ module.exports = async (req, res) => {
     }
   }
 
+  // 교사가 제보에 답변(댓글) 등록/수정
+  if (action === 'replyReport') {
+    const { reportId, teacher, reply } = req.body;
+    try {
+      const { error } = await supabase.from('reports')
+        .update({ reply: reply || '', reply_teacher: teacher || '', reply_date: new Date().toISOString() })
+        .eq('id', Number(reportId));
+      if (error) return res.json({ success: false, msg: '오류: ' + error.message });
+      return res.json({ success: true, msg: '답변이 등록되었습니다.' });
+    } catch (e) {
+      return res.json({ success: false, msg: '오류: ' + e.message });
+    }
+  }
+
   if (action === 'rental') {
     const { type, teacher, ids, mode } = req.body;
     const col = type === 'umbrella' ? 'umbrella' : 'ball';

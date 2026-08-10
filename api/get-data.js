@@ -60,6 +60,17 @@ module.exports = async (req, res) => {
         .filter(u => { var r = String(u.role||'').toLowerCase().trim(); return r === 'teacher' || r === 'admin'; })
         .map(u => ({ id: String(u.id).trim(), name: u.name }))
         .sort((a, b) => a.name.localeCompare(b.name));
+
+      // 학생 본인이 올린 제보 + 교사 답변
+      const { data: myReports } = await supabase
+        .from('reports').select('*')
+        .eq('reporter_id', String(userId))
+        .order('id', { ascending: false })
+        .limit(30);
+      result.myReportList = (myReports || []).map(r => ({
+        date: formatDate(r.date), content: r.content, fileLink: r.file_link || '',
+        reply: r.reply || '', replyTeacher: r.reply_teacher || '', replyDate: r.reply_date ? formatDate(r.reply_date) : ''
+      }));
     } else {
       // 교사용: 본인 미확인 메시지 카운트
       const { count } = await supabase.from('teacher_messages')
@@ -109,7 +120,8 @@ module.exports = async (req, res) => {
         .order('id', { ascending: false })
         .limit(30);
       result.reportList = (reports || []).map(r => ({
-        date: formatDate(r.date), reporterId: r.reporter_id || '', reporterName: r.reporter_name, content: r.content, fileLink: r.file_link || ''
+        id: r.id, date: formatDate(r.date), reporterId: r.reporter_id || '', reporterName: r.reporter_name, content: r.content, fileLink: r.file_link || '',
+        reply: r.reply || '', replyTeacher: r.reply_teacher || '', replyDate: r.reply_date ? formatDate(r.reply_date) : ''
       }));
 
       // Teacher Logs

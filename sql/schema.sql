@@ -98,8 +98,16 @@ CREATE TABLE reports (
   reporter_id TEXT NOT NULL,
   reporter_name TEXT NOT NULL,
   content TEXT NOT NULL,
-  file_link TEXT DEFAULT ''
+  file_link TEXT DEFAULT '',
+  reply TEXT DEFAULT '',
+  reply_teacher TEXT DEFAULT '',
+  reply_date TIMESTAMPTZ
 );
+
+-- [마이그레이션] 기존 reports 테이블에 답변(댓글) 컬럼 추가 시 아래 실행
+-- ALTER TABLE reports ADD COLUMN IF NOT EXISTS reply TEXT DEFAULT '';
+-- ALTER TABLE reports ADD COLUMN IF NOT EXISTS reply_teacher TEXT DEFAULT '';
+-- ALTER TABLE reports ADD COLUMN IF NOT EXISTS reply_date TIMESTAMPTZ;
 
 -- 11. Quizzes 테이블
 CREATE TABLE quizzes (
