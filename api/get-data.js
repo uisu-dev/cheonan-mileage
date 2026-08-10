@@ -260,6 +260,17 @@ module.exports = async (req, res) => {
     // Lunch
     try { result.lunchMenu = await getNeisLunch(); } catch (e) { result.lunchMenu = '정보 없음'; }
 
+    // Timetable (학생 본인 학년/반)
+    if (role !== 'teacher' && role !== 'admin') {
+      const sid = String(userId).trim();
+      if (/^\d{5}$/.test(sid)) {
+        const grade = sid.substring(0, 1);
+        const classNm = String(parseInt(sid.substring(1, 3), 10));
+        try { result.timetable = await getNeisTimetable(grade, classNm); }
+        catch (e) { result.timetable = []; }
+      }
+    }
+
   } catch (e) {
     console.error(e);
     result.error = e.message;
@@ -351,12 +362,20 @@ function getSurveyStats(vid, qs, logs, allowPhoto, allowVideo) {
   return h;
 }
 
-async function getNeisLunch() {
+// 천안중학교 NEIS 코드 (충청남도교육청 N10 / 학교 8151023) - 단일 학교 고정
+const NEIS_ATPT = 'N10';
+const NEIS_SCHOOL = '8151023';
+
+function neisToday() {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  const d = kst.toISOString().slice(0, 10).replace(/-/g, '');
-  const code = process.env.ATPT_OFCDC_SC_CODE || 'T10';
-  const school = process.env.SD_SCHUL_CODE || '7441062';
+  return kst.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+async function getNeisLunch() {
+  const d = neisToday();
+  const code = NEIS_ATPT;
+  const school = NEIS_SCHOOL;
   const key = process.env.NEIS_API_KEY || '';
   const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=10&ATPT_OFCDC_SC_CODE=${code}&SD_SCHUL_CODE=${school}&MLSV_YMD=${d}${key ? '&KEY=' + key : ''}`;
   const resp = await fetch(url);
@@ -368,4 +387,21 @@ async function getNeisLunch() {
       .replace(/\(\)/g, '');
   }
   return '급식 없음';
+}
+
+async function getNeisTimetable(grade, classNm) {
+  const d = neisToday();
+  const code = NEIS_ATPT;
+  const school = NEIS_SCHOOL;
+  const key = process.env.NEIS_API_KEY || '';
+  const url = `https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=30&ATPT_OFCDC_SC_CODE=${code}&SD_SCHUL_CODE=${school}&ALL_TI_YMD=${d}&GRADE=${grade}&CLASS_NM=${classNm}${key ? '&KEY=' + key : ''}`;
+  const resp = await fetch(url);
+  const json = await resp.json();
+  if (json.misTimetable) {
+    return json.misTimetable[1].row
+      .map(r => ({ period: Number(r.PERIO) || 0, subject: String(r.ITRT_CNTNT || '').trim() }))
+      .filter(x => x.subject)
+      .sort((a, b) => a.period - b.period);
+  }
+  return [];
 }
