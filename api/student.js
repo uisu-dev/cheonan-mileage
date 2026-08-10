@@ -1,4 +1,5 @@
 const { getSupabase, cors } = require('../lib/supabase');
+const { getNeisLunch, getNeisTimetable } = require('../lib/neis');
 
 module.exports = async (req, res) => {
   cors(res);
@@ -7,6 +8,22 @@ module.exports = async (req, res) => {
 
   const { action } = req.body;
   const supabase = getSupabase();
+
+  // 특정 날짜의 급식 + 시간표 조회 (학생 학번 기준 학년/반)
+  if (action === 'dayInfo') {
+    const { studentId, date } = req.body;
+    const sid = String(studentId || '').trim();
+    const ymd = String(date || '').replace(/[^0-9]/g, '');
+    let lunch = '급식 없음';
+    let timetable = [];
+    try { lunch = await getNeisLunch(ymd); } catch (e) { lunch = '정보 없음'; }
+    if (/^\d{5}$/.test(sid)) {
+      const grade = sid.substring(0, 1);
+      const classNm = String(parseInt(sid.substring(1, 3), 10));
+      try { timetable = await getNeisTimetable(ymd, grade, classNm); } catch (e) { timetable = []; }
+    }
+    return res.json({ success: true, lunch, timetable });
+  }
 
   if (action === 'attendance') {
     const { id } = req.body;
