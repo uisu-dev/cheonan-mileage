@@ -111,7 +111,10 @@
              <div class="card border-0 shadow-sm mb-3">
                  <div class="card-body p-3">
                      <h6 class="fw-bold mb-3">🏫 동아리/학급 출석부</h6>
-                     <div class="input-group mb-3"><input type="text" id="newClubName" class="form-control" placeholder="새 동아리/학급 이름"><button class="btn btn-primary" onclick="createClub()">생성</button></div>
+                     <div class="row g-2 mb-3">
+                       <div class="col-6"><button class="btn btn-outline-primary w-100 fw-bold py-2" onclick="openClassRosterModal()"><i class="bi bi-list-ul"></i> 학급 명단 조회</button></div>
+                       <div class="col-6"><button class="btn btn-primary w-100 fw-bold py-2" onclick="openCreateClubModal()"><i class="bi bi-plus-circle"></i> 출석부 생성</button></div>
+                     </div>
                      <label class="small text-muted mb-2">관리할 그룹 선택</label>
                      <select id="myClubSelect" class="form-select mb-3" onchange="loadClubMembers()"><option value="">선택하세요</option></select>
 
@@ -480,6 +483,56 @@
         <div id="penaltyCertListArea"><div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> 불러오는 중...</div></div>
       </div>
       <div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div>
+    </div></div></div>
+
+    <!-- 출석부: 학급 명단 조회 -->
+    <div class="modal fade" id="classRosterModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header bg-school text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-list-ul"></i> 학급 명단 조회</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <div class="row g-2 mb-2">
+          <div class="col-4"><select id="rosterGrade" class="form-select form-select-sm" onchange="renderClassRoster()"><option value="">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+          <div class="col-4"><select id="rosterClass" class="form-select form-select-sm" onchange="renderClassRoster()"><option value="">전체 반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
+          <div class="col-4"><input type="text" id="rosterSearch" class="form-control form-control-sm" placeholder="이름/학번" onkeyup="renderClassRoster()"></div>
+        </div>
+        <div class="alert alert-secondary py-2 small d-flex justify-content-between mb-2">
+          <span>총원: <strong id="rosterCount">0</strong>명</span>
+          <span>평균 마일리지: <strong id="rosterAvg">0</strong>P</span>
+        </div>
+        <div class="table-responsive bg-white border rounded" style="max-height:380px; overflow-y:auto;">
+          <table class="table table-hover table-sm mb-0 small">
+            <thead class="table-light sticky-top"><tr><th style="width:70px;">학번</th><th>이름</th><th class="text-end" style="width:60px;">점수</th></tr></thead>
+            <tbody id="rosterTableBody"></tbody>
+          </table>
+        </div>
+        <div class="small text-muted mt-2 px-1"><i class="bi bi-info-circle"></i> 이름을 누르면 마일리지 내역·상담 기록을 볼 수 있습니다.</div>
+      </div>
+      <div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div>
+    </div></div></div>
+
+    <!-- 출석부: 출석부(그룹) 생성 -->
+    <div class="modal fade" id="createClubModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header bg-school text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle"></i> 출석부 생성</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small text-muted">출석부 이름 (동아리 또는 학급)</label>
+        <input type="text" id="newClubName" class="form-control mb-2" placeholder="예: 1학년 3반, 방송부">
+        <div class="small text-muted mb-3"><i class="bi bi-info-circle"></i> 생성 후 <b>학생 명단 관리</b>에서 학년·반으로 학생을 한 번에 추가할 수 있습니다.</div>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="small text-muted w-100 mb-1">빠른 입력:</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillClubName('1학년 ')">1학년</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillClubName('2학년 ')">2학년</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillClubName('3학년 ')">3학년</button>
+        </div>
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="createClub()"><i class="bi bi-check-lg"></i> 생성하기</button>
+      </div>
     </div></div></div>
 
     <!-- 출석부: 학생 명단 관리 -->
@@ -1439,7 +1492,59 @@
       async function deleteLog(r, t, p) { if(confirm("삭제하시겠습니까?")) { showLoading(true); var res = await apiCall('/points', { action: 'delete', rowId: r, studentId: t, point: p }); showLoading(false); alert(res.msg); loadDashboard(); } }
       function searchPraiseUser() { var v=document.getElementById('praiseReceiverId').value; var s=allStudents.find(x=>String(x.id)==v); document.getElementById('praiseTargetName').innerText = s ? s.name+" 학생" : "학생 없음"; }
       async function sendPraiseMsg() { var id=document.getElementById('praiseReceiverId').value; var t=document.getElementById('praiseContent').value; if(!id||!t) return alert("입력확인"); if(confirm("전송?")) { showLoading(true); var s=allStudents.find(x=>String(x.id)==id); var r = await apiCall('/praise', { action: 'send', senderId: currentUser.id, senderName: currentUser.name, receiverId: id, receiverName: s.name, content: t }); showLoading(false); alert(r.msg); document.getElementById('praiseContent').value=""; } }
-      async function createClub() { var n=document.getElementById('newClubName').value; if(!n) return alert("이름입력"); showLoading(true); var r = await apiCall('/club', { action: 'create', teacherId: currentUser.id, name: n }); showLoading(false); alert(r.msg); loadDashboard(); }
+      // ===== 출석부: 생성 =====
+      function openCreateClubModal() {
+        document.getElementById('newClubName').value = '';
+        new bootstrap.Modal(document.getElementById('createClubModal')).show();
+      }
+      function fillClubName(prefix) {
+        var el = document.getElementById('newClubName');
+        el.value = prefix;
+        el.focus();
+      }
+      async function createClub() {
+        var n = document.getElementById('newClubName').value.trim();
+        if(!n) return alert("출석부 이름을 입력하세요.");
+        showLoading(true);
+        var r = await apiCall('/club', { action: 'create', teacherId: currentUser.id, name: n });
+        showLoading(false);
+        alert(r.msg);
+        var m = bootstrap.Modal.getInstance(document.getElementById('createClubModal'));
+        if (m) m.hide();
+        loadDashboard();
+      }
+
+      // ===== 출석부: 학급 명단 조회 =====
+      function openClassRosterModal() {
+        document.getElementById('rosterGrade').value = '';
+        document.getElementById('rosterClass').value = '';
+        document.getElementById('rosterSearch').value = '';
+        renderClassRoster();
+        new bootstrap.Modal(document.getElementById('classRosterModal')).show();
+      }
+      function renderClassRoster() {
+        var gr = document.getElementById('rosterGrade').value;
+        var cl = document.getElementById('rosterClass').value;
+        var sv = document.getElementById('rosterSearch').value.trim();
+        var list = (allStudents || []).filter(function(s){
+          var g = String(s.id).substring(0,1);
+          var c = parseInt(String(s.id).substring(1,3), 10);
+          if (gr && gr !== g) return false;
+          if (cl && parseInt(cl,10) !== c) return false;
+          if (sv && !(s.name.includes(sv) || String(s.id).includes(sv))) return false;
+          return true;
+        }).sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        document.getElementById('rosterCount').innerText = list.length;
+        document.getElementById('rosterAvg').innerText = list.length ? Math.round(list.reduce((a,b)=>a+(Number(b.points)||0),0)/list.length) : 0;
+        var el = document.getElementById('rosterTableBody');
+        if (list.length === 0) { el.innerHTML = "<tr><td colspan='3' class='text-center text-muted py-3'>조회된 학생이 없습니다.</td></tr>"; return; }
+        el.innerHTML = list.map(function(s){
+          var penaltyBadge = (s.penaltyTotal > 0) ? ' <span class="badge bg-danger" title="교내봉사 ' + s.penaltyEarned + '/' + s.penaltyTotal + '">🚨</span>' : '';
+          return '<tr><td>' + s.id + '</td>' +
+            '<td onclick="viewStudentHistory(\'' + s.id + '\', \'' + escapeHtml(s.name) + '\')" style="cursor:pointer; color:var(--school-blue); font-weight:bold;">' + escapeHtml(s.name) + penaltyBadge + '</td>' +
+            '<td class="text-end fw-bold">' + (Number(s.points)||0) + '</td></tr>';
+        }).join('');
+      }
       function openPwModal() { new bootstrap.Modal(document.getElementById('pwModal')).show(); }
       async function changePasswordAction() { var p=document.getElementById('newPwInput').value; if(p.length<4) return alert("4자이상"); if(confirm("변경?")) { showLoading(true); var r = await apiCall('/auth', { action: 'changePassword', id: currentUser.id, newPw: p }); showLoading(false); alert(r.msg); location.reload(); } }
       function startMbtiTest() { currentQIndex=0; mbtiScores={E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0}; document.getElementById('mbtiStartView').style.display='none'; document.getElementById('mbtiResultView').style.display='none'; document.getElementById('mbtiTestView').style.display='block'; showQuestion(); }
