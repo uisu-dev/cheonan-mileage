@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
+    <meta charset="utf-8">
     <base target="_top">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>2026 천중 마일리지</title>
@@ -28,6 +29,15 @@
       .grid-num { background-color: #eee; color: #555; width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 8px; font-size: 0.9rem; }
       .grid-input { border: none; width: 100%; font-size: 1.1rem; outline: none; letter-spacing: 0.5px; font-weight: bold; color: var(--school-blue); }
       .student-name-display { font-size: 0.8rem; font-weight: bold; color: var(--school-blue); min-width: 60px; text-align: right; }
+
+      /* 대여 터치패드 */
+      .pad-display { font-size: 2rem; font-weight: 800; letter-spacing: 10px; text-align: center; color: var(--school-blue); min-height: 48px; }
+      .pad-hint { text-align: center; font-size: 0.85rem; font-weight: bold; min-height: 22px; }
+      .pad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 330px; margin: 0 auto; }
+      .pad-btn { font-size: 1.5rem; font-weight: 700; min-height: 56px; border-radius: 10px; border: 1px solid #dee2e6; background: #fff; color: #333; transition: background 0.1s; }
+      .pad-btn:active { background: #e9ecef; }
+      .pad-btn.pad-fn { font-size: 1rem; }
+      .pad-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #ced4da; border-radius: 20px; padding: 6px 10px; margin: 3px; font-size: 0.85rem; font-weight: bold; }
 
       .tier-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; color: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.2); vertical-align: middle; margin-left: 4px;}
       .app-tile { width: 110px; height: 110px; display: block; }
@@ -84,7 +94,7 @@
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab">📢 제보함</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab">💌 칭찬</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#noticeTab">📢 공지사항</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab">📊 통계</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab">📊 통계/상담</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#rentalTab">📦 대여</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#surveyTab">📝 설문</button></li>
         </ul>
@@ -106,14 +116,11 @@
                      <select id="myClubSelect" class="form-select mb-3" onchange="loadClubMembers()"><option value="">선택하세요</option></select>
 
                      <div id="clubManageArea" style="display:none;">
-                         <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">학생 명단 관리</span><button class="btn btn-sm btn-outline-primary" onclick="toggleMemberAdd()">+ 학생 추가</button></div>
-                         <div id="memberAddArea" class="mb-3" style="display:none;">
-                             <div class="alert alert-info small py-2">학번 5자리를 입력하면 이름이 뜹니다. 다 입력하고 아래 <b>[명단 저장]</b> 버튼을 누르세요.</div>
-                             <div class="grid-container mb-3" id="clubMemberGrid"></div>
-                             <div class="text-end"><button class="btn btn-secondary btn-sm" onclick="toggleMemberAdd()">취소</button> <button class="btn btn-success btn-sm fw-bold" onclick="addMemberToClubFromGrid()">명단 저장</button></div>
+                         <div class="d-flex justify-content-between align-items-center p-2 mb-3 bg-light rounded border">
+                             <span class="small"><i class="bi bi-people-fill text-primary"></i> 명단 <strong id="clubMemberCount">0</strong>명</span>
+                             <button class="btn btn-sm btn-primary fw-bold" onclick="openClubMemberModal()"><i class="bi bi-pencil-square"></i> 학생 명단 관리</button>
                          </div>
-                         <ul class="list-group mb-4 small" id="clubMemberList" style="max-height:150px; overflow-y:auto;"></ul>
-                         <hr><h6 class="fw-bold mb-2">📅 출석 체크</h6>
+                         <h6 class="fw-bold mb-2">📅 출석 체크</h6>
                          <div class="d-flex mb-3"><input type="date" id="attDate" class="form-control me-2"><button class="btn btn-success w-50 fw-bold" onclick="saveAttendance()">저장</button></div>
                          <div id="attendanceCheckList" class="bg-white border rounded p-2 mb-3"></div>
 
@@ -143,9 +150,32 @@
             <div id="teacherNoticeList"></div>
           </div>
 
-          <div class="tab-pane fade" id="statsTab"><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div id="penaltyListArea" class="mb-3"></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
+          <div class="tab-pane fade" id="statsTab"><div class="alert alert-info d-flex align-items-start gap-2 py-2 small mb-3 shadow-sm border-0"><i class="bi bi-lightbulb-fill text-warning fs-5"></i><div><b>학생 이름을 누르면</b> 마일리지 내역 확인, <b>상담 기록 작성·조회</b>, 생활교육위원회 징계 관리를 할 수 있습니다.</div></div><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div id="penaltyListArea" class="mb-3"></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
 
-          <div class="tab-pane fade" id="rentalTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#subUmbrella">☂️ 우산</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#subBall">⚽ 공</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="subUmbrella"><div class="alert alert-info py-2 small mb-3"><b>학번 5자리</b> 입력 후 우산 관리</div><div class="grid-container mb-3" id="umbrellaGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetUmbrellaGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-primary shadow-sm" onclick="processUmbrella('rent')"><i class="bi bi-umbrella"></i> <b>우산 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processUmbrella('return')"><i class="bi bi-arrow-return-left"></i> <b>우산 반납</b> 처리</button></div><div id="unreturnedUmbrellaList"></div></div><div class="tab-pane fade" id="subBall"><div class="alert alert-success py-2 small mb-3"><b>학번 5자리</b> 입력 후 공 관리</div><div class="grid-container mb-3" id="ballGrid"></div><div class="text-end mb-3"><button class="btn btn-sm btn-outline-secondary" onclick="resetBallGrid()">초기화</button></div><div class="d-grid gap-2 mb-4"><button class="btn btn-success shadow-sm" onclick="processBall('rent')"><i class="bi bi-circle"></i> <b>공 대여</b> 처리</button><button class="btn btn-secondary shadow-sm" onclick="processBall('return')"><i class="bi bi-arrow-return-left"></i> <b>공 반납</b> 처리</button></div><div id="unreturnedBallList"></div></div></div></div>
+          <div class="tab-pane fade" id="rentalTab">
+            <ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1">
+              <li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#subBall">⚽ 공</a></li>
+              <li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#subUmbrella">☂️ 우산</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="subBall">
+                <div id="ballPadArea"></div>
+                <div class="d-grid gap-2 mb-4">
+                  <button class="btn btn-success shadow-sm" onclick="processBall('rent')"><i class="bi bi-circle"></i> <b>공 대여</b> 처리</button>
+                  <button class="btn btn-secondary shadow-sm" onclick="processBall('return')"><i class="bi bi-arrow-return-left"></i> <b>공 반납</b> 처리</button>
+                </div>
+                <div id="unreturnedBallList"></div>
+              </div>
+              <div class="tab-pane fade" id="subUmbrella">
+                <div id="umbrellaPadArea"></div>
+                <div class="d-grid gap-2 mb-4">
+                  <button class="btn btn-primary shadow-sm" onclick="processUmbrella('rent')"><i class="bi bi-umbrella"></i> <b>우산 대여</b> 처리</button>
+                  <button class="btn btn-secondary shadow-sm" onclick="processUmbrella('return')"><i class="bi bi-arrow-return-left"></i> <b>우산 반납</b> 처리</button>
+                </div>
+                <div id="unreturnedUmbrellaList"></div>
+              </div>
+            </div>
+          </div>
 
           <div class="tab-pane fade" id="surveyTab"><ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1"><li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabSurveyGen">일반 설문</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyQuiz">💡 퀴즈</a></li><li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabSurveyMbti">MBTI</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="tabSurveyGen"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white fw-bold"><i class="bi bi-plus-circle"></i> 새 설문 만들기</div><div class="card-body p-3 bg-light"><input type="text" id="newSurveyTitle" class="form-control mb-3 fw-bold" placeholder="설문 제목 (예: 이번 달 급식 만족도)"><div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="newSurveyAllowPhoto"><label class="form-check-label small" for="newSurveyAllowPhoto">📷🎬 학생들이 사진/영상을 첨부할 수 있도록 허용 (영상 최대 100MB)</label></div><div id="questionsContainer"></div><button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="addQuestionField()"><i class="bi bi-plus"></i> 문항 추가</button><button class="btn btn-school w-100" onclick="makeSurvey()">설문 등록하기</button></div></div><h6 class="fw-bold text-secondary ps-2 border-start border-4 border-primary mb-3">진행 중인 설문 결과 (삭제 가능)</h6><div class="accordion" id="teacherSurveyList"></div></div><div class="tab-pane fade" id="tabSurveyQuiz">
             <div class="card border-0 shadow-sm mb-4">
@@ -448,6 +478,39 @@
           <button class="btn btn-outline-danger btn-sm fw-bold" onclick="printAllPenaltyCerts()"><i class="bi bi-printer"></i> 전체 출력</button>
         </div>
         <div id="penaltyCertListArea"><div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> 불러오는 중...</div></div>
+      </div>
+      <div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div>
+    </div></div></div>
+
+    <!-- 출석부: 학생 명단 관리 -->
+    <div class="modal fade" id="clubMemberModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header bg-school text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-people-fill"></i> 학생 명단 관리 <span id="clubMemberModalName" class="fw-normal small"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <ul class="nav nav-pills nav-fill mb-2 bg-light rounded p-1">
+          <li class="nav-item"><a class="nav-link active btn-sm" data-bs-toggle="pill" href="#tabClubAdd">＋ 학생 추가</a></li>
+          <li class="nav-item"><a class="nav-link btn-sm" data-bs-toggle="pill" href="#tabClubCurrent">현재 명단 (<span id="clubMemberCount2">0</span>)</a></li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="tabClubAdd">
+            <div class="row g-2 mb-2">
+              <div class="col-4"><select id="clubFilterGrade" class="form-select form-select-sm" onchange="renderClubCandidates()"><option value="">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+              <div class="col-4"><select id="clubFilterClass" class="form-select form-select-sm" onchange="renderClubCandidates()"><option value="">전체 반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
+              <div class="col-4"><input type="text" id="clubFilterSearch" class="form-control form-control-sm" placeholder="이름/학번" onkeyup="renderClubCandidates()"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+              <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="clubCandAll" onchange="toggleAllCandidates()"><label class="form-check-label small fw-bold" for="clubCandAll">전체 선택</label></div>
+              <span class="small text-muted"><span id="clubCandCount">0</span>명 조회됨</span>
+            </div>
+            <div id="clubCandidateList" class="list-group mb-2" style="max-height:300px; overflow-y:auto;"></div>
+            <button class="btn btn-success w-100 fw-bold" onclick="addSelectedCandidates()"><i class="bi bi-plus-circle"></i> 선택한 학생 명단에 추가</button>
+          </div>
+          <div class="tab-pane fade" id="tabClubCurrent">
+            <ul class="list-group small" id="clubMemberList" style="max-height:360px; overflow-y:auto;"></ul>
+          </div>
+        </div>
       </div>
       <div class="modal-footer p-1"><button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">닫기</button></div>
     </div></div></div>
@@ -935,7 +998,7 @@
         allStudents = data.students || []; myClubList = data.myClubs || [];
         var listAll = document.getElementById('studentDataListAll'); listAll.innerHTML = "";
         allStudents.forEach(s=>{ var o = document.createElement('option'); o.value = `${s.id} ${s.name}`; listAll.appendChild(o); });
-        createMultiGrid(); createUmbrellaGrid(); createBallGrid(); updateClubSelectOptions(); createClubGrid();
+        createMultiGrid(); renderRentalPad('ball'); renderRentalPad('umbrella'); updateClubSelectOptions();
 
         var itemHtml = ""; (data.items || []).filter(i => !String(i.name||'').includes('교환')).forEach(i=>{ var c = i.points>0?"btn-outline-primary":"btn-outline-danger"; itemHtml += `<button class="btn ${c} py-3 shadow-sm" onclick="confirmGivePoints('${i.name}', ${i.points})"><div class="d-flex justify-content-between"><span class="fw-bold">${i.name}</span><span class="badge bg-secondary rounded-pill">${i.points}</span></div></button>`; });
         itemHtml += `<button class="btn btn-outline-success py-3 shadow-sm" onclick="confirmGivePoints('기타', 0)"><div class="d-flex justify-content-between"><span class="fw-bold">✏️ 기타 (사유입력)</span><span class="badge bg-secondary rounded-pill">직접입력</span></div></button>`;
@@ -985,7 +1048,13 @@
         }
       }
 
-      function updateClubSelectOptions() { var s=document.getElementById('myClubSelect'); s.innerHTML="<option value=''>선택하세요</option>"; myClubList.forEach(c=>{ var o=document.createElement('option'); o.value=c.id; o.innerText=c.name; s.appendChild(o); }); }
+      function updateClubSelectOptions() {
+        var s=document.getElementById('myClubSelect');
+        var prev = s.value; // 새로고침 후에도 선택한 그룹 유지
+        s.innerHTML="<option value=''>선택하세요</option>";
+        myClubList.forEach(c=>{ var o=document.createElement('option'); o.value=c.id; o.innerText=c.name; s.appendChild(o); });
+        if (prev && myClubList.some(c => String(c.id) === String(prev))) { s.value = prev; loadClubMembers(); }
+      }
       function loadClubMembers() {
           var cid=document.getElementById('myClubSelect').value;
           if(!cid){ document.getElementById('clubManageArea').style.display='none'; return; }
@@ -1079,9 +1148,87 @@
          }
       }
 
-      function renderClubMembers() { var l=document.getElementById('clubMemberList'); l.innerHTML=""; var al=document.getElementById('attendanceCheckList'); al.innerHTML=""; if(selectedClubMembers.length==0) l.innerHTML="<li class='list-group-item'>학생 없음</li>"; else selectedClubMembers.forEach(m=>{ l.innerHTML+=`<li class='list-group-item d-flex justify-content-between'>${m.name}(${m.id}) <button class='btn btn-close btn-sm' onclick='removeMember("${m.id}")'></button></li>`; al.innerHTML+=`<div class='club-member-item'><span>${m.name}</span><div><input type='radio' class='btn-check' name='att_${m.id}' id='o_${m.id}' value='O' checked><label class='btn btn-outline-success btn-sm' for='o_${m.id}'>출</label><input type='radio' class='btn-check' name='att_${m.id}' id='l_${m.id}' value='L'><label class='btn btn-outline-warning btn-sm' for='l_${m.id}'>지</label><input type='radio' class='btn-check' name='att_${m.id}' id='x_${m.id}' value='X'><label class='btn btn-outline-danger btn-sm' for='x_${m.id}'>결</label></div></div>`; }); document.getElementById('attDate').valueAsDate = new Date(); }
+      function renderClubMembers() {
+        var l=document.getElementById('clubMemberList'); l.innerHTML="";
+        var al=document.getElementById('attendanceCheckList'); al.innerHTML="";
+        // 학번순 정렬로 보기 편하게
+        var mem = (selectedClubMembers||[]).slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+        document.getElementById('clubMemberCount').innerText = mem.length;
+        var c2 = document.getElementById('clubMemberCount2'); if (c2) c2.innerText = mem.length;
+        if(mem.length==0) {
+          l.innerHTML="<li class='list-group-item text-muted text-center'>등록된 학생이 없습니다.</li>";
+          al.innerHTML="<div class='text-muted small text-center py-3'>명단에 학생을 추가하면 출석 체크를 할 수 있습니다.</div>";
+        } else mem.forEach(m=>{
+          l.innerHTML+=`<li class='list-group-item d-flex justify-content-between align-items-center'><span>${escapeHtml(m.name)} <span class="text-muted">(${m.id})</span></span> <button class='btn btn-close btn-sm' onclick='removeMember("${m.id}")'></button></li>`;
+          al.innerHTML+=`<div class='club-member-item'><span>${escapeHtml(m.name)} <span class="text-muted small">(${m.id})</span></span><div><input type='radio' class='btn-check' name='att_${m.id}' id='o_${m.id}' value='O' checked><label class='btn btn-outline-success btn-sm' for='o_${m.id}'>출</label><input type='radio' class='btn-check' name='att_${m.id}' id='l_${m.id}' value='L'><label class='btn btn-outline-warning btn-sm' for='l_${m.id}'>지</label><input type='radio' class='btn-check' name='att_${m.id}' id='x_${m.id}' value='X'><label class='btn btn-outline-danger btn-sm' for='x_${m.id}'>결</label></div></div>`;
+        });
+        document.getElementById('attDate').valueAsDate = new Date();
+      }
+      // ===== 출석부: 학생 명단 관리 팝업 =====
+      function openClubMemberModal() {
+        var cid = document.getElementById('myClubSelect').value;
+        if (!cid) return alert("먼저 그룹을 선택하세요.");
+        var c = myClubList.find(x => String(x.id) === String(cid));
+        document.getElementById('clubMemberModalName').innerText = c ? '· ' + c.name : '';
+        document.getElementById('clubFilterGrade').value = '';
+        document.getElementById('clubFilterClass').value = '';
+        document.getElementById('clubFilterSearch').value = '';
+        renderClubMembers();
+        renderClubCandidates();
+        new bootstrap.Modal(document.getElementById('clubMemberModal')).show();
+      }
+      function getClubCandidates() {
+        var gr = document.getElementById('clubFilterGrade').value;
+        var cl = document.getElementById('clubFilterClass').value;
+        var sv = document.getElementById('clubFilterSearch').value.trim();
+        return (allStudents||[]).filter(function(s){
+          var g = String(s.id).substring(0,1);
+          var c = parseInt(String(s.id).substring(1,3), 10);
+          if (gr && gr !== g) return false;
+          if (cl && parseInt(cl,10) !== c) return false;
+          if (sv && !(s.name.includes(sv) || String(s.id).includes(sv))) return false;
+          return true;
+        }).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+      }
+      function renderClubCandidates() {
+        var el = document.getElementById('clubCandidateList');
+        var list = getClubCandidates();
+        document.getElementById('clubCandCount').innerText = list.length;
+        document.getElementById('clubCandAll').checked = false;
+        if (list.length === 0) { el.innerHTML = "<div class='list-group-item text-muted text-center'>조회된 학생이 없습니다.</div>"; return; }
+        var html = '';
+        list.forEach(function(s){
+          var already = selectedClubMembers.some(m => String(m.id) === String(s.id));
+          html += '<label class="list-group-item d-flex align-items-center gap-2 py-2' + (already ? ' bg-light text-muted' : '') + '">' +
+            '<input class="form-check-input mt-0 club-cand" type="checkbox" value="' + s.id + '"' + (already ? ' disabled' : '') + '>' +
+            '<span class="flex-grow-1">' + escapeHtml(s.name) + ' <span class="text-muted small">(' + s.id + ')</span></span>' +
+            (already ? '<span class="badge bg-secondary">등록됨</span>' : '') +
+          '</label>';
+        });
+        el.innerHTML = html;
+      }
+      function toggleAllCandidates() {
+        var on = document.getElementById('clubCandAll').checked;
+        document.querySelectorAll('#clubCandidateList .club-cand:not(:disabled)').forEach(function(c){ c.checked = on; });
+      }
+      function addSelectedCandidates() {
+        var picked = Array.from(document.querySelectorAll('#clubCandidateList .club-cand:checked')).map(c => c.value);
+        if (picked.length === 0) return alert("추가할 학생을 선택하세요.");
+        var cnt = 0;
+        picked.forEach(function(id){
+          if (!selectedClubMembers.some(m => String(m.id) === String(id))) {
+            var s = allStudents.find(st => String(st.id) === String(id));
+            if (s) { selectedClubMembers.push({ id: String(s.id), name: s.name }); cnt++; }
+          }
+        });
+        if (cnt === 0) return alert("이미 모두 등록된 학생입니다.");
+        saveMembersToServer();
+        alert(cnt + "명 추가 완료!");
+        renderClubMembers();
+        renderClubCandidates();
+      }
       function createGrid(id, cnt) { var c=document.getElementById(id); c.innerHTML=""; for(var i=1;i<=cnt;i++){ c.innerHTML+=`<div class="grid-item"><div class="grid-num">${i}</div><div style="flex-grow:1;text-align:center"><input type="text" class="grid-input" placeholder="학번/이름" oninput="checkStudentName(this)"><div class="student-name-display"></div></div></div>`; } }
-      function createMultiGrid() { createGrid('multiGrid',15); } function createUmbrellaGrid(){ createGrid('umbrellaGrid',10); } function createBallGrid(){ createGrid('ballGrid',10); } function createClubGrid(){ createGrid('clubMemberGrid',35); }
+      function createMultiGrid() { createGrid('multiGrid',15); }
       function resetGrid() { document.querySelectorAll('#multiGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
       function checkStudentName(i) {
         var v = i.value.trim();
@@ -1278,11 +1425,15 @@
         }
       }
 
-      async function removeMember(id) { if(confirm("삭제?")) { selectedClubMembers=selectedClubMembers.filter(m=>m.id!=id); saveMembersToServer(); } }
+      async function removeMember(id) {
+        if(!confirm("명단에서 삭제할까요?")) return;
+        selectedClubMembers=selectedClubMembers.filter(m=>String(m.id)!=String(id));
+        saveMembersToServer();
+        renderClubMembers();
+        if (document.getElementById('clubMemberModal').classList.contains('show')) renderClubCandidates();
+      }
       async function saveMembersToServer() { var cid=document.getElementById('myClubSelect').value; showLoading(true); await apiCall('/club', { action: 'updateMembers', clubId: cid, members: selectedClubMembers.map(m=>m.id) }); showLoading(false); loadDashboard(); }
       async function saveAttendance() { var d=document.getElementById('attDate').value; if(!d) return alert("날짜선택"); var cid=document.getElementById('myClubSelect').value; var att=[]; selectedClubMembers.forEach(m=>{ var v=document.querySelector(`input[name="att_${m.id}"]:checked`).value; att.push({id:m.id, status:v}); }); if(confirm("저장?")) { showLoading(true); var r = await apiCall('/club', { action: 'saveAttendance', clubId: cid, date: d, data: JSON.stringify(att) }); showLoading(false); alert(r.msg); } }
-      function toggleMemberAdd() { var d=document.getElementById('memberAddArea'); d.style.display=d.style.display=='none'?'block':'none'; }
-      async function addMemberToClubFromGrid() { var inputs = document.querySelectorAll('#clubMemberGrid input'); var cnt = 0; var ids = collectGridIds('clubMemberGrid'); ids.forEach(val => { if(!selectedClubMembers.find(m => m.id === val)) { var s = allStudents.find(st => String(st.id) === val); if(s) { selectedClubMembers.push({id: val, name: s.name}); cnt++; } } }); if(cnt > 0) { saveMembersToServer(); alert(cnt + "명 추가 완료!"); inputs.forEach(i => { i.value=""; checkStudentName(i); }); } else { alert("추가된 학생이 없습니다."); } }
       function searchSingleUser() { var v=document.getElementById('singleSearchInput').value.trim(); if(v.length<2) return; var l=document.getElementById('searchResultList'); l.innerHTML=""; var f=allStudents.filter(s=>s.name.includes(v)||String(s.id).includes(v)); if(f.length==0) l.innerHTML="<div class='list-group-item'>검색결과 없음</div>"; else f.forEach(s=>{ var b=document.createElement('button'); b.className="list-group-item list-group-item-action"; b.innerHTML=`<b>${s.name}</b> (${s.id})`; b.onclick=function(){ selectUser(s); }; l.appendChild(b); }); }
       function selectUser(s) { selectedSingleUserId=s.id; document.getElementById('searchResultList').innerHTML=""; document.getElementById('selectedStudentCard').style.display='block'; document.getElementById('selName').innerText=s.name; document.getElementById('selId').innerText=s.id; document.getElementById('selPoint').innerText=s.points; document.getElementById('selTier').innerHTML=getTierBadge(s.points); }
       async function deleteLog(r, t, p) { if(confirm("삭제하시겠습니까?")) { showLoading(true); var res = await apiCall('/points', { action: 'delete', rowId: r, studentId: t, point: p }); showLoading(false); alert(res.msg); loadDashboard(); } }
@@ -1714,20 +1865,87 @@
           var r = await apiCall('/praise', { action: mode, ids: ids });
           showLoading(false); alert(r.msg); loadDashboard();
       }
+      // ===== 대여: 터치패드 입력 =====
+      var rentalInput = { umbrella: '', ball: '' };
+      var rentalPicks = { umbrella: [], ball: [] };
+      function renderRentalPad(type) {
+        var area = document.getElementById(type + 'PadArea');
+        if (!area) return;
+        var label = type === 'umbrella' ? '우산' : '공';
+        var keys = '';
+        [1,2,3,4,5,6,7,8,9].forEach(function(n){
+          keys += '<button type="button" class="pad-btn" onclick="padPress(\'' + type + '\',\'' + n + '\')">' + n + '</button>';
+        });
+        keys += '<button type="button" class="pad-btn pad-fn text-danger" onclick="padBack(\'' + type + '\')">← 지움</button>';
+        keys += '<button type="button" class="pad-btn" onclick="padPress(\'' + type + '\',\'0\')">0</button>';
+        keys += '<button type="button" class="pad-btn pad-fn text-success fw-bold" onclick="padAdd(\'' + type + '\')">＋ 추가</button>';
+        area.innerHTML =
+          '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">' +
+            '<div class="text-center small text-muted mb-1">' + label + ' 대여/반납할 <b>학번 5자리</b>를 누르세요</div>' +
+            '<div class="pad-display" id="' + type + 'Display"></div>' +
+            '<div class="pad-hint text-muted mb-2" id="' + type + 'Hint">&nbsp;</div>' +
+            '<div class="pad-grid">' + keys + '</div>' +
+          '</div></div>' +
+          '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-2">' +
+            '<div class="d-flex justify-content-between align-items-center mb-1 px-1">' +
+              '<span class="small fw-bold">선택된 학생 <span class="text-primary" id="' + type + 'Count">0</span>명</span>' +
+              '<button class="btn btn-sm btn-outline-secondary" onclick="padClear(\'' + type + '\')">전체 지우기</button>' +
+            '</div>' +
+            '<div id="' + type + 'Picks"></div>' +
+          '</div></div>';
+        padRender(type);
+      }
+      function padRender(type) {
+        var v = rentalInput[type];
+        var disp = document.getElementById(type + 'Display');
+        var hint = document.getElementById(type + 'Hint');
+        if (!disp) return;
+        disp.innerText = v.padEnd(5, '·');
+        // 5자리가 되면 학생 이름 즉시 확인
+        if (v.length === 5) {
+          var s = allStudents.find(u => String(u.id) === v);
+          if (s) { hint.className = 'pad-hint text-primary mb-2'; hint.innerText = s.name + ' — [＋ 추가]를 누르세요'; }
+          else { hint.className = 'pad-hint text-danger mb-2'; hint.innerText = '해당 학번의 학생이 없습니다'; }
+        } else {
+          hint.className = 'pad-hint text-muted mb-2';
+          hint.innerHTML = v.length === 0 ? '&nbsp;' : (5 - v.length) + '자리 남음';
+        }
+        var picks = rentalPicks[type];
+        document.getElementById(type + 'Count').innerText = picks.length;
+        var el = document.getElementById(type + 'Picks');
+        if (picks.length === 0) { el.innerHTML = '<div class="text-muted small text-center py-2">추가된 학생이 없습니다.</div>'; return; }
+        el.innerHTML = picks.map(function(p){
+          return '<span class="pad-chip">' + escapeHtml(p.name) + ' <span class="text-muted">(' + p.id + ')</span>' +
+            '<button type="button" class="btn-close" style="font-size:0.6rem;" onclick="padRemove(\'' + type + '\',\'' + p.id + '\')"></button></span>';
+        }).join('');
+      }
+      function padPress(type, n) { if (rentalInput[type].length < 5) { rentalInput[type] += n; padRender(type); } }
+      function padBack(type) { rentalInput[type] = rentalInput[type].slice(0, -1); padRender(type); }
+      function padAdd(type) {
+        var v = rentalInput[type];
+        if (v.length !== 5) return alert("학번 5자리를 모두 입력하세요.");
+        var s = allStudents.find(u => String(u.id) === v);
+        if (!s) return alert("해당 학번의 학생이 없습니다.");
+        if (rentalPicks[type].some(p => String(p.id) === v)) { rentalInput[type] = ''; padRender(type); return alert("이미 추가된 학생입니다."); }
+        rentalPicks[type].push({ id: String(s.id), name: s.name });
+        rentalInput[type] = '';
+        padRender(type);
+      }
+      function padRemove(type, id) { rentalPicks[type] = rentalPicks[type].filter(p => String(p.id) !== String(id)); padRender(type); }
+      function padClear(type) { rentalPicks[type] = []; rentalInput[type] = ''; padRender(type); }
+
       async function processUmbrella(mode) { await processItem('umbrella', mode); }
       async function processBall(mode) { await processItem('ball', mode); }
       async function processItem(type, mode) {
-         var gridId = type === 'umbrella' ? 'umbrellaGrid' : 'ballGrid';
-         var ids = collectGridIds(gridId);
-         if(ids.length==0) return alert("입력된 학번 없음");
+         var ids = rentalPicks[type].map(p => p.id);
+         if(ids.length==0) return alert("추가된 학생이 없습니다. 학번을 입력하고 [＋ 추가]를 누르세요.");
          if(!confirm(`${ids.length}명을 ${mode=='rent'?'대여':'반납'} 처리합니까?`)) return;
          showLoading(true);
          var r = await apiCall('/student', { action: 'rental', type: type, teacher: currentUser.name, ids: ids, mode: mode });
-         showLoading(false); alert(r.msg); loadDashboard();
-         if(type==='umbrella') resetUmbrellaGrid(); else resetBallGrid();
+         showLoading(false); alert(r.msg);
+         padClear(type);
+         loadDashboard();
       }
-      function resetUmbrellaGrid() { document.querySelectorAll('#umbrellaGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
-      function resetBallGrid() { document.querySelectorAll('#ballGrid input').forEach(i=>{i.value=""; checkStudentName(i);}); }
       function addQuestionField() {
           var c = document.getElementById('questionsContainer');
           var idx = c.children.length + 1;
