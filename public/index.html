@@ -2652,10 +2652,14 @@
 
       function openHumanRightsPoem() {
         if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
+        var payload = { id: String(currentUser.id), name: currentUser.name || '' };
         try {
-          sessionStorage.setItem('poem_student', JSON.stringify({ id: String(currentUser.id), name: currentUser.name || '' }));
+          sessionStorage.setItem('poem_student', JSON.stringify(payload));
+          localStorage.setItem('poem_student', JSON.stringify(payload));
         } catch (e) {}
-        window.open('/poem.html', 'humanRightsPoem', 'noopener,noreferrer');
+        // noopener면 일부 브라우저에서 sessionStorage가 새 창에 안 넘어감 → 쿼리로도 전달
+        var q = '?sid=' + encodeURIComponent(payload.id) + '&sname=' + encodeURIComponent(payload.name);
+        window.open('/poem.html' + q, 'humanRightsPoem');
       }
 
       async function openPoemReview() {
