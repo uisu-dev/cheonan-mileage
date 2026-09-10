@@ -172,8 +172,9 @@ module.exports = async (req, res) => {
     if (!st.ok) return res.json({ success: false, msg: st.msg });
 
     const poemText = String(poem || '').trim();
-    if (poemText.length < 20) {
-      return res.json({ success: false, msg: '시는 최소 20자 이상 작성해 주세요.' });
+    const poemLines = poemText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (poemLines.length < 10) {
+      return res.json({ success: false, msg: '시는 빈 줄 제외하고 최소 10줄 이상 작성해 주세요. (현재 ' + poemLines.length + '줄)' });
     }
     if (poemText.length > 8000) {
       return res.json({ success: false, msg: '시가 너무 깁니다.' });
