@@ -5,7 +5,7 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const MAX_HISTORY = 12;          // 최근 12메시지 (user+assistant)
 const MAX_USER_CHARS = 800;
 const MAX_TOKENS = 280;
-const MIN_CHAT_INTERVAL_MS = 8000; // 학생당 최소 8초 (생각 시간)
+const MIN_CHAT_INTERVAL_MS = 3000; // 학생당 최소 3초
 const MAX_CHAT_LOG_SUBMIT = 24;
 
 const SYSTEM_PROMPT = `너는 천안중학교 학생의 '인권 관련 생활시' 작성을 돕는 촉진자 챗봇이다.

@@ -33,7 +33,7 @@
     }
     .bubble.bot { background: #eef1ff; color: #1f2937; border-bottom-left-radius: 0.25rem; }
     .bubble.me { background: var(--accent); color: #fff; margin-left: auto; border-bottom-right-radius: 0.25rem; }
-    .poem-area { min-height: 220px; font-size: 1.05rem; line-height: 1.7; }
+    .poem-area { min-height: 380px; height: min(55vh, 520px); font-size: 1.05rem; line-height: 1.7; }
     .hint { font-size: 0.85rem; color: #6b7280; }
   </style>
 </head>
@@ -83,7 +83,7 @@
               <span class="hint" id="statusLabel"></span>
             </div>
             <div class="card-body">
-              <textarea id="poemInput" class="form-control poem-area mb-2" placeholder="여기에 시를 직접 써 주세요.&#10;&#10;예) 줄바꿈으로 행을 나눠도 좋아요."></textarea>
+              <textarea id="poemInput" class="form-control poem-area mb-2" rows="16" placeholder="여기에 시를 직접 써 주세요.&#10;&#10;예) 줄바꿈으로 행을 나눠도 좋아요."></textarea>
               <div class="hint mb-3">빈 줄 제외 <b>최소 10줄</b> 이상이어야 제출됩니다. 제출하면 시와 챗봇 대화가 함께 저장됩니다.</div>
               <button class="btn w-100 fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);" id="btnSubmit" onclick="submitPoem()">
                 제출하기
@@ -149,17 +149,17 @@
         });
         if (!r.success) {
           addBubble('assistant', (r.msg || '응답 실패'));
-          var wait = Number(r.waitMs) || 8000;
+          var wait = Number(r.waitMs) || 3000;
           chatCooldownUntil = Date.now() + wait;
         } else {
           if (Array.isArray(r.messages)) messages = r.messages;
           else addBubble('assistant', r.reply || '');
           renderChat();
-          chatCooldownUntil = Date.now() + 8000;
+          chatCooldownUntil = Date.now() + 3000;
         }
       } catch (e) {
         addBubble('assistant', '네트워크 오류: ' + e);
-        chatCooldownUntil = Date.now() + 8000;
+        chatCooldownUntil = Date.now() + 3000;
       }
       setTimeout(function () {
         document.getElementById('btnSend').disabled = false;
