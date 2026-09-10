@@ -43,7 +43,7 @@
       <div class="d-flex justify-content-between align-items-start gap-2">
         <div>
           <h1 class="h4 fw-bold mb-1"><i class="bi bi-hearts"></i> 인권 생활시 쓰기</h1>
-          <p class="mb-0 small opacity-75">챗봇은 생각만 이끌어 줘요. 시는 꼭 스스로 써야 해요.</p>
+          <p class="mb-0 small opacity-75">존중·배려·공동체 생활도 인권이에요. 챗봇은 생각만 돕고, 시는 스스로 써요.</p>
         </div>
         <div class="text-end">
           <div class="fw-bold" id="whoLabel">학생</div>
@@ -225,9 +225,12 @@
       document.getElementById('whoLabel').innerText = (student.name || '') + ' (' + student.id + ')';
 
       addBubble('assistant',
-        '안녕! 나는 인권 생활시 쓰기 도우미야.\n' +
-        '시는 내가 써 주지 않고, 네가 직접 쓸 수 있게 질문만 할게.\n\n' +
-        '최근에 학교에서나 일상에서 "이건 좀 불공평하다" 또는 "존중받지 못한 것 같다"고 느낀 일이 있었어?'
+        '안녕! 나는 인권 생활시 쓰기 도우미야.\n\n' +
+        '인권은 억울한 일만 뜻하는 게 아니야. 함께 사는 공동체에서 서로를 존중하고, 배려하고, ' +
+        '말을 조심히 듣고, 약속을 지키는 일상도 모두 인권과 이어져 있어.\n\n' +
+        '시는 내가 대신 쓰지 않아. 네 생각을 꺼낼 수 있게 질문만 할게.\n\n' +
+        '요즘 친구·가족·교실에서 "서로를 존중했다"거나 "함께 잘 지냈다"고 느낀 순간이 있어? ' +
+        '아니면 존중·배려가 잘 보였던 장면을 하나 떠올려 볼래?'
       );
 
       try {
