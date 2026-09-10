@@ -84,7 +84,7 @@
             </div>
             <div class="card-body">
               <textarea id="poemInput" class="form-control poem-area mb-2" placeholder="여기에 시를 직접 써 주세요.&#10;&#10;예) 줄바꿈으로 행을 나눠도 좋아요."></textarea>
-              <div class="hint mb-3">제출하면 시와 챗봇 대화 전체가 함께 저장됩니다. (심사 참고용)</div>
+              <div class="hint mb-3">빈 줄 제외 <b>최소 10줄</b> 이상이어야 제출됩니다. 제출하면 시와 챗봇 대화가 함께 저장됩니다.</div>
               <button class="btn w-100 fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);" id="btnSubmit" onclick="submitPoem()">
                 제출하기
               </button>
@@ -149,17 +149,17 @@
         });
         if (!r.success) {
           addBubble('assistant', (r.msg || '응답 실패'));
-          var wait = Number(r.waitMs) || 3000;
+          var wait = Number(r.waitMs) || 8000;
           chatCooldownUntil = Date.now() + wait;
         } else {
           if (Array.isArray(r.messages)) messages = r.messages;
           else addBubble('assistant', r.reply || '');
           renderChat();
-          chatCooldownUntil = Date.now() + 3000;
+          chatCooldownUntil = Date.now() + 8000;
         }
       } catch (e) {
         addBubble('assistant', '네트워크 오류: ' + e);
-        chatCooldownUntil = Date.now() + 3000;
+        chatCooldownUntil = Date.now() + 8000;
       }
       setTimeout(function () {
         document.getElementById('btnSend').disabled = false;
@@ -170,7 +170,8 @@
     async function submitPoem() {
       if (!student) return;
       var poem = (document.getElementById('poemInput').value || '').trim();
-      if (poem.length < 20) return alert('시는 최소 20자 이상 작성해 주세요.');
+      var lines = poem.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+      if (lines.length < 10) return alert('시는 빈 줄 제외하고 최소 10줄 이상 작성해 주세요. (현재 ' + lines.length + '줄)');
       var userTurns = messages.filter(function (m) { return m.role === 'user'; }).length;
       if (userTurns < 2) return alert('챗봇과 조금 더 대화한 뒤 제출해 주세요. (학생 메시지 2회 이상)');
       if (!confirm('시와 대화 내역을 함께 제출할까요?')) return;

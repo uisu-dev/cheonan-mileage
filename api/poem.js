@@ -5,7 +5,7 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const MAX_HISTORY = 12;          // 최근 12메시지 (user+assistant)
 const MAX_USER_CHARS = 800;
 const MAX_TOKENS = 280;
-const MIN_CHAT_INTERVAL_MS = 3000; // 학생당 최소 3초
+const MIN_CHAT_INTERVAL_MS = 8000; // 학생당 최소 8초 (생각 시간)
 const MAX_CHAT_LOG_SUBMIT = 24;
 
 const SYSTEM_PROMPT = `너는 천안중학교 학생의 '인권 관련 생활시' 작성을 돕는 촉진자 챗봇이다.
@@ -172,8 +172,9 @@ module.exports = async (req, res) => {
     if (!st.ok) return res.json({ success: false, msg: st.msg });
 
     const poemText = String(poem || '').trim();
-    if (poemText.length < 20) {
-      return res.json({ success: false, msg: '시는 최소 20자 이상 작성해 주세요.' });
+    const poemLines = poemText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (poemLines.length < 10) {
+      return res.json({ success: false, msg: '시는 빈 줄 제외하고 최소 10줄 이상 작성해 주세요. (현재 ' + poemLines.length + '줄)' });
     }
     if (poemText.length > 8000) {
       return res.json({ success: false, msg: '시가 너무 깁니다.' });
