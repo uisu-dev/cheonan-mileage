@@ -149,3 +149,7 @@ ALTER TABLE club_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE reports DISABLE ROW LEVEL SECURITY;
 ALTER TABLE quizzes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE quiz_logs DISABLE ROW LEVEL SECURITY;
+
+-- 13. 인권 생활시 (상세 DDL은 sql/human_rights_poems.sql)
+-- CREATE TABLE human_rights_poems ...
+-- CREATE TABLE poem_chat_throttle ...

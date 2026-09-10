@@ -260,6 +260,12 @@
                   <div class="app-tile-name">행운의 돌림판<br>관리</div>
                 </div>
               </a>
+              <a href="javascript:void(0)" onclick="openPoemReview()" class="app-tile text-decoration-none">
+                <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#ede7f6);">
+                  <i class="bi bi-journal-richtext app-tile-icon" style="color:#667eea;"></i>
+                  <div class="app-tile-name">인권 생활시<br>심사</div>
+                </div>
+              </a>
             </div>
           </div>
         </div>
@@ -276,6 +282,7 @@
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
+        <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
         <div class="tab-content">
@@ -730,6 +737,22 @@
     </div>
 
     <div class="modal fade" id="pwModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">🔒 비번 변경</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><input type="password" id="newPwInput" class="form-control" placeholder="새 비밀번호"></div></div><div class="modal-footer p-2"><button type="button" class="btn btn-primary btn-sm fw-bold" onclick="changePasswordAction()">변경</button></div></div></div></div>
+
+    <div class="modal fade" id="poemReviewModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:linear-gradient(to right,#667eea,#764ba2);">
+            <h5 class="modal-title fw-bold"><i class="bi bi-journal-richtext"></i> 인권 생활시 제출 목록</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info small mb-3"><i class="bi bi-info-circle"></i> 시와 챗봇 대화 전체를 함께 확인할 수 있습니다. (AI가 시를 대신 쓰지 않았는지 심사할 때 참고)</div>
+            <div id="poemReviewList" class="list-group"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <datalist id="studentDataListAll"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2626,6 +2649,52 @@
       }
 
       // 학생 측
+
+      function openHumanRightsPoem() {
+        if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
+        try {
+          sessionStorage.setItem('poem_student', JSON.stringify({ id: String(currentUser.id), name: currentUser.name || '' }));
+        } catch (e) {}
+        window.open('/poem.html', 'humanRightsPoem', 'noopener,noreferrer');
+      }
+
+      async function openPoemReview() {
+        var modalEl = document.getElementById('poemReviewModal');
+        var listEl = document.getElementById('poemReviewList');
+        listEl.innerHTML = '<div class="text-center text-muted py-4">불러오는 중…</div>';
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        try {
+          var r = await apiCall('/poem', { action: 'list', teacherId: currentUser.id, teacherName: currentUser.name });
+          if (!r.success) {
+            listEl.innerHTML = '<div class="alert alert-danger">' + (r.msg || '불러오기 실패') + '</div>';
+            return;
+          }
+          var rows = r.submissions || [];
+          if (!rows.length) {
+            listEl.innerHTML = '<div class="text-center text-muted py-4">아직 제출된 생활시가 없습니다.</div>';
+            return;
+          }
+          listEl.innerHTML = rows.map(function(s, idx) {
+            var chat = (s.chatLog || []).map(function(m) {
+              var who = m.role === 'assistant' ? '챗봇' : (m.role === 'user' ? '학생' : m.role);
+              var text = String(m.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+              return '<div class="small mb-1"><span class="badge ' + (m.role==='assistant'?'bg-secondary':'bg-primary') + '">' + who + '</span> ' + text.replace(/\n/g,'<br>') + '</div>';
+            }).join('');
+            var poem = String(s.poem || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+            var when = s.updatedAt || s.createdAt || '';
+            return '<div class="list-group-item">' +
+              '<div class="d-flex justify-content-between align-items-start mb-2">' +
+              '<div><span class="fw-bold">' + (s.studentName||'') + '</span> <span class="badge bg-secondary">' + (s.studentId||'') + '</span></div>' +
+              '<small class="text-muted">' + when + '</small></div>' +
+              '<div class="card border-0 bg-light mb-2"><div class="card-body py-2"><div class="small text-muted mb-1">제출한 시</div><div style="white-space:pre-wrap;">' + poem + '</div></div></div>' +
+              '<details><summary class="small fw-bold text-primary">챗봇 대화 보기 (' + (s.chatLog||[]).length + '턴)</summary><div class="mt-2 p-2 border rounded bg-white" style="max-height:280px;overflow:auto;">' + (chat || '<span class="text-muted">대화 없음</span>') + '</div></details>' +
+              '</div>';
+          }).join('');
+        } catch (e) {
+          listEl.innerHTML = '<div class="alert alert-danger">오류: ' + e + '</div>';
+        }
+      }
+
       function openRouletteStudent() {
         renderRouletteStudent();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('rouletteStudentModal')).show();
