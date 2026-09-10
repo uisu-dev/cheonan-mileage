@@ -55,7 +55,7 @@
 
   <div class="container pb-5">
     <div id="noLogin" class="alert alert-warning" style="display:none;">
-      메인에서 학생으로 로그인한 뒤 <b>인권 생활시 쓰기</b> 배너로 열어 주세요.
+      메인에서 학생으로 로그인한 뒤 <b>인권 생활시 쓰기</b> 버튼을 다시 눌러 주세요. (이 창을 주소로 직접 열면 학생 정보가 없어요)
     </div>
 
     <div id="app" style="display:none;">
@@ -191,10 +191,32 @@
       document.getElementById('btnSubmit').disabled = false;
     }
 
-    async function boot() {
+    function readStudent() {
       try {
-        student = JSON.parse(sessionStorage.getItem('poem_student') || 'null');
-      } catch (e) { student = null; }
+        var q = new URLSearchParams(location.search);
+        var sid = (q.get('sid') || '').trim();
+        var sname = (q.get('sname') || '').trim();
+        if (sid) return { id: sid, name: sname };
+      } catch (e) {}
+      try {
+        var fromSession = JSON.parse(sessionStorage.getItem('poem_student') || 'null');
+        if (fromSession && fromSession.id) return fromSession;
+      } catch (e) {}
+      try {
+        var fromLocal = JSON.parse(localStorage.getItem('poem_student') || 'null');
+        if (fromLocal && fromLocal.id) return fromLocal;
+      } catch (e) {}
+      return null;
+    }
+
+    async function boot() {
+      student = readStudent();
+      if (student && student.id) {
+        try {
+          sessionStorage.setItem('poem_student', JSON.stringify(student));
+          localStorage.setItem('poem_student', JSON.stringify(student));
+        } catch (e) {}
+      }
       if (!student || !student.id) {
         document.getElementById('noLogin').style.display = 'block';
         return;
