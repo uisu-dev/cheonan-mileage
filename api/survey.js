@@ -3,11 +3,9 @@ const { getSupabase, cors } = require('../lib/supabase');
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
 
 // ===== 상점 우수자(전교 상위 5명) 설문 =====
-// 상점 = logs 중 교사가 직접 준 양수 포인트 합계 (teacher <> 'System': 출석/퀴즈/설문/칭찬 등 시스템 지급 제외,
-// 음수(벌점·상품교환) 제외). 동점이면 5위 동점자는 모두 포함.
+// 대상자: 2026-10-14 기준 상점(교사 지급 양수 포인트 합계) 전교 상위 5명으로 고정.
 const MERIT_SURVEY_ID = 'merit_top5_2026';
 const MERIT_SURVEY_TITLE = '상점 우수자 설문';
-const MERIT_TOP_N = 5;
 const MERIT_QUESTIONS = [
   '올해 초 나의 학교생활은 어땠나요? 잘하고 있었던 점과 더 노력하고 싶었던 점을 적어 주세요.',
   '어떤 행동으로 상점을 받았나요? 가장 기억에 남는 한 가지를 골라, 언제·어디서·무엇을 했는지 적어 주세요.',
@@ -19,27 +17,13 @@ const MERIT_QUESTIONS = [
   '앞으로 계속하고 싶은 행동은 무엇인가요? 상점 운영이나 학교 활동에서 개선되었으면 하는 점도 적어 주세요.'
 ].map(q => ({ q, type: 'text', opts: [] }));
 
+// 2026-10-14 기준 전교 상점 상위 5명으로 대상자 고정 (실시간 계산 X)
+const MERIT_TOP5_IDS = ['10327', '10521', '10320', '20126', '10605'];
+
 async function getMeritTop(supabase) {
-  const { data: users } = await supabase.from('users').select('id,name,role');
-  const students = new Map();
-  (users || []).forEach(u => { if (String(u.role || '').toLowerCase().trim() === 'student') students.set(String(u.id), u.name); });
-  const totals = {};
-  const PAGE = 1000;
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase.from('logs').select('id,student_id,point')
-      .gt('point', 0).neq('teacher', 'System').order('id', { ascending: true }).range(from, from + PAGE - 1);
-    if (error) throw error;
-    (data || []).forEach(l => {
-      const sid = String(l.student_id || '').trim();
-      if (students.has(sid)) totals[sid] = (totals[sid] || 0) + (Number(l.point) || 0);
-    });
-    if (!data || data.length < PAGE) break;
-  }
-  const ranked = Object.keys(totals).map(id => ({ id, name: students.get(id), total: totals[id] }))
-    .sort((a, b) => b.total - a.total);
-  if (ranked.length <= MERIT_TOP_N) return ranked;
-  const cut = ranked[MERIT_TOP_N - 1].total;
-  return ranked.filter(r => r.total >= cut);
+  const { data } = await supabase.from('users').select('id,name').in('id', MERIT_TOP5_IDS);
+  const names = new Map((data || []).map(u => [String(u.id), u.name]));
+  return MERIT_TOP5_IDS.map(id => ({ id, name: names.get(id) || '' }));
 }
 
 // 설문 행이 없으면 생성 (status 'M' = 대상자 전용 → 일반 설문 목록(status 'O')에는 안 보임)
