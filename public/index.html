@@ -289,6 +289,7 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
+        <div class="card shadow-sm border-0 mb-3" style="background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-2" style="font-size:1rem;">🗳️ 2026 충남형 학교민주주의 지수 진단 조사</div><div class="d-flex align-items-center flex-wrap gap-2 mb-2"><span class="bg-white rounded px-2 py-1 fw-bold" style="color:#0b6e63;font-size:1.25rem;letter-spacing:1px;">접속 코드: 116724</span><button type="button" class="btn btn-sm btn-outline-light fw-bold" onclick="copyDemoCode()"><i class="bi bi-clipboard"></i> 코드 복사</button></div><button type="button" class="btn btn-light w-100 fw-bold" style="color:#0b6e63;" onclick="openDemoSurvey()">조사 참여하기 <i class="bi bi-box-arrow-up-right"></i></button></div></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
@@ -1793,6 +1794,20 @@
           }
       }
       // ===== 상점 우수자(전교 상위 5명) 설문 =====
+      // ===== 2026 충남형 학교민주주의 지수 진단 조사 =====
+      var DEMO_SURVEY_URL = 'https://ksurv.kr/akM3PDs8PzY', DEMO_SURVEY_CODE = '116724';
+      function copyDemoCode() {
+          function fallback() {
+              var t = document.createElement('textarea'); t.value = DEMO_SURVEY_CODE; t.style.position = 'fixed'; t.style.opacity = '0';
+              document.body.appendChild(t); t.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+              document.body.removeChild(t); alert(ok ? '접속 코드 ' + DEMO_SURVEY_CODE + ' 복사됨!' : '접속 코드: ' + DEMO_SURVEY_CODE + ' (직접 입력해 주세요)');
+          }
+          if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(DEMO_SURVEY_CODE).then(function(){ alert('접속 코드 ' + DEMO_SURVEY_CODE + ' 복사됨!'); }, fallback);
+          else fallback();
+      }
+      function openDemoSurvey() {
+          if (confirm('학교 접속 코드는 ' + DEMO_SURVEY_CODE + ' 입니다.\n조사 페이지에서 이 코드를 입력하세요.\n\n조사 페이지를 열까요?')) window.open(DEMO_SURVEY_URL, '_blank', 'noopener');
+      }
       var meritSurveyInfo = null;
       async function loadMeritSurveyBanner() {
           var el = document.getElementById('meritSurveyBanner');
