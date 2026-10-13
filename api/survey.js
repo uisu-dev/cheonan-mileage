@@ -2,6 +2,55 @@ const { getSupabase, cors } = require('../lib/supabase');
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
 
+// ===== 상점 우수자(전교 상위 5명) 설문 =====
+// 상점 = logs 중 교사가 직접 준 양수 포인트 합계 (teacher <> 'System': 출석/퀴즈/설문/칭찬 등 시스템 지급 제외,
+// 음수(벌점·상품교환) 제외). 동점이면 5위 동점자는 모두 포함.
+const MERIT_SURVEY_ID = 'merit_top5_2026';
+const MERIT_SURVEY_TITLE = '상점 우수자 설문';
+const MERIT_TOP_N = 5;
+const MERIT_QUESTIONS = [
+  '올해 초 나의 학교생활은 어땠나요? 잘하고 있었던 점과 더 노력하고 싶었던 점을 적어 주세요.',
+  '어떤 행동으로 상점을 받았나요? 가장 기억에 남는 한 가지를 골라, 언제·어디서·무엇을 했는지 적어 주세요.',
+  '그때 선생님은 어떤 말이나 행동을 해 주셨나요? 칭찬, 인정, 도움 등 기억나는 내용을 적어 주세요.',
+  '그 경험을 했을 때 어떤 생각이나 기분이 들었나요?',
+  '그 이후 학교생활에서 달라진 점이나 계속 실천하게 된 행동이 있나요? 변화가 없다면 그대로 적어 주세요.',
+  '최근에 그 행동을 실제로 실천한 장면을 하나 알려 주세요. 언제, 어떤 상황에서, 어떻게 행동했나요?',
+  '그 행동을 실천하는 데 무엇이 도움이 되었나요? 상점, 선생님의 말, 친구, 학교 활동, 자신의 노력 등 도움이 된 것과 이유를 적어 주세요.',
+  '앞으로 계속하고 싶은 행동은 무엇인가요? 상점 운영이나 학교 활동에서 개선되었으면 하는 점도 적어 주세요.'
+].map(q => ({ q, type: 'text', opts: [] }));
+
+async function getMeritTop(supabase) {
+  const { data: users } = await supabase.from('users').select('id,name,role');
+  const students = new Map();
+  (users || []).forEach(u => { if (String(u.role || '').toLowerCase().trim() === 'student') students.set(String(u.id), u.name); });
+  const totals = {};
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase.from('logs').select('id,student_id,point')
+      .gt('point', 0).neq('teacher', 'System').order('id', { ascending: true }).range(from, from + PAGE - 1);
+    if (error) throw error;
+    (data || []).forEach(l => {
+      const sid = String(l.student_id || '').trim();
+      if (students.has(sid)) totals[sid] = (totals[sid] || 0) + (Number(l.point) || 0);
+    });
+    if (!data || data.length < PAGE) break;
+  }
+  const ranked = Object.keys(totals).map(id => ({ id, name: students.get(id), total: totals[id] }))
+    .sort((a, b) => b.total - a.total);
+  if (ranked.length <= MERIT_TOP_N) return ranked;
+  const cut = ranked[MERIT_TOP_N - 1].total;
+  return ranked.filter(r => r.total >= cut);
+}
+
+// 설문 행이 없으면 생성 (status 'M' = 대상자 전용 → 일반 설문 목록(status 'O')에는 안 보임)
+async function ensureMeritSurvey(supabase) {
+  const { data } = await supabase.from('surveys').select('id,status').eq('id', MERIT_SURVEY_ID);
+  if (data && data.length) return data[0];
+  const row = { id: MERIT_SURVEY_ID, title: MERIT_SURVEY_TITLE, questions: MERIT_QUESTIONS, status: 'M', allow_photo: false, allow_video: false };
+  await supabase.from('surveys').insert(row);
+  return row;
+}
+
 module.exports = async (req, res) => {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -119,6 +168,46 @@ module.exports = async (req, res) => {
     return res.json({ success: true, msg: '완료' });
   }
 
+  // 학생: 상점 우수자 설문 대상 여부 / 참여 여부
+  if (action === 'meritStatus') {
+    const sid = String(req.body.studentId || '').trim();
+    if (!sid) return res.json({ success: false, eligible: false });
+    try {
+      const top = await getMeritTop(supabase);
+      if (!top.some(t => t.id === sid)) return res.json({ success: true, eligible: false });
+      const sv = await ensureMeritSurvey(supabase);
+      const { data: ex } = await supabase.from('survey_logs').select('id').eq('vote_id', MERIT_SURVEY_ID).eq('student_id', sid);
+      return res.json({ success: true, eligible: true, open: sv.status === 'M', done: !!(ex && ex.length),
+        surveyId: MERIT_SURVEY_ID, title: MERIT_SURVEY_TITLE, questions: MERIT_QUESTIONS.map(x => x.q) });
+    } catch (e) {
+      return res.json({ success: false, eligible: false, msg: String(e.message || e) });
+    }
+  }
+
+  // 교사: 현재 대상자 목록
+  if (action === 'meritTop') {
+    try { return res.json({ success: true, list: await getMeritTop(supabase) }); }
+    catch (e) { return res.json({ success: false, msg: String(e.message || e) }); }
+  }
+
+  // 학생: 상점 우수자 설문 제출 (서버에서 자격 재확인, 1인 1회 - 재제출 불가)
+  if (action === 'meritVote') {
+    const sid = String(req.body.studentId || '').trim();
+    const answers = req.body.answers;
+    if (!sid || !Array.isArray(answers) || answers.length !== MERIT_QUESTIONS.length) return res.json({ success: false, msg: '정보 누락' });
+    const clean = answers.map(a => String(a || '').trim().slice(0, 2000));
+    if (clean.some(a => !a)) return res.json({ success: false, msg: '모든 문항에 답해 주세요.' });
+    const top = await getMeritTop(supabase);
+    if (!top.some(t => t.id === sid)) return res.json({ success: false, msg: '상점 우수자 설문 대상이 아닙니다.' });
+    const sv = await ensureMeritSurvey(supabase);
+    if (sv.status !== 'M') return res.json({ success: false, msg: '마감된 설문입니다.' });
+    const { data: ex } = await supabase.from('survey_logs').select('id').eq('vote_id', MERIT_SURVEY_ID).eq('student_id', sid);
+    if (ex && ex.length) return res.json({ success: false, msg: '이미 참여함' });
+    const { error } = await supabase.from('survey_logs').insert({ vote_id: MERIT_SURVEY_ID, student_id: sid, answer: clean });
+    if (error) return res.json({ success: false, msg: '제출 실패: ' + error.message });
+    return res.json({ success: true, msg: '제출 완료! 소중한 답변 고마워요.' });
+  }
+
   if (action === 'delete') {
     const { id } = req.body;
     await supabase.from('surveys').delete().eq('id', id);
@@ -128,12 +217,14 @@ module.exports = async (req, res) => {
   if (action === 'close') {
     const { id } = req.body;
     await supabase.from('surveys').update({ status: 'C' }).eq('id', id);
+    if (id === MERIT_SURVEY_ID) return res.json({ success: true, msg: '마감되었습니다.' });
     return res.json({ success: true, msg: '마감되었습니다. 학생 화면에서 숨겨집니다.' });
   }
 
   if (action === 'reopen') {
     const { id } = req.body;
-    await supabase.from('surveys').update({ status: 'O' }).eq('id', id);
+    // 상점 우수자 설문은 'O'(전체 공개)가 아니라 'M'(대상자 전용)으로 되돌림
+    await supabase.from('surveys').update({ status: id === MERIT_SURVEY_ID ? 'M' : 'O' }).eq('id', id);
     return res.json({ success: true, msg: '다시 공개되었습니다.' });
   }
 

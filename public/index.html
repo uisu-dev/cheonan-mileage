@@ -289,6 +289,7 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
+        <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
         <div class="tab-content">
@@ -726,6 +727,13 @@
       </div>
     </div>
 
+    <div class="modal fade" id="meritSurveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(to right,#f7971e,#ffd200);"><h5 class="modal-title fw-bold text-white">🏅 상점 우수자 설문</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="meritSurveyBody"></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button><button type="button" class="btn btn-warning fw-bold" onclick="submitMeritSurvey()">제출하기</button></div>
+      </div></div>
+    </div>
     <div class="modal fade" id="surveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -1029,6 +1037,7 @@
              rHtml += `<div class="col-6"><div class="card h-100 shadow-sm border-0"><div class="card-body text-center"><h6 class="fw-bold">${r.name}</h6><p class="text-primary fw-bold mb-2">${r.price} P</p><button class="btn btn-sm btn-outline-primary w-100" onclick="alert('학생부 선생님께 문의하세요!')">교환불가</button></div></div></div>`;
         });
         document.getElementById('rewardListStudent').innerHTML = rHtml;
+        loadMeritSurveyBanner();
 
         var sHtml = "";
         if(data.surveyList && data.surveyList.length > 0) {
@@ -1106,7 +1115,7 @@
            });
         } else { rt.innerHTML = "<tr><td colspan='5' class='text-center text-muted'>접수된 제보가 없습니다.</td></tr>"; }
 
-        var sHtml = ""; if(data.surveyList && data.surveyList.length > 0) { data.surveyList.forEach((s, idx) => { var isClosed = s.status === 'C'; var stateBadge = isClosed ? '<span class="badge bg-secondary ms-2">마감됨</span>' : ''; var actionBtn = isClosed ? `<span class="badge bg-success ms-1" onclick="reopenSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">다시 게시</span><span class="badge bg-danger ms-1" onclick="deleteSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">완전 삭제</span>` : `<span class="badge bg-warning text-dark ms-2" onclick="closeSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">마감</span>`; sHtml += `<div class="accordion-item mb-2 shadow-sm border-0 overflow-hidden" style="border-radius:10px;"><h2 class="accordion-header" id="heading${idx}"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">${s.title}${stateBadge} ${actionBtn}</button></h2><div id="collapse${idx}" class="accordion-collapse collapse" data-bs-parent="#teacherSurveyList"><div class="accordion-body bg-light">${s.stats}</div></div></div>`; }); } else { sHtml = "<div class='text-center text-muted py-3'>등록된 설문이 없습니다.</div>"; } document.getElementById('teacherSurveyList').innerHTML = sHtml;
+        var sHtml = ""; if(data.surveyList && data.surveyList.length > 0) { data.surveyList.forEach((s, idx) => { var isClosed = s.status === 'C'; var stateBadge = (isClosed ? '<span class="badge bg-secondary ms-2">마감됨</span>' : '') + (String(s.id).indexOf('merit_') === 0 ? '<span class="badge bg-warning text-dark ms-2">🏅 상점 상위5 전용</span>' : ''); var actionBtn = isClosed ? `<span class="badge bg-success ms-1" onclick="reopenSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">다시 게시</span><span class="badge bg-danger ms-1" onclick="deleteSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">완전 삭제</span>` : `<span class="badge bg-warning text-dark ms-2" onclick="closeSurveyAction('${s.id}'); event.stopPropagation();" style="cursor:pointer;">마감</span>`; sHtml += `<div class="accordion-item mb-2 shadow-sm border-0 overflow-hidden" style="border-radius:10px;"><h2 class="accordion-header" id="heading${idx}"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">${s.title}${stateBadge} ${actionBtn}</button></h2><div id="collapse${idx}" class="accordion-collapse collapse" data-bs-parent="#teacherSurveyList"><div class="accordion-body bg-light">${s.stats}</div></div></div>`; }); } else { sHtml = "<div class='text-center text-muted py-3'>등록된 설문이 없습니다.</div>"; } document.getElementById('teacherSurveyList').innerHTML = sHtml;
         renderMbtiStats();
         var pHtml = ""; if(data.pendingPraises && data.pendingPraises.length > 0) { data.pendingPraises.forEach(p => { pHtml += `<div class="card mb-2 border-warning"><div class="card-body p-2"><div class="form-check"><input class="form-check-input praise-checkbox" type="checkbox" value="${p.id}" id="praise${p.id}"><label class="form-check-label w-100" for="praise${p.id}"><div class="d-flex justify-content-between small mb-1"><span class="text-muted">${p.date}</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></label></div></div></div>`; }); } else { pHtml = "<div class='text-center text-muted py-3'>대기 중인 칭찬 없음</div>"; } document.getElementById('teacherPraiseListPending').innerHTML = pHtml;
         var phHtml = ""; if(data.approvedPraises && data.approvedPraises.length > 0) { data.approvedPraises.forEach(p => { phHtml += `<div class="card mb-2 border-success"><div class="card-body p-2"><div class="d-flex justify-content-between small text-muted mb-1"><span>${p.date}</span><span class="badge bg-success">승인완료</span></div><div class="fw-bold">${p.senderName} → ${p.receiverName}</div><div class="small text-secondary mt-1">${p.content}</div></div></div>`; }); } else { phHtml = "<div class='text-center text-muted py-3'>승인 내역 없음</div>"; } document.getElementById('teacherPraiseListHistory').innerHTML = phHtml;
@@ -1782,6 +1791,44 @@
               alert(r.msg);
               if(r.success) loadDashboard();
           }
+      }
+      // ===== 상점 우수자(전교 상위 5명) 설문 =====
+      var meritSurveyInfo = null;
+      async function loadMeritSurveyBanner() {
+          var el = document.getElementById('meritSurveyBanner');
+          if (!el) return;
+          el.style.setProperty('display', 'none', 'important');
+          meritSurveyInfo = null;
+          try {
+              var r = await apiCall('/survey', { action: 'meritStatus', studentId: currentUser.id });
+              if (r && r.eligible && r.open) {
+                  meritSurveyInfo = r;
+                  document.getElementById('meritSurveyBtn').innerHTML = '<i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문' + (r.done ? ' (제출 완료)' : '');
+                  el.style.setProperty('display', 'grid', 'important');
+              }
+          } catch (e) { console.warn('merit status', e); }
+      }
+      function openMeritSurvey() {
+          if (!meritSurveyInfo) return;
+          if (meritSurveyInfo.done) { alert('이미 제출했어요. 참여해 주셔서 고마워요!'); return; }
+          var html = '<div class="alert alert-warning small">전교 상점 우수자로 선정된 학생에게만 보이는 설문이에요. 솔직하게 적어 주세요.</div>';
+          meritSurveyInfo.questions.forEach(function(q, i) {
+              html += '<div class="mb-4"><h6 class="fw-bold">' + (i === 0 ? '' : i + '. ') + q + '</h6><textarea class="form-control merit-ans" rows="3" maxlength="2000" data-qi="' + i + '" placeholder="답변을 입력하세요"></textarea></div>';
+          });
+          document.getElementById('meritSurveyBody').innerHTML = html;
+          new bootstrap.Modal(document.getElementById('meritSurveyModal')).show();
+      }
+      async function submitMeritSurvey() {
+          var ans = Array.prototype.map.call(document.querySelectorAll('.merit-ans'), function(t) { return t.value.trim(); });
+          if (ans.some(function(a) { return !a; })) { alert('모든 문항에 답해 주세요.'); return; }
+          if (!confirm('제출하면 수정할 수 없어요. 제출할까요?')) return;
+          showLoading(true);
+          try {
+              var r = await apiCall('/survey', { action: 'meritVote', studentId: currentUser.id, answers: ans });
+              showLoading(false);
+              alert(r.msg);
+              if (r.success) { bootstrap.Modal.getInstance(document.getElementById('meritSurveyModal')).hide(); loadMeritSurveyBanner(); }
+          } catch (e) { showLoading(false); alert('제출 오류: ' + (e.message || e)); }
       }
       var currentSurveyId = ''; var currentSurveyQs = []; var currentSurveyAllowPhoto = false; var currentSurveyAllowVideo = false;
       var SURVEY_VIDEO_MAX = 100 * 1024 * 1024; // 100MB
