@@ -275,7 +275,7 @@ function getSurveyStats(vid, qs, logs, allowPhoto, allowVideo) {
       try {
         const a = typeof log.answer === 'string' ? JSON.parse(log.answer) : log.answer;
         a.forEach((v, x) => {
-          if (qs[x] && qs[x].type === 'text') st[x].unshift(v);
+          if (qs[x] && qs[x].type === 'text') st[x].unshift(String(vid).startsWith('merit_') ? `<b>[${log.student_id}]</b> ` + String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) : v);
           else if (st[x]) st[x][v] = (st[x][v] || 0) + 1;
         });
       } catch (e) { }
