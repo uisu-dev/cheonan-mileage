@@ -228,11 +228,18 @@ module.exports = async (req, res) => {
     const { studentId } = req.body;
     const st = await assertStudent(supabase, studentId);
     if (!st.ok) return res.json({ success: false, msg: st.msg });
-    const { data, error } = await supabase
-      .from('human_rights_poems')
-      .select('*')
-      .eq('student_id', String(studentId).trim())
-      .maybeSingle();
+    // 전체 제출분을 페이지 단위로 모두 가져옴 (학년/반 필터가 전체를 대상으로 하도록)
+    let data = [], error = null;
+    for (let from = 0; from < 10000; from += 1000) {
+      const r = await supabase
+        .from('human_rights_poems')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .range(from, from + 999);
+      if (r.error) { error = r.error; break; }
+      data = data.concat(r.data || []);
+      if (!r.data || r.data.length < 1000) break;
+    }
     if (error) {
       if (/does not exist|schema cache/i.test(String(error.message || ''))) {
         return res.json({ success: true, submission: null });

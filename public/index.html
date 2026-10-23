@@ -762,6 +762,13 @@
           </div>
           <div class="modal-body">
             <div class="alert alert-info small mb-3"><i class="bi bi-info-circle"></i> 시와 챗봇 대화 전체를 함께 확인할 수 있습니다. (AI가 시를 대신 쓰지 않았는지 심사할 때 참고)</div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <select id="poemFilterGrade" class="form-select form-select-sm" style="width:auto;" onchange="onPoemGradeChange()"><option value="">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+              <select id="poemFilterClass" class="form-select form-select-sm" style="width:auto;" onchange="renderPoemReview()"><option value="">전체 반</option></select>
+              <button type="button" id="poemRefreshBtn" class="btn btn-sm btn-outline-primary" onclick="loadPoemReview()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
+              <span id="poemReviewCount" class="badge bg-primary ms-auto"></span>
+            </div>
+            <div id="poemMissingBox"></div>
             <div id="poemReviewList" class="list-group"></div>
           </div>
         </div>
@@ -2730,41 +2737,73 @@
         window.open('/poem.html' + q, 'humanRightsPoem');
       }
 
+      var poemReviewRows = [];
+      function poemGC(id) { id = String(id||''); return /^\d{5}$/.test(id) ? { g: id.charAt(0), c: String(parseInt(id.substr(1,2),10)) } : { g: '', c: '' }; }
+      function poemEsc(t) { return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function onPoemGradeChange() {
+        var g = document.getElementById('poemFilterGrade').value;
+        var sel = document.getElementById('poemFilterClass'), prev = sel.value, set = {};
+        if (g) {
+          poemReviewRows.forEach(function(s){ var x = poemGC(s.studentId); if (x.g === g) set[x.c] = 1; });
+          (allStudents||[]).forEach(function(s){ var x = poemGC(s.id); if (x.g === g) set[x.c] = 1; });
+        }
+        var cls = Object.keys(set).map(Number).sort(function(a,b){return a-b;});
+        sel.innerHTML = '<option value="">전체 반</option>' + cls.map(function(c){ return '<option value="'+c+'">'+c+'반</option>'; }).join('');
+        sel.disabled = !g;
+        if (cls.indexOf(Number(prev)) >= 0) sel.value = prev;
+        renderPoemReview();
+      }
       async function openPoemReview() {
-        var modalEl = document.getElementById('poemReviewModal');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('poemReviewModal')).show();
+        await loadPoemReview();
+      }
+      async function loadPoemReview() {
         var listEl = document.getElementById('poemReviewList');
+        var btn = document.getElementById('poemRefreshBtn');
         listEl.innerHTML = '<div class="text-center text-muted py-4">불러오는 중…</div>';
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        document.getElementById('poemMissingBox').innerHTML = '';
+        btn.disabled = true;
         try {
           var r = await apiCall('/poem', { action: 'list', teacherId: currentUser.id, teacherName: currentUser.name });
-          if (!r.success) {
-            listEl.innerHTML = '<div class="alert alert-danger">' + (r.msg || '불러오기 실패') + '</div>';
-            return;
-          }
-          var rows = r.submissions || [];
-          if (!rows.length) {
-            listEl.innerHTML = '<div class="text-center text-muted py-4">아직 제출된 생활시가 없습니다.</div>';
-            return;
-          }
-          listEl.innerHTML = rows.map(function(s, idx) {
-            var chat = (s.chatLog || []).map(function(m) {
-              var who = m.role === 'assistant' ? '챗봇' : (m.role === 'user' ? '학생' : m.role);
-              var text = String(m.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-              return '<div class="small mb-1"><span class="badge ' + (m.role==='assistant'?'bg-secondary':'bg-primary') + '">' + who + '</span> ' + text.replace(/\n/g,'<br>') + '</div>';
-            }).join('');
-            var poem = String(s.poem || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-            var when = s.updatedAt || s.createdAt || '';
-            return '<div class="list-group-item">' +
-              '<div class="d-flex justify-content-between align-items-start mb-2">' +
-              '<div><span class="fw-bold">' + (s.studentName||'') + '</span> <span class="badge bg-secondary">' + (s.studentId||'') + '</span></div>' +
-              '<small class="text-muted">' + when + '</small></div>' +
-              '<div class="card border-0 bg-light mb-2"><div class="card-body py-2"><div class="small text-muted mb-1">제출한 시</div><div style="white-space:pre-wrap;">' + poem + '</div></div></div>' +
-              '<details><summary class="small fw-bold text-primary">챗봇 대화 보기 (' + (s.chatLog||[]).length + '턴)</summary><div class="mt-2 p-2 border rounded bg-white" style="max-height:280px;overflow:auto;">' + (chat || '<span class="text-muted">대화 없음</span>') + '</div></details>' +
-              '</div>';
-          }).join('');
+          if (!r.success) { listEl.innerHTML = '<div class="alert alert-danger">' + (r.msg || '불러오기 실패') + '</div>'; return; }
+          poemReviewRows = r.submissions || [];
+          onPoemGradeChange();
         } catch (e) {
           listEl.innerHTML = '<div class="alert alert-danger">오류: ' + e + '</div>';
+        } finally { btn.disabled = false; }
+      }
+      function renderPoemReview() {
+        var listEl = document.getElementById('poemReviewList');
+        var g = document.getElementById('poemFilterGrade').value, c = document.getElementById('poemFilterClass').value;
+        var rows = poemReviewRows.filter(function(s){ var x = poemGC(s.studentId); return (!g || x.g === g) && (!c || x.c === c); });
+        if (g) rows = rows.slice().sort(function(a,b){ return String(a.studentId).localeCompare(String(b.studentId)); });
+        var label = (g ? g+'학년 ' : '') + (c ? c+'반 ' : '');
+        document.getElementById('poemReviewCount').textContent = label + '제출 ' + rows.length + '명';
+        var missBox = document.getElementById('poemMissingBox');
+        missBox.innerHTML = '';
+        if (g && c && (allStudents||[]).length) {
+          var done = {}; rows.forEach(function(s){ done[String(s.studentId)] = 1; });
+          var cls = allStudents.filter(function(s){ var x = poemGC(s.id); return x.g === g && x.c === c; });
+          var miss = cls.filter(function(s){ return !done[String(s.id)]; }).sort(function(a,b){ return String(a.id).localeCompare(String(b.id)); });
+          missBox.innerHTML = '<div class="alert ' + (miss.length ? 'alert-warning' : 'alert-success') + ' small py-2 mb-2"><b>미제출 ' + miss.length + '명</b> (반 인원 ' + cls.length + '명)' +
+            (miss.length ? '<div class="mt-1">' + miss.map(function(s){ return '<span class="badge bg-light text-dark border me-1 mb-1">' + poemEsc(s.id) + ' ' + poemEsc(s.name) + '</span>'; }).join('') + '</div>' : ' — 모두 제출했습니다 🎉') + '</div>';
         }
+        if (!rows.length) { listEl.innerHTML = '<div class="text-center text-muted py-4">' + (poemReviewRows.length ? '조건에 맞는 제출이 없습니다.' : '아직 제출된 생활시가 없습니다.') + '</div>'; return; }
+        listEl.innerHTML = rows.map(function(s) {
+          var chat = (s.chatLog || []).map(function(m) {
+            var who = m.role === 'assistant' ? '챗봇' : (m.role === 'user' ? '학생' : m.role);
+            return '<div class="small mb-1"><span class="badge ' + (m.role==='assistant'?'bg-secondary':'bg-primary') + '">' + who + '</span> ' + poemEsc(m.content).replace(/\n/g,'<br>') + '</div>';
+          }).join('');
+          var poem = poemEsc(s.poem).replace(/\n/g,'<br>');
+          var when = s.updatedAt || s.createdAt || '';
+          return '<div class="list-group-item">' +
+            '<div class="d-flex justify-content-between align-items-start mb-2">' +
+            '<div><span class="fw-bold">' + poemEsc(s.studentName) + '</span> <span class="badge bg-secondary">' + poemEsc(s.studentId) + '</span></div>' +
+            '<small class="text-muted">' + when + '</small></div>' +
+            '<div class="card border-0 bg-light mb-2"><div class="card-body py-2"><div class="small text-muted mb-1">제출한 시</div><div style="white-space:pre-wrap;">' + poem + '</div></div></div>' +
+            '<details><summary class="small fw-bold text-primary">챗봇 대화 보기 (' + (s.chatLog||[]).length + '턴)</summary><div class="mt-2 p-2 border rounded bg-white" style="max-height:280px;overflow:auto;">' + (chat || '<span class="text-muted">대화 없음</span>') + '</div></details>' +
+            '</div>';
+        }).join('');
       }
 
       function openRouletteStudent() {
