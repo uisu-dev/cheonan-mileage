@@ -72,6 +72,13 @@
         <button onclick="tryLogin()" class="btn btn-school w-100 btn-lg fw-bold">로그인</button>
       </div>
       <div class="mt-4"><a href="http://uisu-dev-ondok.vercel.app/" target="_blank" class="text-decoration-none"><div class="p-3 rounded shadow-sm text-white d-flex align-items-center justify-content-center" style="background: linear-gradient(45deg, #11998e, #38ef7d); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1.0)'"><div class="me-3 fs-1"><i class="bi bi-book-half"></i></div><div class="text-start"><h6 class="fw-bold mb-0">온독 플러스</h6><small style="opacity: 0.9;">독서 기록 남기러 가기 <i class="bi bi-arrow-right"></i></small></div></div></a></div>
+      <div id="shortcutGuideCard" class="card shadow-sm border-0 mt-3 mb-4 text-start mx-auto" style="border-radius: 15px; max-width: 480px;">
+        <div class="card-body p-3">
+          <h6 class="fw-bold text-school mb-1">📱 스마트폰 바탕화면에 바로가기 만들기</h6>
+          <small class="text-muted d-block mb-2">크롬 메뉴(⋮) → '설치 및 바로가기 만들기'로 앱처럼 바로 접속할 수 있어요.</small>
+          <video id="shortcutGuideVideo" src="/shortcut-guide.mp4" poster="/shortcut-guide-poster.jpg" controls playsinline preload="none" class="w-100 rounded bg-dark d-block" style="aspect-ratio: 16 / 9;">이 브라우저는 동영상 재생을 지원하지 않습니다.</video>
+        </div>
+      </div>
     </div>
 
     <div id="teacherPage" class="container-fluid p-0" style="display:none;">
@@ -939,7 +946,7 @@
         try {
           var res = await apiCall('/auth', { action: 'login', id, pw });
           showLoading(false);
-          if(res.success) { currentUser = res; document.getElementById('loginPage').style.display = 'none'; loadDashboard(); }
+          if(res.success) { currentUser = res; document.getElementById('loginPage').style.display = 'none'; try { var gv = document.getElementById('shortcutGuideVideo'); if (gv) gv.pause(); } catch (e) {} loadDashboard(); }
           else { alert(res.message); }
         } catch(e) { showLoading(false); alert("로그인 오류: "+e); }
       }
