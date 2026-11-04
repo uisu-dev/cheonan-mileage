@@ -1,4 +1,5 @@
 const { getSupabase, cors } = require('../lib/supabase');
+const unifyScratch = require('../lib/unify-scratch'); // 학교통일교육 실태조사 복권 (확률·정원 상수는 lib/unify-scratch.js 맨 위)
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
 
@@ -190,6 +191,28 @@ module.exports = async (req, res) => {
     const { error } = await supabase.from('survey_logs').insert({ vote_id: MERIT_SURVEY_ID, student_id: sid, answer: clean });
     if (error) return res.json({ success: false, msg: '제출 실패: ' + error.message });
     return res.json({ success: true, msg: '제출 완료! 소중한 답변 고마워요.' });
+  }
+
+  // ===== 학교통일교육 실태조사 복권 =====
+  // 학생: 내 복권 결과 조회 (로그인/배너 표시 때마다 호출 → 당첨 화면 계속 유지)
+  if (action === 'unifyScratchStatus') {
+    try { return res.json(await unifyScratch.status(supabase, req.body.studentId)); }
+    catch (e) { return res.json({ success: false, msg: String(e.message || e) }); }
+  }
+  // 학생: 복권 긁기 (서버에서 결과 결정, 1인 1회)
+  if (action === 'unifyScratch') {
+    try { return res.json(await unifyScratch.play(supabase, req.body.studentId)); }
+    catch (e) { return res.json({ success: false, msg: String(e.message || e) }); }
+  }
+  // 교사/관리자: 당첨자 목록
+  if (action === 'unifyWinners') {
+    try {
+      const tid = String(req.body.teacherId || '').trim();
+      const { data: t } = await supabase.from('users').select('role').eq('id', tid);
+      const role = String((t && t[0] && t[0].role) || '').toLowerCase().trim();
+      if (role !== 'teacher' && role !== 'admin') return res.json({ success: false, msg: '교사만 볼 수 있어요.' });
+      return res.json(await unifyScratch.winners(supabase));
+    } catch (e) { return res.json({ success: false, msg: String(e.message || e) }); }
   }
 
   if (action === 'delete') {

@@ -273,6 +273,12 @@
                   <div class="app-tile-name">인권 생활시<br>심사</div>
                 </div>
               </a>
+              <a href="javascript:void(0)" onclick="openUnifyWinners()" class="app-tile text-decoration-none">
+                <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#fff6d6);">
+                  <i class="bi bi-ticket-perforated-fill app-tile-icon" style="color:#e0a800;"></i>
+                  <div class="app-tile-name">통일조사 복권<br>당첨자</div>
+                </div>
+              </a>
               <a href="https://examtest.grok.me" target="_blank" class="app-tile text-decoration-none">
                 <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#e0f7f1);">
                   <i class="bi bi-clipboard-check-fill app-tile-icon" style="color:#11998e;"></i>
@@ -296,7 +302,7 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
-        <div class="card shadow-sm border-0 mb-3" style="background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-2" style="font-size:1rem;">🗳️ 학교통일교육 실태조사</div><button type="button" class="btn btn-light w-100 fw-bold" style="color:#0b6e63;" onclick="openDemoSurvey()">조사 참여하기 <i class="bi bi-box-arrow-up-right"></i></button></div></div>
+        <div class="card shadow-sm border-0 mb-3" style="background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-2" style="font-size:1rem;">🗳️ 학교통일교육 실태조사</div><button type="button" class="btn btn-light w-100 fw-bold" style="color:#0b6e63;" onclick="openDemoSurvey()">조사 참여하기 <i class="bi bi-box-arrow-up-right"></i></button><div id="unifyScratchArea" class="mt-2"></div></div></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
@@ -735,6 +741,26 @@
       </div>
     </div>
 
+    <div class="modal fade" id="unifyScratchModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0" style="border-radius:18px;overflow:hidden;">
+        <div class="modal-header text-white" style="background:linear-gradient(135deg,#11998e,#38ef7d);"><h5 class="modal-title fw-bold">🎟️ 통일조사 참여 복권</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body text-center" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;">
+          <div id="unifyScratchHint" class="small text-muted mb-2">은색 부분을 손가락으로 쓱쓱 긁어 보세요!</div>
+          <div id="unifyScratchBox" style="position:relative;width:100%;max-width:320px;margin:0 auto;aspect-ratio:3/2;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15);">
+            <div id="unifyScratchResult" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;"></div>
+            <canvas id="unifyScratchCanvas" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:pointer;"></canvas>
+          </div>
+          <div id="unifyScratchDetail" class="mt-3"></div>
+        </div>
+        <div class="modal-footer"><button type="button" id="unifyRevealBtn" class="btn btn-outline-success btn-sm" onclick="unifyRevealAll()">한 번에 보기</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>
+      </div></div>
+    </div>
+    <div class="modal fade" id="unifyWinnersModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(135deg,#fff6d6,#ffe08a);"><h5 class="modal-title fw-bold">🎟️ 통일조사 복권 당첨자</h5><button type="button" class="btn btn-sm btn-outline-dark ms-auto me-2" onclick="loadUnifyWinners()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="unifyWinnersBody"></div>
+      </div></div>
+    </div>
     <div class="modal fade" id="meritSurveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
       <div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content">
         <div class="modal-header" style="background:linear-gradient(to right,#f7971e,#ffd200);"><h5 class="modal-title fw-bold text-white">🏅 상점 우수자 설문</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -1053,6 +1079,7 @@
         });
         document.getElementById('rewardListStudent').innerHTML = rHtml;
         loadMeritSurveyBanner();
+        loadUnifyScratch();
 
         var sHtml = "";
         if(data.surveyList && data.surveyList.length > 0) {
@@ -1812,6 +1839,160 @@
       var DEMO_SURVEY_URL = 'https://seolmoon.com/?6201M';
       function openDemoSurvey() {
           window.open(DEMO_SURVEY_URL, '_blank', 'noopener');
+          try { localStorage.setItem('unifyOpened_' + currentUser.id, '1'); } catch (e) {}
+          renderUnifyScratchArea();
+      }
+      // ----- 조사 참여 복권 (결과는 서버가 결정, 1인 1회, 결과 화면은 계속 다시 볼 수 있음) -----
+      var unifyState = null; // 서버 상태 { played, result, name, studentId, at }
+      var unifyScratchDone = false;
+      function unifyEsc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+      function unifyKst(iso) {
+          if (!iso) return '';
+          try { return new Date(iso).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' (KST)'; } catch (e) { return String(iso); }
+      }
+      async function loadUnifyScratch() {
+          unifyState = null;
+          renderUnifyScratchArea();
+          try {
+              var r = await apiCall('/survey', { action: 'unifyScratchStatus', studentId: currentUser.id });
+              if (r && r.success) unifyState = r;
+          } catch (e) { console.warn('unify status', e); }
+          renderUnifyScratchArea();
+      }
+      function renderUnifyScratchArea() {
+          var el = document.getElementById('unifyScratchArea');
+          if (!el) return;
+          if (!currentUser || currentUser.role !== 'student') { el.innerHTML = ''; return; }
+          if (unifyState && unifyState.played) {
+              var win = unifyState.result === 'win';
+              el.innerHTML = '<button type="button" class="btn w-100 fw-bold ' + (win ? 'btn-warning' : 'btn-outline-light') + '" onclick="openUnifyResult()">' + (win ? '🎉 당첨! 내 복권 결과 보기' : '🎟️ 내 복권 결과 보기') + '</button>';
+              return;
+          }
+          if (unifyState && unifyState.eligible === false) { el.innerHTML = ''; return; }
+          var opened = false;
+          try { opened = localStorage.getItem('unifyOpened_' + currentUser.id) === '1'; } catch (e) {}
+          if (opened) {
+              el.innerHTML = '<button type="button" class="btn btn-warning w-100 fw-bold" onclick="unifyDoneAndScratch()">✅ 조사 완료했어요 → 🎟️ 복권 긁기</button>';
+          } else {
+              el.innerHTML = '<div class="small" style="opacity:.9;">🎟️ 조사를 마치면 복권을 긁을 수 있어요! (학년별 당첨자 선물)</div>';
+          }
+      }
+      var unifyBusy = false;
+      async function unifyDoneAndScratch() {
+          if (unifyBusy) return;
+          if (!confirm('학교통일교육 실태조사를 끝까지 완료했나요?\n복권은 한 번만 긁을 수 있어요.')) return;
+          unifyBusy = true; showLoading(true);
+          try {
+              var r = await apiCall('/survey', { action: 'unifyScratch', studentId: currentUser.id });
+              showLoading(false);
+              if (!r || !r.success) { alert((r && r.msg) || '복권을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'); return; }
+              unifyState = r;
+              renderUnifyScratchArea();
+              showUnifyModal(!!r.already);
+          } catch (e) { showLoading(false); alert('오류: ' + (e.message || e)); }
+          finally { unifyBusy = false; }
+      }
+      function openUnifyResult() { if (unifyState && unifyState.played) showUnifyModal(true); }
+      function showUnifyModal(revealed) {
+          var s = unifyState || {}; var win = s.result === 'win';
+          var res = document.getElementById('unifyScratchResult');
+          var detail = document.getElementById('unifyScratchDetail');
+          if (win) {
+              res.style.background = 'linear-gradient(135deg,#fff3b0,#ffd36e)';
+              res.innerHTML = '<div style="font-size:2.6rem;line-height:1;">🎉</div><div class="fw-bold" style="font-size:2rem;color:#c0392b;">당첨</div><div class="small fw-bold" style="color:#7a4b00;">축하해요!</div>';
+              detail.innerHTML = '<div class="p-3 rounded-3" style="background:#fff8e1;border:2px dashed #f0b400;"><div class="fw-bold fs-5 mb-1">🎉 당첨 🎉</div><div><b>' + unifyEsc(s.name) + '</b> (' + unifyEsc(s.studentId) + ')</div><div class="small text-muted">당첨 시각: ' + unifyEsc(unifyKst(s.at)) + '</div><div class="mt-2 fw-bold text-danger">상품 교환은 학생부에서 합니다. 이 화면을 보여주세요.</div></div>';
+          } else {
+              res.style.background = 'linear-gradient(135deg,#eef2f7,#d9e2ec)';
+              res.innerHTML = '<div style="font-size:2.4rem;line-height:1;">⭐</div><div class="fw-bold" style="font-size:1.9rem;color:#5a6b7d;">별 꽝</div><div class="small text-muted">참여해 줘서 고마워요!</div>';
+              detail.innerHTML = '<div class="small text-muted">' + unifyEsc(s.name) + ' (' + unifyEsc(s.studentId) + ') · ' + unifyEsc(unifyKst(s.at)) + '<br>아쉽지만 이번엔 꽝이에요. 조사에 참여해 줘서 고마워요!</div>';
+          }
+          var modalEl = document.getElementById('unifyScratchModal');
+          var m = bootstrap.Modal.getOrCreateInstance(modalEl);
+          unifyScratchDone = !!revealed;
+          detail.style.display = revealed ? 'block' : 'none';
+          document.getElementById('unifyScratchHint').style.display = revealed ? 'none' : 'block';
+          document.getElementById('unifyRevealBtn').style.display = revealed ? 'none' : 'inline-block';
+          var cv = document.getElementById('unifyScratchCanvas');
+          cv.style.display = revealed ? 'none' : 'block';
+          if (!revealed) {
+              var init = function() { modalEl.removeEventListener('shown.bs.modal', init); unifyInitCanvas(); };
+              if (modalEl.classList.contains('show')) unifyInitCanvas(); else modalEl.addEventListener('shown.bs.modal', init);
+          }
+          m.show();
+      }
+      function unifyInitCanvas() {
+          var cv = document.getElementById('unifyScratchCanvas');
+          var rect = cv.getBoundingClientRect();
+          var dpr = window.devicePixelRatio || 1;
+          cv.width = Math.max(1, Math.round(rect.width * dpr)); cv.height = Math.max(1, Math.round(rect.height * dpr));
+          var ctx = cv.getContext('2d');
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.globalCompositeOperation = 'source-over';
+          var g = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+          g.addColorStop(0, '#b8bec6'); g.addColorStop(0.5, '#e9edf1'); g.addColorStop(1, '#a9b0b9');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, rect.width, rect.height);
+          ctx.fillStyle = 'rgba(255,255,255,.35)';
+          for (var i = 0; i < 40; i++) { ctx.beginPath(); ctx.arc(Math.random() * rect.width, Math.random() * rect.height, Math.random() * 3 + 1, 0, Math.PI * 2); ctx.fill(); }
+          ctx.fillStyle = '#5b6470'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = 'bold 22px sans-serif'; ctx.fillText('🎟️ 여기를 긁어요!', rect.width / 2, rect.height / 2 - 10);
+          ctx.font = '13px sans-serif'; ctx.fillText('통일조사 참여 복권', rect.width / 2, rect.height / 2 + 18);
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 34;
+          var drawing = false, last = null, moves = 0;
+          function pos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+          function stroke(p) { ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.arc(p.x, p.y, 17, 0, Math.PI * 2); ctx.fill(); last = p; }
+          cv.onpointerdown = function(e) { if (unifyScratchDone) return; drawing = true; last = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} stroke(last); e.preventDefault(); };
+          cv.onpointermove = function(e) { if (!drawing || unifyScratchDone) return; stroke(pos(e)); if (++moves % 8 === 0) unifyCheckCleared(); e.preventDefault(); };
+          cv.onpointerup = cv.onpointercancel = function() { drawing = false; unifyCheckCleared(); };
+      }
+      function unifyCheckCleared() {
+          if (unifyScratchDone) return;
+          var cv = document.getElementById('unifyScratchCanvas');
+          try {
+              var d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, clear = 0, tot = 0;
+              for (var i = 3; i < d.length; i += 64) { tot++; if (d[i] < 32) clear++; }
+              if (tot && clear / tot > 0.45) unifyRevealAll();
+          } catch (e) { unifyRevealAll(); }
+      }
+      function unifyRevealAll() {
+          if (unifyScratchDone) return;
+          unifyScratchDone = true;
+          var cv = document.getElementById('unifyScratchCanvas');
+          cv.style.transition = 'opacity .5s'; cv.style.opacity = '0';
+          setTimeout(function() { cv.style.display = 'none'; cv.style.opacity = '1'; cv.style.transition = ''; }, 550);
+          document.getElementById('unifyScratchHint').style.display = 'none';
+          document.getElementById('unifyRevealBtn').style.display = 'none';
+          document.getElementById('unifyScratchDetail').style.display = 'block';
+          if (unifyState && unifyState.result === 'win') unifyConfetti();
+      }
+      function unifyConfetti() {
+          var box = document.getElementById('unifyScratchBox');
+          var colors = ['#f94144', '#f9c74f', '#90be6d', '#43aa8b', '#577590', '#f3722c'];
+          for (var i = 0; i < 40; i++) {
+              var p = document.createElement('div');
+              p.style.cssText = 'position:absolute;top:-10px;width:8px;height:12px;border-radius:2px;pointer-events:none;z-index:5;left:' + (Math.random() * 100) + '%;background:' + colors[i % colors.length] + ';transition:transform 1.6s ease-out, opacity 1.6s;';
+              box.appendChild(p);
+              (function(el) { requestAnimationFrame(function() { el.style.transform = 'translate(' + (Math.random() * 80 - 40) + 'px,' + (180 + Math.random() * 120) + 'px) rotate(' + (Math.random() * 720) + 'deg)'; el.style.opacity = '0'; }); setTimeout(function() { el.remove(); }, 1700); })(p);
+          }
+      }
+      // 교사: 당첨자 확인
+      function openUnifyWinners() { bootstrap.Modal.getOrCreateInstance(document.getElementById('unifyWinnersModal')).show(); loadUnifyWinners(); }
+      async function loadUnifyWinners() {
+          var body = document.getElementById('unifyWinnersBody');
+          body.innerHTML = '<div class="text-center text-muted py-4">불러오는 중...</div>';
+          try {
+              var r = await apiCall('/survey', { action: 'unifyWinners', teacherId: currentUser.id });
+              if (!r || !r.success) { body.innerHTML = '<div class="text-danger">' + unifyEsc((r && r.msg) || '불러오기 실패') + '</div>'; return; }
+              var q = r.quota || {};
+              var html = '<div class="small text-muted mb-2">참여(복권 긁음) ' + r.played + '명 · 당첨 확률 ' + Math.round((r.probability || 0) * 100) + '% · 학년별 정원 1학년 ' + q['1'] + ' / 2학년 ' + q['2'] + ' / 3학년 ' + q['3'] + '</div>';
+              ['1', '2', '3'].forEach(function(g) {
+                  var list = r.list.filter(function(x) { return x.grade === g; });
+                  html += '<h6 class="fw-bold mt-3">' + g + '학년 <span class="badge bg-warning text-dark">' + list.length + ' / ' + (q[g] || 0) + '</span></h6>';
+                  if (!list.length) html += '<div class="small text-muted">아직 당첨자가 없습니다.</div>';
+                  else html += '<ul class="list-group">' + list.map(function(x) { return '<li class="list-group-item d-flex justify-content-between align-items-center"><span><b>' + unifyEsc(x.id) + '</b> ' + unifyEsc(x.name) + '</span><span class="small text-muted">' + unifyEsc(unifyKst(x.at)) + '</span></li>'; }).join('') + '</ul>';
+              });
+              body.innerHTML = html;
+          } catch (e) { body.innerHTML = '<div class="text-danger">오류: ' + unifyEsc(e.message || e) + '</div>'; }
       }
       var meritSurveyInfo = null;
       async function loadMeritSurveyBanner() {
