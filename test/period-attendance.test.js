@@ -85,14 +85,14 @@ const tt = async (ymd, g, c) => (ymd === '20261106' && g === 1 && c === 3 ? [{ p
   assert.ok(r.periods.every(p => p.teacherName === '김교사' && p.exceptionCount === 2));
   assert.strictEqual(r.records.find(x => x.studentId === '10302' && x.period === 1).note, '병원');
 
-  // 담임이 2교시 재저장: 10301은 출석으로 복귀(삭제), 10302 유지, 10303 조퇴 추가
+  // 담임이 2교시 재저장: 10301은 출석으로 복귀(삭제), 10302 유지, 10303 조퇴(질병) 추가
   r = await PA.handle(Object.assign({}, base, {
     teacherId: 'T02', action: 'saveMarks', period: 2, subject: '수학',
-    marks: [{ studentId: '10302', status: 'absent_sick' }, { studentId: '10303', status: 'early_leave' }]
+    marks: [{ studentId: '10302', status: 'absent_sick' }, { studentId: '10303', status: 'early_leave_sick' }]
   }), deps);
   assert.ok(r.success, r.msg);
   const p2 = r.records.filter(x => x.period === 2).map(x => x.studentId + ':' + x.status).sort();
-  assert.deepStrictEqual(p2, ['10302:absent_sick', '10303:early_leave']);
+  assert.deepStrictEqual(p2, ['10302:absent_sick', '10303:early_leave_sick']);
   // 다른 교시는 그대로
   assert.strictEqual(r.records.filter(x => x.period === 1).length, 2);
   assert.strictEqual(r.records.filter(x => x.period === 3).length, 2);
@@ -110,7 +110,7 @@ const tt = async (ymd, g, c) => (ymd === '20261106' && g === 1 && c === 3 ? [{ p
   r = await PA.handle(Object.assign({}, base, { action: 'saveMarks', period: 1, subject: '국어', extraPeriods: [2],
     marks: [{ studentId: '10301', status: 'absent_unexcused' }, { studentId: '10302', status: 'absent_sick' }] }), deps);
   const p2b = r.records.filter(x => x.period === 2).map(x => x.studentId + ':' + x.status).sort();
-  assert.deepStrictEqual(p2b, ['10301:absent_unexcused', '10302:absent_sick', '10303:early_leave']);
+  assert.deepStrictEqual(p2b, ['10301:absent_unexcused', '10302:absent_sick', '10303:early_leave_sick']);
   assert.strictEqual(r.periods.find(p => p.period === 2).exceptionCount, 3);
 
   // 시간표 없는 날 + 자유 교시 번호
@@ -124,6 +124,19 @@ const tt = async (ymd, g, c) => (ymd === '20261106' && g === 1 && c === 3 ? [{ p
   assert.strictEqual(r.success, false);
   r = await PA.handle({ action: 'saveMarks', teacherId: 'T01', date: '20261107', grade: 1, classNm: 3, period: 11, marks: [] }, deps);
   assert.strictEqual(r.success, false);
+
+  // 조퇴 3종 허용, 구 early_leave는 거부
+  assert.ok(PA.STATUSES.early_leave_sick);
+  assert.ok(PA.STATUSES.early_leave_unexcused);
+  assert.ok(PA.STATUSES.early_leave_excused);
+  assert.strictEqual(PA.STATUSES.early_leave, undefined);
+  const cleaned = PA.cleanMarks([
+    { studentId: '10301', status: 'early_leave_excused' },
+    { studentId: '10302', status: 'early_leave' },
+    { studentId: '10303', status: 'early_leave_unexcused' }
+  ], ['10301', '10302', '10303']);
+  assert.deepStrictEqual(cleaned.map(x => x.student_id + ':' + x.status).sort(),
+    ['10301:early_leave_excused', '10303:early_leave_unexcused']);
 
   console.log('period-attendance tests: OK');
 })().catch(e => { console.error(e); process.exit(1); });
