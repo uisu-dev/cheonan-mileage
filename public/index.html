@@ -123,7 +123,7 @@
              <div id="periodAttSection">
                <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">
                  <h6 class="fw-bold mb-2">🕘 학급 출석부 (교시별)</h6>
-                 <div class="small text-muted mb-2">기본은 <b>출석</b>이에요. 지각·조퇴(질병/미인정/인정)·결과·결석인 학생만 골라 체크하고 교시별로 저장하세요. 전체 일괄 설정도 가능해요.</div>
+                 <div class="small text-muted mb-2">기본은 <b>출석</b>이에요. 지각·조퇴(질병/미인정/인정)·결과·결석인 학생만 골라 체크하고 교시별로 저장하세요. 학생마다 「일괄」로 하루 전체·선택 교시에 한꺼번에 적용할 수 있어요.</div>
                  <div class="row g-2 mb-2">
                    <div class="col-3"><select id="paGrade" class="form-select form-select-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
                    <div class="col-3"><select id="paClass" class="form-select form-select-sm"><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
@@ -1678,7 +1678,7 @@
         if (!r || !r.success) { body.innerHTML = '<div class="alert alert-danger small">' + escapeHtml((r && r.msg) || '불러오기 실패') + '</div>'; return; }
         var sameClass = keepSel === true && pa.loaded && pa.date === r.date && pa.grade === r.grade && pa.classNm === r.classNm;
         var prevSel = pa.sel;
-        pa = { loaded: true, date: r.date, grade: r.grade, classNm: r.classNm, timetable: r.timetable || [], roster: r.roster || [], records: r.records || [], periods: r.periods || [], custom: sameClass ? pa.custom : {}, sel: 0, draft: {}, dirty: false };
+        pa = { loaded: true, date: r.date, grade: r.grade, classNm: r.classNm, timetable: r.timetable || [], roster: r.roster || [], records: r.records || [], periods: r.periods || [], custom: sameClass ? pa.custom : {}, sel: 0, draft: {}, dirty: false, stuBulk: null };
         var list = paPeriodList();
         if (sameClass && list.some(function(x){ return x.period === prevSel; })) pa.sel = prevSel;
         else if (list.length) pa.sel = list[0].period;
@@ -1686,7 +1686,7 @@
       }
       function paSelect(p, force) {
         if (!force && pa.dirty && p !== pa.sel && !confirm('저장하지 않은 변경이 있어요. 다른 교시로 이동할까요?')) return;
-        pa.sel = p; pa.draft = {}; pa.dirty = false; pa.extra = {}; pa.subj = null;
+        pa.sel = p; pa.draft = {}; pa.dirty = false; pa.extra = {}; pa.subj = null; pa.stuBulk = null;
         (pa.records || []).forEach(function(r){ if (r.period === p) pa.draft[r.studentId] = { status: r.status, note: r.note || '' }; });
         paRender();
       }
@@ -1705,19 +1705,61 @@
       function paSetSubj(v) { pa.subj = v; pa.dirty = true; }
       function paToggleExtra(p, on) { pa.extra = pa.extra || {}; if (on) pa.extra[p] = true; else delete pa.extra[p]; }
       function paSetNote(sid, v) { if (pa.draft[sid]) { pa.draft[sid].note = v; pa.dirty = true; } }
-      function paBulkSet() {
-        if (!pa.sel || !pa.roster.length) return alert('먼저 반을 불러오고 교시를 선택하세요.');
-        var sel = document.getElementById('paBulkStatus');
-        var v = sel ? sel.value : '';
-        var label = v ? (PA_LABEL[v] || v) : '출석';
-        var msg = pa.sel + '교시 전원(' + pa.roster.length + '명)을 「' + label + '」으로 일괄 설정할까요?\n(저장 전 초안이며, 아래 저장 버튼을 눌러야 반영됩니다.)';
-        if (!confirm(msg)) return;
-        pa.draft = {};
-        if (v) {
-          pa.roster.forEach(function(s){ pa.draft[s.id] = { status: v, note: '' }; });
-        }
-        pa.dirty = true;
+      function paOpenStudentBulk(sid) {
+        if (!pa.loaded) return;
+        if (pa.dirty && !confirm('저장하지 않은 변경이 있어요. 버리고 학생 일괄 적용으로 갈까요?')) return;
+        pa.dirty = false;
+        pa.stuBulk = { sid: String(sid), status: (pa.draft[sid] && pa.draft[sid].status) || '', allDay: true, periods: {} };
+        paPeriodList().forEach(function(x){ pa.stuBulk.periods[x.period] = true; });
         paRender();
+        var el = document.getElementById('paStuBulkPanel');
+        if (el) try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+      }
+      function paCloseStudentBulk() { pa.stuBulk = null; paRender(); }
+      function paStuBulkSetStatus(v) { if (!pa.stuBulk) return; pa.stuBulk.status = v; }
+      function paStuBulkToggleAll(on) {
+        if (!pa.stuBulk) return;
+        pa.stuBulk.allDay = !!on;
+        paPeriodList().forEach(function(x){ pa.stuBulk.periods[x.period] = !!on; });
+        paRender();
+      }
+      function paStuBulkTogglePeriod(p, on) {
+        if (!pa.stuBulk) return;
+        pa.stuBulk.periods[p] = !!on;
+        var list = paPeriodList();
+        pa.stuBulk.allDay = list.length > 0 && list.every(function(x){ return pa.stuBulk.periods[x.period]; });
+        var allEl = document.getElementById('paStuBulkAll');
+        if (allEl) allEl.checked = pa.stuBulk.allDay;
+      }
+      async function paApplyStudentBulk() {
+        if (!pa.stuBulk || !pa.stuBulk.sid) return;
+        var sid = pa.stuBulk.sid;
+        var st = pa.stuBulk.status || '';
+        var periods = Object.keys(pa.stuBulk.periods).filter(function(k){ return pa.stuBulk.periods[k]; }).map(Number).sort(function(a,b){ return a-b; });
+        if (!periods.length) return alert('적용할 교시를 하나 이상 선택하세요.');
+        var s = (pa.roster || []).find(function(x){ return x.id === sid; });
+        var name = s ? s.name : sid;
+        var label = st ? (PA_LABEL[st] || st) : '출석';
+        var msg = name + '(' + sid + ')을 「' + label + '」으로\n' + periods.join(', ') + '교시에 일괄 적용할까요?';
+        if (!st) msg += '\n(해당 교시의 이 학생 예외 기록이 삭제됩니다.)';
+        if (!confirm(msg)) return;
+        var subjects = {}; paPeriodList().forEach(function(x){ subjects[x.period] = x.subject || ''; });
+        showLoading(true);
+        var r;
+        try {
+          r = await apiCall('/attendance', {
+            action: 'applyStudent', teacherId: currentUser.id, date: pa.date, grade: pa.grade, classNm: pa.classNm,
+            studentId: sid, status: st, periods: periods, subjects: subjects
+          });
+        } catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        showLoading(false);
+        if (!r || !r.success) return alert((r && r.msg) || '적용 실패');
+        pa.records = r.records || []; pa.periods = r.periods || []; pa.stuBulk = null; pa.dirty = false;
+        // 현재 교시 초안도 서버 기준으로 다시 맞춤
+        pa.draft = {};
+        (pa.records || []).forEach(function(rec){ if (rec.period === pa.sel) pa.draft[rec.studentId] = { status: rec.status, note: rec.note || '' }; });
+        paRender();
+        alert(r.msg || '적용 완료');
       }
       async function paSave() {
         if (!pa.sel) return alert('교시를 먼저 선택하세요.');
@@ -1767,19 +1809,38 @@
           h += '<div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold mb-0">' + pa.sel + '교시 출석 체크</h6><span class="badge ' + (exCount ? 'bg-danger' : 'bg-success') + '">예외 ' + exCount + '명</span></div>';
           h += '<div class="small mb-2 ' + (meta ? 'text-success' : 'text-muted') + '">' + (meta ? '✔ 마지막 저장: ' + escapeHtml(meta.teacherName || meta.teacherId) + ' · ' + paFmtKst(meta.updatedAt) : '아직 저장한 기록이 없어요.') + (pa.dirty ? ' <span class="text-danger fw-bold">· 저장 안 됨</span>' : '') + '</div>';
           h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">과목</span><input type="text" id="paSubjectInput" class="form-control" value="' + escapeHtml(pa.subj != null ? pa.subj : paSubjectOf(pa.sel)) + '" placeholder="과목명" oninput="paSetSubj(this.value)"></div>';
-          h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">전체 →</span>';
-          h += '<select id="paBulkStatus" class="form-select"><option value="">출석 (예외 지우기)</option>' + PA_STATUS.map(function(x){ return '<option value="' + x[0] + '">' + x[1] + '</option>'; }).join('') + '</select>';
-          h += '<button type="button" class="btn btn-outline-primary fw-bold" onclick="paBulkSet()">일괄 적용</button></div>';
-          h += '<div class="small text-muted mb-2">일괄 적용은 이 교시 명단 전체에 초안으로 반영돼요. 확인 후 「저장」을 눌러주세요.</div>';
+          h += '<div class="small text-muted mb-2">학생마다 「일괄」로 하루 전체 또는 선택 교시에 같은 상태를 한꺼번에 적용할 수 있어요.</div>';
           if (!pa.roster.length) h += '<div class="text-muted small py-3 text-center">이 반에 등록된 학생이 없어요.</div>';
+          if (pa.stuBulk && pa.stuBulk.sid) {
+            var bs = (pa.roster || []).find(function(x){ return x.id === pa.stuBulk.sid; });
+            var bName = bs ? bs.name : pa.stuBulk.sid;
+            var bOpts = '<option value="">출석 (예외 지우기)</option>' + PA_STATUS.map(function(x){ return '<option value="' + x[0] + '"' + (pa.stuBulk.status === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('');
+            h += '<div id="paStuBulkPanel" class="border border-primary rounded p-2 mb-2 bg-light">';
+            h += '<div class="d-flex justify-content-between align-items-center mb-2"><div class="fw-bold small">🎟️ 학생 일괄 적용 · ' + escapeHtml(bName) + ' <span class="text-muted">(' + pa.stuBulk.sid + ')</span></div>';
+            h += '<button type="button" class="btn btn-sm btn-outline-secondary py-0" onclick="paCloseStudentBulk()">닫기</button></div>';
+            h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">상태</span><select id="paStuBulkStatus" class="form-select" onchange="paStuBulkSetStatus(this.value)">' + bOpts + '</select></div>';
+            h += '<div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="paStuBulkAll"' + (pa.stuBulk.allDay ? ' checked' : '') + ' onchange="paStuBulkToggleAll(this.checked)"><label class="form-check-label small fw-bold" for="paStuBulkAll">하루 전체 (모든 교시)</label></div>';
+            h += '<div class="small text-muted mb-1">또는 교시 선택</div><div class="d-flex flex-wrap gap-2 mb-2">';
+            list.forEach(function(x){
+              var id = 'paStuP' + x.period;
+              h += '<label class="form-check-label small border rounded px-2 py-1 bg-white" for="' + id + '"><input type="checkbox" class="form-check-input me-1" id="' + id + '"' + (pa.stuBulk.periods[x.period] ? ' checked' : '') + ' onchange="paStuBulkTogglePeriod(' + x.period + ', this.checked)">' + x.period + '교시' + (x.subject ? ' ' + escapeHtml(x.subject) : '') + '</label>';
+            });
+            h += '</div>';
+            h += '<button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="paApplyStudentBulk()"><i class="bi bi-check2-circle"></i> 이 학생에게 적용</button>';
+            h += '</div>';
+          }
           h += '<div class="list-group mb-2">';
           pa.roster.forEach(function(s){
             var d = pa.draft[s.id]; var st = d ? d.status : '';
+            var open = pa.stuBulk && pa.stuBulk.sid === s.id;
             var opts = '<option value="">출석</option>' + PA_STATUS.map(function(x){ return '<option value="' + x[0] + '"' + (st === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('');
-            h += '<div class="list-group-item py-2 px-2' + (st ? ' list-group-item-warning' : '') + '">' +
-              '<div class="d-flex align-items-center gap-2"><span class="text-muted small" style="width:22px;">' + String(s.no).padStart(2,'0') + '</span>' +
-              '<span class="flex-grow-1 fw-bold small text-truncate">' + escapeHtml(s.name) + '</span>' +
-              '<select class="form-select form-select-sm" style="max-width:150px;" onchange="paSetStatus(\'' + s.id + '\', this.value)">' + opts + '</select></div>' +
+            h += '<div class="list-group-item py-2 px-2' + (st ? ' list-group-item-warning' : '') + (open ? ' border-primary' : '') + '">' +
+              '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+              '<span class="text-muted small" style="width:22px;">' + String(s.no).padStart(2,'0') + '</span>' +
+              '<span class="flex-grow-1 fw-bold small text-truncate" style="min-width:56px;">' + escapeHtml(s.name) + '</span>' +
+              '<select class="form-select form-select-sm" style="max-width:140px;min-width:110px;" onchange="paSetStatus(\'' + s.id + '\', this.value)">' + opts + '</select>' +
+              '<button type="button" class="btn btn-sm ' + (open ? 'btn-primary' : 'btn-outline-primary') + ' py-1 px-2" style="white-space:nowrap;" onclick="paOpenStudentBulk(\'' + s.id + '\')">일괄</button>' +
+              '</div>' +
               (st ? '<input type="text" class="form-control form-control-sm mt-1" maxlength="200" placeholder="메모 (선택)" value="' + escapeHtml(d.note || '') + '" oninput="paSetNote(\'' + s.id + '\', this.value)">' : '') +
               '</div>';
           });

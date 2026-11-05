@@ -1,5 +1,5 @@
 // 학급 출석부 (교시별) API — 교사/관리자 전용
-// actions: load(시간표+명단+기록), getMarks(기록만), saveMarks(교시별 저장)
+// actions: load(시간표+명단+기록), getMarks(기록만), saveMarks(교시별 저장), applyStudent(한 학생 다교시 일괄)
 const { getSupabase, cors } = require('../lib/supabase');
 const { getNeisTimetable } = require('../lib/neis');
 const PA = require('../lib/period-attendance');

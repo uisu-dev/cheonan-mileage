@@ -138,5 +138,35 @@ const tt = async (ymd, g, c) => (ymd === '20261106' && g === 1 && c === 3 ? [{ p
   assert.deepStrictEqual(cleaned.map(x => x.student_id + ':' + x.status).sort(),
     ['10301:early_leave_excused', '10303:early_leave_unexcused']);
 
+  // 한 학생 일괄: 하루 전체(선택 교시)에 결석(질병) — 다른 학생 유지
+  r = await PA.handle(Object.assign({}, base, {
+    action: 'applyStudent', studentId: '10301', status: 'absent_sick',
+    periods: [1, 2, 3], subjects: { 1: '국어', 2: '수학', 3: '과학' }, note: '하루'
+  }), deps);
+  assert.ok(r.success, r.msg);
+  const s10301 = r.records.filter(x => x.studentId === '10301').map(x => x.period + ':' + x.status).sort();
+  assert.deepStrictEqual(s10301, ['1:absent_sick', '2:absent_sick', '3:absent_sick']);
+  assert.strictEqual(r.records.find(x => x.studentId === '10301' && x.period === 1).note, '하루');
+  // 2교시의 10303 조퇴(질병)는 그대로
+  assert.ok(r.records.some(x => x.studentId === '10303' && x.period === 2 && x.status === 'early_leave_sick'));
+
+  // 한 학생 출석으로 되돌리기 → 해당 교시 예외 삭제
+  r = await PA.handle(Object.assign({}, base, {
+    action: 'applyStudent', studentId: '10301', status: '', periods: [2, 3]
+  }), deps);
+  assert.ok(r.success, r.msg);
+  assert.strictEqual(r.records.filter(x => x.studentId === '10301' && (x.period === 2 || x.period === 3)).length, 0);
+  assert.ok(r.records.some(x => x.studentId === '10301' && x.period === 1 && x.status === 'absent_sick'));
+  assert.strictEqual(r.periods.find(p => p.period === 2).exceptionCount,
+    r.records.filter(x => x.period === 2).length);
+
+  // 검증: 없는 학생 / 빈 교시 / 잘못된 상태
+  r = await PA.handle(Object.assign({}, base, { action: 'applyStudent', studentId: '10401', status: 'late', periods: [1] }), deps);
+  assert.strictEqual(r.success, false);
+  r = await PA.handle(Object.assign({}, base, { action: 'applyStudent', studentId: '10302', status: 'late', periods: [] }), deps);
+  assert.strictEqual(r.success, false);
+  r = await PA.handle(Object.assign({}, base, { action: 'applyStudent', studentId: '10302', status: 'bogus', periods: [1] }), deps);
+  assert.strictEqual(r.success, false);
+
   console.log('period-attendance tests: OK');
 })().catch(e => { console.error(e); process.exit(1); });
