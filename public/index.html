@@ -115,6 +115,29 @@
           </div>
 
           <div class="tab-pane fade" id="attendanceTab">
+             <div class="d-flex justify-content-center mb-3"><div class="btn-group w-100" role="group">
+               <input type="radio" class="btn-check" name="attMode" id="attModePeriod" autocomplete="off" checked onclick="setAttMode('period')"><label class="btn btn-outline-primary fw-bold" for="attModePeriod">🕘 학급 출석부 (교시)</label>
+               <input type="radio" class="btn-check" name="attMode" id="attModeClub" autocomplete="off" onclick="setAttMode('club')"><label class="btn btn-outline-primary fw-bold" for="attModeClub">🏫 동아리 출석부</label>
+             </div></div>
+
+             <div id="periodAttSection">
+               <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">
+                 <h6 class="fw-bold mb-2">🕘 학급 출석부 (교시별)</h6>
+                 <div class="small text-muted mb-2">기본은 <b>출석</b>이에요. 지각·조퇴·결과·결석인 학생만 골라 체크하고 교시별로 저장하세요.</div>
+                 <div class="row g-2 mb-2">
+                   <div class="col-3"><select id="paGrade" class="form-select form-select-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+                   <div class="col-3"><select id="paClass" class="form-select form-select-sm"><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
+                   <div class="col-6"><input type="date" id="paDate" class="form-control form-control-sm"></div>
+                 </div>
+                 <div class="row g-2">
+                   <div class="col-8"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="paLoad()"><i class="bi bi-search"></i> 불러오기</button></div>
+                   <div class="col-4"><button class="btn btn-outline-secondary btn-sm w-100" onclick="paLoad(true)"><i class="bi bi-arrow-clockwise"></i> 새로고침</button></div>
+                 </div>
+               </div></div>
+               <div id="paBody"></div>
+             </div>
+
+             <div id="clubAttSection" style="display:none;">
              <div class="card border-0 shadow-sm mb-3">
                  <div class="card-body p-3">
                      <h6 class="fw-bold mb-3">🏫 동아리/학급 출석부</h6>
@@ -138,6 +161,7 @@
                          <div id="clubHistoryList" class="bg-light border rounded p-2 small" style="max-height:200px; overflow-y:auto; color:#555;">기록이 없습니다.</div>
                      </div>
                  </div>
+             </div>
              </div>
           </div>
 
@@ -1120,6 +1144,7 @@
       }
 
       function setupTeacherUI(data) {
+        try { paInit(); } catch (e) {}
         document.getElementById('teacherPage').style.display = 'block'; document.getElementById('tName').innerText = currentUser.name;
         // 미확인 감사 메시지 뱃지
         var unread = Number(data.unreadMessageCount) || 0;
@@ -1592,6 +1617,184 @@
         var m = bootstrap.Modal.getInstance(document.getElementById('createClubModal'));
         if (m) m.hide();
         loadDashboard();
+      }
+
+      // ===== 학급 출석부 (교시별) =====
+      var PA_STATUS = [
+        ['late','지각','지','warning'], ['early_leave','조퇴','조','warning'], ['result','결과','과','info'],
+        ['absent_excused','결석(인정)','결인','secondary'], ['absent_unexcused','결석(미인정)','결미','danger'],
+        ['absent_sick','결석(질병)','결질','primary'], ['absent_other','결석(기타)','결기','dark']
+      ];
+      var PA_LABEL = {}; var PA_SHORT = {}; var PA_COLOR = {};
+      PA_STATUS.forEach(function(x){ PA_LABEL[x[0]] = x[1]; PA_SHORT[x[0]] = x[2]; PA_COLOR[x[0]] = x[3]; });
+      var pa = { loaded: false, date: '', grade: 0, classNm: 0, timetable: [], roster: [], records: [], periods: [], custom: {}, sel: 0, draft: {}, dirty: false };
+
+      function setAttMode(m) {
+        document.getElementById('periodAttSection').style.display = m === 'period' ? '' : 'none';
+        document.getElementById('clubAttSection').style.display = m === 'club' ? '' : 'none';
+      }
+      function paKstToday() {
+        var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+        return p; // YYYY-MM-DD
+      }
+      function paFmtKst(iso) {
+        if (!iso) return '';
+        var d = new Date(iso); if (isNaN(d.getTime())) return '';
+        return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(d) + ' (KST)';
+      }
+      function paInit() {
+        var dEl = document.getElementById('paDate');
+        if (dEl && !dEl.value) dEl.value = paKstToday();
+        try {
+          var last = JSON.parse(localStorage.getItem('paLastClass') || 'null');
+          if (last && last.g) { document.getElementById('paGrade').value = String(last.g); document.getElementById('paClass').value = String(last.c); }
+        } catch (e) {}
+      }
+      function paPeriodList() {
+        var map = {};
+        (pa.timetable || []).forEach(function(t){ if (t.period) map[t.period] = map[t.period] || { period: t.period, subject: t.subject }; });
+        (pa.periods || []).forEach(function(m){ if (!map[m.period]) map[m.period] = { period: m.period, subject: m.subject }; else if (!map[m.period].subject) map[m.period].subject = m.subject; });
+        (pa.records || []).forEach(function(r){ if (!map[r.period]) map[r.period] = { period: r.period, subject: r.subject }; });
+        Object.keys(pa.custom).forEach(function(k){ if (!map[k]) map[k] = { period: Number(k), subject: pa.custom[k] }; });
+        return Object.keys(map).map(function(k){ return map[k]; }).sort(function(a,b){ return a.period - b.period; });
+      }
+      function paMeta(p) { return (pa.periods || []).find(function(m){ return m.period === p; }); }
+      function paSubjectOf(p) { var x = paPeriodList().find(function(q){ return q.period === p; }); return x ? (x.subject || '') : ''; }
+
+      async function paLoad(keepSel) {
+        if (pa.dirty && !confirm('저장하지 않은 변경이 있어요. 버리고 다시 불러올까요?')) return;
+        var g = document.getElementById('paGrade').value, c = document.getElementById('paClass').value;
+        var d = (document.getElementById('paDate').value || paKstToday()).replace(/-/g, '');
+        try { localStorage.setItem('paLastClass', JSON.stringify({ g: g, c: c })); } catch (e) {}
+        var body = document.getElementById('paBody');
+        body.innerHTML = '<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> 불러오는 중...</div>';
+        var r;
+        try { r = await apiCall('/attendance', { action: 'load', teacherId: currentUser.id, date: d, grade: g, classNm: c }); }
+        catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        if (!r || !r.success) { body.innerHTML = '<div class="alert alert-danger small">' + escapeHtml((r && r.msg) || '불러오기 실패') + '</div>'; return; }
+        var sameClass = keepSel === true && pa.loaded && pa.date === r.date && pa.grade === r.grade && pa.classNm === r.classNm;
+        var prevSel = pa.sel;
+        pa = { loaded: true, date: r.date, grade: r.grade, classNm: r.classNm, timetable: r.timetable || [], roster: r.roster || [], records: r.records || [], periods: r.periods || [], custom: sameClass ? pa.custom : {}, sel: 0, draft: {}, dirty: false };
+        var list = paPeriodList();
+        if (sameClass && list.some(function(x){ return x.period === prevSel; })) pa.sel = prevSel;
+        else if (list.length) pa.sel = list[0].period;
+        paSelect(pa.sel, true);
+      }
+      function paSelect(p, force) {
+        if (!force && pa.dirty && p !== pa.sel && !confirm('저장하지 않은 변경이 있어요. 다른 교시로 이동할까요?')) return;
+        pa.sel = p; pa.draft = {}; pa.dirty = false; pa.extra = {}; pa.subj = null;
+        (pa.records || []).forEach(function(r){ if (r.period === p) pa.draft[r.studentId] = { status: r.status, note: r.note || '' }; });
+        paRender();
+      }
+      function paAddPeriod() {
+        var n = parseInt(document.getElementById('paNewPeriod').value, 10);
+        var subj = document.getElementById('paNewSubject').value.trim();
+        if (!(n >= 1 && n <= 10)) return alert('교시는 1~10 사이 숫자로 입력하세요.');
+        if (!paPeriodList().some(function(x){ return x.period === n; })) pa.custom[n] = subj;
+        paSelect(n);
+      }
+      function paSetStatus(sid, v) {
+        if (!v) delete pa.draft[sid];
+        else pa.draft[sid] = { status: v, note: (pa.draft[sid] && pa.draft[sid].note) || '' };
+        pa.dirty = true; paRender();
+      }
+      function paSetSubj(v) { pa.subj = v; pa.dirty = true; }
+      function paToggleExtra(p, on) { pa.extra = pa.extra || {}; if (on) pa.extra[p] = true; else delete pa.extra[p]; }
+      function paSetNote(sid, v) { if (pa.draft[sid]) { pa.draft[sid].note = v; pa.dirty = true; } }
+      async function paSave() {
+        if (!pa.sel) return alert('교시를 먼저 선택하세요.');
+        var extra = Array.from(document.querySelectorAll('.pa-extra:checked')).map(function(c){ return Number(c.value); });
+        var marks = Object.keys(pa.draft).map(function(sid){ return { studentId: sid, status: pa.draft[sid].status, note: pa.draft[sid].note }; });
+        var subjects = {}; paPeriodList().forEach(function(x){ subjects[x.period] = x.subject || ''; });
+        var subjInput = document.getElementById('paSubjectInput');
+        if (subjInput) subjects[pa.sel] = subjInput.value.trim();
+        var msg = pa.sel + '교시 출석을 저장할까요? (예외 ' + marks.length + '명, 나머지는 출석)';
+        if (extra.length) msg += '\n\n' + extra.join(', ') + '교시에도 같은 예외를 추가합니다. (그 교시의 다른 학생 기록은 유지)';
+        if (!confirm(msg)) return;
+        showLoading(true);
+        var r;
+        try { r = await apiCall('/attendance', { action: 'saveMarks', teacherId: currentUser.id, date: pa.date, grade: pa.grade, classNm: pa.classNm, period: pa.sel, subject: subjects[pa.sel] || '', subjects: subjects, extraPeriods: extra, marks: marks }); }
+        catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        showLoading(false);
+        if (!r || !r.success) return alert((r && r.msg) || '저장 실패');
+        pa.records = r.records || []; pa.periods = r.periods || []; pa.dirty = false;
+        paSelect(pa.sel, true);
+        alert(r.msg || '저장 완료');
+      }
+      function paRender() {
+        var body = document.getElementById('paBody');
+        if (!pa.loaded) { body.innerHTML = ''; return; }
+        var days = ['일','월','화','수','목','금','토'];
+        var dt = new Date(pa.date.slice(0,4) + '-' + pa.date.slice(4,6) + '-' + pa.date.slice(6,8) + 'T00:00:00');
+        var title = pa.grade + '학년 ' + pa.classNm + '반 · ' + (dt.getMonth()+1) + '/' + dt.getDate() + '(' + days[dt.getDay()] + ')';
+        var list = paPeriodList();
+        var h = '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">';
+        h += '<div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold">' + title + '</span><span class="small text-muted">학생 ' + pa.roster.length + '명</span></div>';
+        if (!pa.timetable.length) h += '<div class="alert alert-warning py-2 small mb-2">나이스 시간표가 없어요. 아래에서 교시를 직접 추가해 체크할 수 있어요.</div>';
+        h += '<div class="d-flex flex-wrap gap-1 mb-2">';
+        list.forEach(function(x){
+          var m = paMeta(x.period); var on = x.period === pa.sel;
+          var cnt = (pa.records || []).filter(function(r){ return r.period === x.period; }).length;
+          h += '<button class="btn btn-sm ' + (on ? 'btn-primary' : (m ? 'btn-outline-success' : 'btn-outline-secondary')) + '" style="min-width:64px;line-height:1.2;" onclick="paSelect(' + x.period + ')">' +
+            '<div class="fw-bold">' + x.period + '교시' + (m ? ' ✔' : '') + '</div><div style="font-size:0.72rem;">' + escapeHtml(x.subject || '-') + (cnt ? ' · <span class="' + (on ? '' : 'text-danger') + '">' + cnt + '</span>' : '') + '</div></button>';
+        });
+        h += '</div>';
+        h += '<div class="input-group input-group-sm"><span class="input-group-text">교시 추가</span><input type="number" min="1" max="10" id="paNewPeriod" class="form-control" placeholder="교시" style="max-width:70px;"><input type="text" id="paNewSubject" class="form-control" placeholder="과목(선택)"><button class="btn btn-outline-primary" onclick="paAddPeriod()">추가</button></div>';
+        h += '</div></div>';
+
+        if (pa.sel) {
+          var meta = paMeta(pa.sel);
+          var exCount = Object.keys(pa.draft).length;
+          h += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">';
+          h += '<div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold mb-0">' + pa.sel + '교시 출석 체크</h6><span class="badge ' + (exCount ? 'bg-danger' : 'bg-success') + '">예외 ' + exCount + '명</span></div>';
+          h += '<div class="small mb-2 ' + (meta ? 'text-success' : 'text-muted') + '">' + (meta ? '✔ 마지막 저장: ' + escapeHtml(meta.teacherName || meta.teacherId) + ' · ' + paFmtKst(meta.updatedAt) : '아직 저장한 기록이 없어요.') + (pa.dirty ? ' <span class="text-danger fw-bold">· 저장 안 됨</span>' : '') + '</div>';
+          h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">과목</span><input type="text" id="paSubjectInput" class="form-control" value="' + escapeHtml(pa.subj != null ? pa.subj : paSubjectOf(pa.sel)) + '" placeholder="과목명" oninput="paSetSubj(this.value)"></div>';
+          if (!pa.roster.length) h += '<div class="text-muted small py-3 text-center">이 반에 등록된 학생이 없어요.</div>';
+          h += '<div class="list-group mb-2">';
+          pa.roster.forEach(function(s){
+            var d = pa.draft[s.id]; var st = d ? d.status : '';
+            var opts = '<option value="">출석</option>' + PA_STATUS.map(function(x){ return '<option value="' + x[0] + '"' + (st === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('');
+            h += '<div class="list-group-item py-2 px-2' + (st ? ' list-group-item-warning' : '') + '">' +
+              '<div class="d-flex align-items-center gap-2"><span class="text-muted small" style="width:22px;">' + String(s.no).padStart(2,'0') + '</span>' +
+              '<span class="flex-grow-1 fw-bold small text-truncate">' + escapeHtml(s.name) + '</span>' +
+              '<select class="form-select form-select-sm" style="max-width:130px;" onchange="paSetStatus(\'' + s.id + '\', this.value)">' + opts + '</select></div>' +
+              (st ? '<input type="text" class="form-control form-control-sm mt-1" maxlength="200" placeholder="메모 (선택)" value="' + escapeHtml(d.note || '') + '" oninput="paSetNote(\'' + s.id + '\', this.value)">' : '') +
+              '</div>';
+          });
+          h += '</div>';
+          var others = list.filter(function(x){ return x.period !== pa.sel; });
+          if (others.length && exCount) {
+            h += '<details class="mb-2 small"' + (pa.extra && Object.keys(pa.extra).length ? ' open' : '') + '><summary class="text-primary">다른 교시에도 같은 예외 추가 (예: 하루 결석)</summary><div class="d-flex flex-wrap gap-2 mt-2">';
+            others.forEach(function(x){ h += '<label class="form-check-label"><input type="checkbox" class="form-check-input pa-extra me-1" value="' + x.period + '"' + (pa.extra && pa.extra[x.period] ? ' checked' : '') + ' onchange="paToggleExtra(' + x.period + ', this.checked)">' + x.period + '교시</label>'; });
+            h += '</div><div class="text-muted mt-1">선택한 교시의 다른 학생 기록은 그대로 둬요.</div></details>';
+          }
+          h += '<button class="btn btn-success w-100 fw-bold py-2" onclick="paSave()"><i class="bi bi-check2-circle"></i> ' + pa.sel + '교시 저장</button>';
+          h += '</div></div>';
+        }
+
+        // 하루 요약
+        var bySid = {};
+        (pa.records || []).forEach(function(r){ (bySid[r.studentId] = bySid[r.studentId] || {})[r.period] = r; });
+        var exIds = Object.keys(bySid).sort();
+        h += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3"><h6 class="fw-bold mb-2">📋 하루 요약</h6>';
+        if (!exIds.length) h += '<div class="small text-muted">저장된 예외가 없어요. (모두 출석)</div>';
+        else {
+          var nameOf = {}; pa.roster.forEach(function(s){ nameOf[s.id] = s.name; });
+          h += '<div class="table-responsive"><table class="table table-sm table-bordered small text-center mb-1"><thead class="table-light"><tr><th class="text-start">학생</th>';
+          list.forEach(function(x){ h += '<th>' + x.period + '</th>'; });
+          h += '</tr></thead><tbody>';
+          exIds.forEach(function(sid){
+            h += '<tr><td class="text-start text-nowrap">' + sid.slice(3) + ' ' + escapeHtml(nameOf[sid] || sid) + '</td>';
+            list.forEach(function(x){
+              var r = bySid[sid][x.period];
+              h += '<td style="cursor:pointer;" onclick="paSelect(' + x.period + ')">' + (r ? '<span class="badge bg-' + PA_COLOR[r.status] + '" title="' + escapeHtml(PA_LABEL[r.status] + (r.note ? ' · ' + r.note : '') + ' / ' + (r.teacherName || '')) + '">' + PA_SHORT[r.status] + '</span>' : '') + '</td>';
+            });
+            h += '</tr>';
+          });
+          h += '</tbody></table></div><div class="text-muted" style="font-size:0.72rem;">' + PA_STATUS.map(function(x){ return x[2] + '=' + x[1]; }).join(' · ') + '</div>';
+        }
+        h += '</div></div>';
+        body.innerHTML = h;
       }
 
       // ===== 출석부: 학급 명단 조회 =====
