@@ -3,7 +3,8 @@
 -- 기존 동아리 출석부(clubs, club_logs)와 학생 +10P 출석체크는 건드리지 않습니다.
 --
 -- 기본값은 '출석'이라 예외만 행으로 저장합니다.
--- status: late(지각) | early_leave(조퇴) | result(결과)
+-- status: late(지각) | early_leave_sick/unexcused/excused(조퇴 질병/미인정/인정)
+--         | result(결과)
 --         | absent_excused(결석 인정) | absent_unexcused(결석 미인정)
 --         | absent_sick(결석 질병) | absent_other(결석 기타)
 
@@ -16,7 +17,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   subject TEXT NOT NULL DEFAULT '',
   student_id TEXT NOT NULL,           -- 학번 5자리
   status TEXT NOT NULL CHECK (status IN (
-    'late','early_leave','result',
+    'late','early_leave_sick','early_leave_unexcused','early_leave_excused','result',
     'absent_excused','absent_unexcused','absent_sick','absent_other')),
   note TEXT NOT NULL DEFAULT '',
   teacher_id TEXT NOT NULL DEFAULT '',

@@ -123,7 +123,7 @@
              <div id="periodAttSection">
                <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">
                  <h6 class="fw-bold mb-2">🕘 학급 출석부 (교시별)</h6>
-                 <div class="small text-muted mb-2">기본은 <b>출석</b>이에요. 지각·조퇴·결과·결석인 학생만 골라 체크하고 교시별로 저장하세요.</div>
+                 <div class="small text-muted mb-2">기본은 <b>출석</b>이에요. 지각·조퇴(질병/미인정/인정)·결과·결석인 학생만 골라 체크하고 교시별로 저장하세요. 전체 일괄 설정도 가능해요.</div>
                  <div class="row g-2 mb-2">
                    <div class="col-3"><select id="paGrade" class="form-select form-select-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
                    <div class="col-3"><select id="paClass" class="form-select form-select-sm"><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
@@ -1621,7 +1621,11 @@
 
       // ===== 학급 출석부 (교시별) =====
       var PA_STATUS = [
-        ['late','지각','지','warning'], ['early_leave','조퇴','조','warning'], ['result','결과','과','info'],
+        ['late','지각','지','warning'],
+        ['early_leave_sick','조퇴(질병)','조질','warning'],
+        ['early_leave_unexcused','조퇴(미인정)','조미','warning'],
+        ['early_leave_excused','조퇴(인정)','조인','warning'],
+        ['result','결과','과','info'],
         ['absent_excused','결석(인정)','결인','secondary'], ['absent_unexcused','결석(미인정)','결미','danger'],
         ['absent_sick','결석(질병)','결질','primary'], ['absent_other','결석(기타)','결기','dark']
       ];
@@ -1701,6 +1705,20 @@
       function paSetSubj(v) { pa.subj = v; pa.dirty = true; }
       function paToggleExtra(p, on) { pa.extra = pa.extra || {}; if (on) pa.extra[p] = true; else delete pa.extra[p]; }
       function paSetNote(sid, v) { if (pa.draft[sid]) { pa.draft[sid].note = v; pa.dirty = true; } }
+      function paBulkSet() {
+        if (!pa.sel || !pa.roster.length) return alert('먼저 반을 불러오고 교시를 선택하세요.');
+        var sel = document.getElementById('paBulkStatus');
+        var v = sel ? sel.value : '';
+        var label = v ? (PA_LABEL[v] || v) : '출석';
+        var msg = pa.sel + '교시 전원(' + pa.roster.length + '명)을 「' + label + '」으로 일괄 설정할까요?\n(저장 전 초안이며, 아래 저장 버튼을 눌러야 반영됩니다.)';
+        if (!confirm(msg)) return;
+        pa.draft = {};
+        if (v) {
+          pa.roster.forEach(function(s){ pa.draft[s.id] = { status: v, note: '' }; });
+        }
+        pa.dirty = true;
+        paRender();
+      }
       async function paSave() {
         if (!pa.sel) return alert('교시를 먼저 선택하세요.');
         var extra = Array.from(document.querySelectorAll('.pa-extra:checked')).map(function(c){ return Number(c.value); });
@@ -1749,6 +1767,10 @@
           h += '<div class="d-flex justify-content-between align-items-center mb-1"><h6 class="fw-bold mb-0">' + pa.sel + '교시 출석 체크</h6><span class="badge ' + (exCount ? 'bg-danger' : 'bg-success') + '">예외 ' + exCount + '명</span></div>';
           h += '<div class="small mb-2 ' + (meta ? 'text-success' : 'text-muted') + '">' + (meta ? '✔ 마지막 저장: ' + escapeHtml(meta.teacherName || meta.teacherId) + ' · ' + paFmtKst(meta.updatedAt) : '아직 저장한 기록이 없어요.') + (pa.dirty ? ' <span class="text-danger fw-bold">· 저장 안 됨</span>' : '') + '</div>';
           h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">과목</span><input type="text" id="paSubjectInput" class="form-control" value="' + escapeHtml(pa.subj != null ? pa.subj : paSubjectOf(pa.sel)) + '" placeholder="과목명" oninput="paSetSubj(this.value)"></div>';
+          h += '<div class="input-group input-group-sm mb-2"><span class="input-group-text">전체 →</span>';
+          h += '<select id="paBulkStatus" class="form-select"><option value="">출석 (예외 지우기)</option>' + PA_STATUS.map(function(x){ return '<option value="' + x[0] + '">' + x[1] + '</option>'; }).join('') + '</select>';
+          h += '<button type="button" class="btn btn-outline-primary fw-bold" onclick="paBulkSet()">일괄 적용</button></div>';
+          h += '<div class="small text-muted mb-2">일괄 적용은 이 교시 명단 전체에 초안으로 반영돼요. 확인 후 「저장」을 눌러주세요.</div>';
           if (!pa.roster.length) h += '<div class="text-muted small py-3 text-center">이 반에 등록된 학생이 없어요.</div>';
           h += '<div class="list-group mb-2">';
           pa.roster.forEach(function(s){
@@ -1757,7 +1779,7 @@
             h += '<div class="list-group-item py-2 px-2' + (st ? ' list-group-item-warning' : '') + '">' +
               '<div class="d-flex align-items-center gap-2"><span class="text-muted small" style="width:22px;">' + String(s.no).padStart(2,'0') + '</span>' +
               '<span class="flex-grow-1 fw-bold small text-truncate">' + escapeHtml(s.name) + '</span>' +
-              '<select class="form-select form-select-sm" style="max-width:130px;" onchange="paSetStatus(\'' + s.id + '\', this.value)">' + opts + '</select></div>' +
+              '<select class="form-select form-select-sm" style="max-width:150px;" onchange="paSetStatus(\'' + s.id + '\', this.value)">' + opts + '</select></div>' +
               (st ? '<input type="text" class="form-control form-control-sm mt-1" maxlength="200" placeholder="메모 (선택)" value="' + escapeHtml(d.note || '') + '" oninput="paSetNote(\'' + s.id + '\', this.value)">' : '') +
               '</div>';
           });
