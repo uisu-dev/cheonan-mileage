@@ -303,6 +303,12 @@
                   <div class="app-tile-name">통일조사 복권<br>당첨자</div>
                 </div>
               </a>
+              <a href="javascript:void(0)" onclick="openEsportsAdmin()" class="app-tile text-decoration-none">
+                <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#e8eaff);">
+                  <i class="bi bi-controller app-tile-icon" style="color:#4e54c8;"></i>
+                  <div class="app-tile-name">이스포츠<br>신청 현황</div>
+                </div>
+              </a>
               <a href="https://examtest.grok.me" target="_blank" class="app-tile text-decoration-none">
                 <div class="app-tile-inner" style="background:linear-gradient(135deg,#fff,#e0f7f1);">
                   <i class="bi bi-clipboard-check-fill app-tile-icon" style="color:#11998e;"></i>
@@ -326,7 +332,7 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
-        <div class="card shadow-sm border-0 mb-3" style="background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-2" style="font-size:1rem;">🗳️ 학교통일교육 실태조사</div><button type="button" class="btn btn-light w-100 fw-bold" style="color:#0b6e63;" onclick="openDemoSurvey()">조사 참여하기 <i class="bi bi-box-arrow-up-right"></i></button><div id="unifyScratchArea" class="mt-2"></div></div></div>
+        <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2">3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
@@ -779,6 +785,18 @@
         <div class="modal-footer"><button type="button" id="unifyRevealBtn" class="btn btn-outline-success btn-sm" onclick="unifyRevealAll()">한 번에 보기</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>
       </div></div>
     </div>
+    <div class="modal fade" id="esportsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header text-white" style="background:linear-gradient(135deg,#4e54c8,#8f94fb);"><h5 class="modal-title fw-bold">🎮 찾아가는 이스포츠 대회 신청</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="esportsBody"></div>
+      </div></div>
+    </div>
+    <div class="modal fade" id="esportsAdminModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content">
+        <div class="modal-header" style="background:linear-gradient(135deg,#e8eaff,#c5c9ff);"><h5 class="modal-title fw-bold">🎮 이스포츠 신청 현황</h5><button type="button" class="btn btn-sm btn-outline-dark ms-auto me-1" onclick="downloadEsportsCsv()"><i class="bi bi-download"></i> CSV</button><button type="button" class="btn btn-sm btn-outline-dark me-2" onclick="loadEsportsAdmin()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="esportsAdminBody"></div>
+      </div></div>
+    </div>
     <div class="modal fade" id="unifyWinnersModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
         <div class="modal-header" style="background:linear-gradient(135deg,#fff6d6,#ffe08a);"><h5 class="modal-title fw-bold">🎟️ 통일조사 복권 당첨자</h5><button type="button" class="btn btn-sm btn-outline-dark ms-auto me-2" onclick="loadUnifyWinners()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button></div>
@@ -1103,7 +1121,7 @@
         });
         document.getElementById('rewardListStudent').innerHTML = rHtml;
         loadMeritSurveyBanner();
-        loadUnifyScratch();
+        initEsportsBanner();
 
         var sHtml = "";
         if(data.surveyList && data.surveyList.length > 0) {
@@ -2121,6 +2139,185 @@
           }
       }
       // ===== 상점 우수자(전교 상위 5명) 설문 =====
+      // ===== 찾아가는 이스포츠 대회 신청 (3학년 전용) =====
+      // 학생: 3학년(학번 3xxxx)만 배너 노출. 1·2학년은 아무것도 보이지 않음. 서버(/api/esports)에서도 3학년만 허용.
+      var esp = { games: [], team: null, isLeader: false, game: null, members: [], myTier: '', teamName: '', results: [], q: '', busy: false };
+      function espEsc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+      function initEsportsBanner() {
+          var el = document.getElementById('esportsBanner');
+          if (!el) return;
+          var ok = currentUser && currentUser.role === 'student' && /^3\d{4}$/.test(String(currentUser.id || ''));
+          el.style.display = ok ? 'block' : 'none';
+      }
+      function espGame(k) { return (esp.games || []).filter(function(g) { return g.key === k; })[0]; }
+      async function openEsports() {
+          if (!currentUser || !/^3\d{4}$/.test(String(currentUser.id || ''))) return;
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('esportsModal')).show();
+          document.getElementById('esportsBody').innerHTML = '<div class="text-center text-muted py-4">불러오는 중...</div>';
+          await espLoad();
+      }
+      async function espLoad() {
+          var body = document.getElementById('esportsBody');
+          try {
+              var r = await apiCall('/esports', { action: 'status', studentId: currentUser.id });
+              if (!r || !r.success) { body.innerHTML = '<div class="text-danger">' + espEsc((r && r.msg) || '불러오기 실패') + '</div>'; return; }
+              if (!r.eligible) { body.innerHTML = '<div class="text-muted">3학년 학생만 참여할 수 있어요.</div>'; return; }
+              esp.games = r.games || []; esp.team = r.team || null; esp.isLeader = !!r.isLeader;
+              esp.game = null; esp.members = []; esp.myTier = ''; esp.teamName = ''; esp.results = []; esp.q = '';
+              espRender();
+          } catch (e) { body.innerHTML = '<div class="text-danger">오류: ' + espEsc(e.message || e) + '</div>'; }
+      }
+      function espRender() {
+          var body = document.getElementById('esportsBody');
+          if (esp.team) { body.innerHTML = espTeamCard(esp.team, esp.isLeader); return; }
+          var html = '<div class="small text-muted mb-2">참가할 종목을 골라 신청하세요. 한 사람은 <b>하나의 팀에만</b> 들어갈 수 있어요.</div><div class="row g-2 mb-3">';
+          esp.games.forEach(function(g) {
+              var on = esp.game === g.key;
+              html += '<div class="col-6"><button type="button" class="btn w-100 ' + (on ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold py-2" data-game="' + g.key + '" onclick="espPick(this.dataset.game)">' + espEsc(g.short) + '<br><span class="small fw-normal">' + (g.size === 1 ? '개인' : g.size + '명 팀') + '</span></button></div>';
+          });
+          html += '</div><div id="esportsForm"></div>';
+          body.innerHTML = html;
+          if (esp.game) espRenderForm();
+      }
+      function espTeamCard(t, isLeader) {
+          var h = '<div class="p-3 rounded-3 mb-3" style="background:#eef0ff;border:1px solid #c5c9ff;"><div class="fw-bold fs-5">' + espEsc(t.gameName) + '</div>' +
+              '<div>' + (t.size > 1 ? '팀 이름: <b>' + espEsc(t.teamName) + '</b>' : '개인 참가') + ' <span class="badge bg-primary">' + t.members.length + '/' + t.size + '명</span></div></div>' +
+              '<ul class="list-group mb-3">';
+          t.members.forEach(function(m) {
+              h += '<li class="list-group-item d-flex justify-content-between align-items-center"><span><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + (m.isLeader ? ' <span class="badge bg-warning text-dark">신청자</span>' : '') + '</span><span class="badge bg-secondary">' + espEsc(m.tier) + '</span></li>';
+          });
+          h += '</ul>';
+          if (isLeader) h += '<button type="button" class="btn btn-outline-danger w-100" onclick="espCancel()">신청 취소</button><div class="small text-muted mt-2">취소하면 팀원도 모두 신청이 풀려요.</div>';
+          else h += '<div class="small text-muted">신청자(' + espEsc(t.leaderName) + ')가 팀을 신청했어요. 취소는 신청자만 할 수 있어요.</div>';
+          return h;
+      }
+      function espPick(k) {
+          if (esp.game && esp.game !== k && (esp.members.length || esp.teamName)) { if (!confirm('종목을 바꾸면 입력한 팀원이 초기화돼요. 바꿀까요?')) return; }
+          if (esp.game !== k) { esp.members = []; esp.results = []; esp.q = ''; }
+          esp.game = k; espRender();
+      }
+      function espRenderForm() {
+          var g = espGame(esp.game); var el = document.getElementById('esportsForm');
+          if (!g || !el) return;
+          var h = '<div class="border rounded-3 p-3"><div class="fw-bold mb-2">' + espEsc(g.name) + ' · ' + (g.size === 1 ? '개인' : g.size + '명 팀') + '</div>';
+          if (g.size > 1) h += '<label class="form-label small fw-bold mb-1">팀 이름</label><input type="text" id="espTeamName" class="form-control form-control-sm mb-2" maxlength="20" placeholder="팀 이름" value="' + espEsc(esp.teamName) + '" oninput="esp.teamName=this.value">';
+          h += '<label class="form-label small fw-bold mb-1">내 티어 (' + espEsc(currentUser.name) + ')</label><input type="text" id="espMyTier" class="form-control form-control-sm mb-2" maxlength="20" placeholder="예: 골드 2 / 플래티넘 / 1000컵" value="' + espEsc(esp.myTier) + '" oninput="esp.myTier=this.value">';
+          if (g.size > 1) {
+              h += '<div class="fw-bold small mb-1">팀원 (3학년 학생 검색) <span id="espCount" class="badge bg-primary"></span></div>' +
+                  '<div class="input-group input-group-sm mb-1"><input type="text" id="espSearch" class="form-control" placeholder="이름 또는 학번" value="' + espEsc(esp.q) + '" oninput="espSearchDebounced(this.value)"><span class="input-group-text"><i class="bi bi-search"></i></span></div>' +
+                  '<div id="espResults" class="list-group mb-2" style="max-height:200px;overflow:auto;"></div>' +
+                  '<div id="espPicked" class="mb-2"></div>';
+          }
+          h += '<button type="button" class="btn btn-primary w-100 fw-bold" onclick="espSubmit()">신청하기</button></div>';
+          el.innerHTML = h;
+          if (g.size > 1) { espRenderResults(); espRenderPicked(); }
+      }
+      var espTimer = null;
+      function espSearchDebounced(v) { esp.q = v; clearTimeout(espTimer); espTimer = setTimeout(espDoSearch, 250); }
+      async function espDoSearch() {
+          var q = (esp.q || '').trim();
+          if (!q) { esp.results = []; espRenderResults(); return; }
+          var mine = q;
+          try {
+              var r = await apiCall('/esports', { action: 'search', studentId: currentUser.id, q: q });
+              if ((esp.q || '').trim() !== mine) return;
+              esp.results = (r && r.success) ? r.list : []; esp.searchMsg = (r && !r.success) ? (r.msg || '검색 실패') : '';
+          } catch (e) { esp.results = []; esp.searchMsg = '검색 오류'; }
+          espRenderResults();
+      }
+      function espRenderResults() {
+          var el = document.getElementById('espResults'); if (!el) return;
+          var picked = {}; esp.members.forEach(function(m) { picked[m.id] = 1; });
+          var g = espGame(esp.game); var full = g && esp.members.length + 1 >= g.size;
+          if (!(esp.q || '').trim()) { el.innerHTML = ''; return; }
+          if (!esp.results.length) { el.innerHTML = '<div class="list-group-item small text-muted">' + espEsc(esp.searchMsg || '검색 결과가 없어요.') + '</div>'; return; }
+          el.innerHTML = esp.results.map(function(u) {
+              var dis = u.taken || picked[u.id] || full;
+              var tag = u.taken ? '<span class="badge bg-danger">이미 신청됨</span>' : (picked[u.id] ? '<span class="badge bg-success">선택됨</span>' : '');
+              return '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" ' + (dis ? 'disabled' : '') + ' data-id="' + espEsc(u.id) + '" data-name="' + espEsc(u.name) + '" onclick="espAdd(this.dataset.id,this.dataset.name)"><span><b>' + espEsc(u.id) + '</b> ' + espEsc(u.name) + '</span>' + tag + '</button>';
+          }).join('');
+      }
+      function espAdd(id, name) {
+          var g = espGame(esp.game); if (!g) return;
+          if (esp.members.length + 1 >= g.size) return;
+          if (esp.members.some(function(m) { return m.id === id; })) return;
+          esp.members.push({ id: id, name: name, tier: '' });
+          espRenderResults(); espRenderPicked();
+      }
+      function espRemove(i) { esp.members.splice(i, 1); espRenderResults(); espRenderPicked(); }
+      function espRenderPicked() {
+          var g = espGame(esp.game);
+          var c = document.getElementById('espCount'); if (c && g) c.textContent = (esp.members.length + 1) + ' / ' + g.size + '명 (나 포함)';
+          var el = document.getElementById('espPicked'); if (!el) return;
+          if (!esp.members.length) { el.innerHTML = '<div class="small text-muted">검색해서 팀원을 추가하세요. 팀원 티어는 내가 대신 입력해요.</div>'; return; }
+          el.innerHTML = esp.members.map(function(m, i) {
+              return '<div class="d-flex align-items-center gap-2 mb-1"><span class="small flex-shrink-0" style="min-width:90px;"><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + '</span><input type="text" class="form-control form-control-sm" maxlength="20" placeholder="티어" value="' + espEsc(m.tier) + '" oninput="esp.members[' + i + '].tier=this.value"><button type="button" class="btn btn-sm btn-outline-danger" onclick="espRemove(' + i + ')"><i class="bi bi-x-lg"></i></button></div>';
+          }).join('');
+      }
+      async function espSubmit() {
+          if (esp.busy) return;
+          var g = espGame(esp.game); if (!g) return;
+          if (g.size > 1 && !(esp.teamName || '').trim()) { alert('팀 이름을 입력해 주세요.'); return; }
+          if (!(esp.myTier || '').trim()) { alert('내 티어를 입력해 주세요.'); return; }
+          if (esp.members.length + 1 !== g.size) { alert(g.short + '은(는) 나 포함 정확히 ' + g.size + '명이어야 해요. (현재 ' + (esp.members.length + 1) + '명)'); return; }
+          if (esp.members.some(function(m) { return !(m.tier || '').trim(); })) { alert('팀원 티어를 모두 입력해 주세요.'); return; }
+          if (!confirm(g.name + ' 신청할까요?\n신청 후에는 신청자만 취소할 수 있어요.')) return;
+          esp.busy = true; showLoading(true);
+          try {
+              var r = await apiCall('/esports', { action: 'apply', studentId: currentUser.id, game: esp.game, teamName: esp.teamName, tier: esp.myTier, members: esp.members.map(function(m) { return { id: m.id, tier: m.tier }; }) });
+              showLoading(false);
+              if (!r || !r.success) { alert((r && r.msg) || '신청 실패'); if (esp.q) espDoSearch(); return; }
+              alert(r.msg || '신청 완료');
+              esp.team = r.team; esp.isLeader = true; espRender();
+          } catch (e) { showLoading(false); alert('오류: ' + (e.message || e)); }
+          finally { esp.busy = false; }
+      }
+      async function espCancel() {
+          if (!confirm('신청을 취소할까요? 팀원도 모두 신청이 풀려요.')) return;
+          showLoading(true);
+          try {
+              var r = await apiCall('/esports', { action: 'cancel', studentId: currentUser.id });
+              showLoading(false); alert((r && r.msg) || '처리됨');
+              if (r && r.success) await espLoad();
+          } catch (e) { showLoading(false); alert('오류: ' + (e.message || e)); }
+      }
+      // 교사: 신청 현황 (종목별 팀/멤버/티어) + CSV
+      var espAdminData = null;
+      function openEsportsAdmin() { bootstrap.Modal.getOrCreateInstance(document.getElementById('esportsAdminModal')).show(); loadEsportsAdmin(); }
+      async function loadEsportsAdmin() {
+          var body = document.getElementById('esportsAdminBody');
+          body.innerHTML = '<div class="text-center text-muted py-4">불러오는 중...</div>';
+          try {
+              var r = await apiCall('/esports', { action: 'list', teacherId: currentUser.id });
+              if (!r || !r.success) { body.innerHTML = '<div class="text-danger">' + espEsc((r && r.msg) || '불러오기 실패') + '</div>'; return; }
+              espAdminData = r;
+              var html = '<div class="small text-muted mb-2">총 ' + r.totalTeams + '팀 · ' + r.totalPeople + '명</div>';
+              r.games.forEach(function(g) {
+                  html += '<h6 class="fw-bold mt-3">' + espEsc(g.name) + ' <span class="badge bg-primary">' + g.teams.length + (g.size === 1 ? '명' : '팀') + '</span> <span class="small text-muted fw-normal">(' + g.people + '명)</span></h6>';
+                  if (!g.teams.length) { html += '<div class="small text-muted">아직 신청이 없습니다.</div>'; return; }
+                  html += g.teams.map(function(t) {
+                      return '<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between align-items-center mb-1"><b>' + (g.size === 1 ? '개인' : espEsc(t.teamName)) + '</b><button type="button" class="btn btn-sm btn-outline-danger py-0" data-tid="' + t.id + '" onclick="espAdminRemove(this.dataset.tid)">삭제</button></div>' +
+                          t.members.map(function(m) { return '<div class="small d-flex justify-content-between"><span><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + (m.isLeader ? ' <span class="badge bg-warning text-dark">신청자</span>' : '') + '</span><span class="text-muted">' + espEsc(m.tier) + '</span></div>'; }).join('') + '</div></div>';
+                  }).join('');
+              });
+              body.innerHTML = html;
+          } catch (e) { body.innerHTML = '<div class="text-danger">오류: ' + espEsc(e.message || e) + '</div>'; }
+      }
+      async function espAdminRemove(tid) {
+          if (!confirm('이 팀 신청을 삭제할까요? (팀원 모두 신청이 풀려요)')) return;
+          var r = await apiCall('/esports', { action: 'teacherRemove', teacherId: currentUser.id, teamId: tid });
+          alert((r && r.msg) || '처리됨'); loadEsportsAdmin();
+      }
+      function downloadEsportsCsv() {
+          if (!espAdminData) { alert('먼저 현황을 불러와 주세요.'); return; }
+          var cell = function(v) { v = String(v == null ? '' : v); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+          var rows = [['종목', '팀이름', '학번', '이름', '티어', '신청자여부', '신청자학번']];
+          espAdminData.games.forEach(function(g) { g.teams.forEach(function(t) { t.members.forEach(function(m) { rows.push([g.name, g.size === 1 ? '' : t.teamName, m.id, m.name, m.tier, m.isLeader ? 'O' : '', t.leaderId]); }); }); });
+          var csv = '\uFEFF' + rows.map(function(r) { return r.map(cell).join(','); }).join('\r\n');
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+          a.download = '이스포츠_신청현황.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
       // ===== 학교통일교육 실태조사 =====
       var DEMO_SURVEY_URL = 'https://seolmoon.com/?6201M';
       function openDemoSurvey() {
