@@ -2177,7 +2177,7 @@
           var html = '<div class="small text-muted mb-2">참가할 종목을 골라 신청하세요. 한 사람은 <b>하나의 팀에만</b> 들어갈 수 있어요.</div><div class="row g-2 mb-3">';
           esp.games.forEach(function(g) {
               var on = esp.game === g.key;
-              html += '<div class="col-6"><button type="button" class="btn w-100 ' + (on ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold py-2" data-game="' + g.key + '" onclick="espPick(this.dataset.game)">' + espEsc(g.short) + '<br><span class="small fw-normal">' + espSub(g) + (g.minAge ? ' · 만 ' + g.minAge + '세↑' : '') + (g.note ? ' · ' + espEsc(g.note) : '') + '</span></button></div>';
+              html += '<div class="col-6"><button type="button" class="btn w-100 ' + (on ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold py-2" data-game="' + g.key + '" onclick="espPick(this.dataset.game)">' + espEsc(g.short) + '<br><span class="small fw-normal">' + espSub(g) + (g.minAge ? ' · 만 ' + g.minAge + '세↑' : '') + (g.note ? ' · ' + espEsc(g.note) : '') + '</span>' + (g.format ? '<br><span class="fw-normal" style="font-size:0.72rem;opacity:.85;">🎯 ' + espEsc(g.format) + '</span>' : '') + '</button></div>';
           });
           html += '</div><div id="esportsForm"></div>';
           body.innerHTML = html;
@@ -2205,6 +2205,7 @@
           if (!g || !el) return;
           var h = '<div class="border rounded-3 p-3"><div class="fw-bold mb-2">' + espEsc(g.name) + ' · ' + espSub(g) + '</div>';
           if (g.minAge) h += '<div class="alert alert-warning small py-2 mb-2">⚠️ ' + espEsc(g.short) + '는 <b>만 ' + g.minAge + '세(생일이 지난 학생)</b>만 참가할 수 있어요. 팀원 전원의 생년월일을 입력해야 하고, 만 ' + g.minAge + '세가 안 된 학생이 있으면 신청되지 않아요.</div>';
+          if (g.format) h += '<div class="alert alert-secondary small py-2 mb-2">🎯 <b>경기 방식</b>: ' + espEsc(g.format) + '</div>';
           if (g.note) h += '<div class="alert alert-info small py-2 mb-2">📣 ' + espEsc(g.name) + '은(는) <b>' + espEsc(g.note) + '</b>이에요. 신청은 누구나 할 수 있고, 선발은 선생님이 해요.</div>';
           if (g.size > 1) h += '<label class="form-label small fw-bold mb-1">팀 이름</label><input type="text" id="espTeamName" class="form-control form-control-sm mb-2" maxlength="20" placeholder="팀 이름" value="' + espEsc(esp.teamName) + '" oninput="esp.teamName=this.value">';
           if (!g.noTier) h += '<label class="form-label small fw-bold mb-1">내 티어 (' + espEsc(currentUser.name) + ')</label><input type="text" id="espMyTier" class="form-control form-control-sm mb-2" maxlength="20" placeholder="예: 골드 2 / 플래티넘 / 1000컵" value="' + espEsc(esp.myTier) + '" oninput="esp.myTier=this.value">';
@@ -2314,7 +2315,7 @@
               espAdminData = r;
               var html = '<div class="small text-muted mb-2">총 ' + r.totalTeams + '팀 · ' + r.totalPeople + '명</div>';
               r.games.forEach(function(g) {
-                  html += '<h6 class="fw-bold mt-3">' + espEsc(g.name) + ' <span class="badge bg-primary">' + g.teams.length + (g.size === 1 ? '명' : '팀') + '</span> <span class="small text-muted fw-normal">(' + g.people + '명)</span>' + (g.note ? ' <span class="badge bg-info text-dark">' + espEsc(g.note) + '</span>' : '') + (g.minAge ? ' <span class="badge bg-warning text-dark">만 ' + g.minAge + '세↑</span>' : '') + '</h6>';
+                  html += '<h6 class="fw-bold mt-3">' + espEsc(g.name) + ' <span class="badge bg-primary">' + g.teams.length + (g.size === 1 ? '명' : '팀') + '</span> <span class="small text-muted fw-normal">(' + g.people + '명)</span>' + (g.note ? ' <span class="badge bg-info text-dark">' + espEsc(g.note) + '</span>' : '') + (g.minAge ? ' <span class="badge bg-warning text-dark">만 ' + g.minAge + '세↑</span>' : '') + '</h6>' + (g.format ? '<div class="small text-muted mb-1">🎯 ' + espEsc(g.format) + '</div>' : '');
                   if (!g.teams.length) { html += '<div class="small text-muted">아직 신청이 없습니다.</div>'; return; }
                   html += g.teams.map(function(t) {
                       return '<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between align-items-center mb-1"><b>' + (g.size === 1 ? '개인' : espEsc(t.teamName)) + '</b><button type="button" class="btn btn-sm btn-outline-danger py-0" data-tid="' + t.id + '" onclick="espAdminRemove(this.dataset.tid)">삭제</button></div>' +

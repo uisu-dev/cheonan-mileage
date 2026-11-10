@@ -221,5 +221,15 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
     assert((await E.cancel(db3, c[0])).success);
     assert((await E.apply(db3, { studentId: c[0], game: 'steppin', tier: '실버' }, NOW)).success);
   }
+  // 종목별 경기 방식 안내(표시용 메타데이터)
+  {
+    const dbF = makeDb(users());
+    const st = await E.status(dbF, '30101'); const L3 = await E.list(dbF, 'T001');
+    const fmt = { lol: '소환사의 협곡 (비공개 선택)', valorant: '토너먼트 모드 및 연장 2점 승리 옵션', brawl: '젬 그랩, 브롤 볼, 하이스트', steppin: '배틀모드', caster: '' };
+    for (const k of Object.keys(fmt)) {
+      assert.strictEqual(st.games.find(g => g.key === k).format, fmt[k], 'status format ' + k);
+      assert.strictEqual(L3.games.find(g => g.key === k).format, fmt[k], 'list format ' + k);
+    }
+  }
   console.log('esports tests passed');
 })().catch(e => { console.error(e); process.exit(1); });
