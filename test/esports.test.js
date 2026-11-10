@@ -150,5 +150,76 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
     assert(sharedWins <= 1, 'shared student in at most one team');
     assert(db2.tables.esports_teams.every(t => db2.tables.esports_members.some(m => m.team_id === t.id)), 'no orphan teams');
   }
+  // ===== v2: 발로란트 만 15세 + 생년월일, 중계(개인, 티어 없음, 인원 제한 없음), 전체 종목 1인 1신청 =====
+  {
+    const NOW = new Date('2026-11-10T03:00:00Z');                   // 서울 2026-11-10 12:00
+    assert.strictEqual(E.seoulToday(new Date('2026-11-09T15:30:00Z')), '2026-11-10', 'UTC 15:30 = 서울 다음날 00:30');
+    const age = (s, n) => E.fullAge(E.parseDate(s), n || NOW);
+    assert.strictEqual(age('2011-11-10'), 15, '오늘이 만 15세 생일');
+    assert.strictEqual(age('2011-11-11'), 14, '생일 하루 전');
+    assert.strictEqual(age('2011-12-31'), 14);
+    assert.strictEqual(age('2008-01-01'), 18);
+    assert.strictEqual(age('2012-02-29', new Date('2027-02-28T03:00:00Z')), 14, '2/29생 평년 2/28은 아직');
+    assert.strictEqual(age('2012-02-29', new Date('2027-03-01T03:00:00Z')), 15, '2/29생 평년 3/1은 지남');
+    assert(E.parseDate('2010-02-30') === null && E.parseDate('abc') === null && E.parseDate('2010-5-1') === null);
+
+    const db3 = makeDb(users());
+    const [v1, v2, v3, v4, v5] = ids(1, 1, 5);
+    const vm = (arr, b) => arr.map(id => ({ id, tier: '골드', birthdate: b }));
+    const base = { studentId: v1, game: 'valorant', teamName: 'V', tier: '골드', birthdate: '2010-05-21' };
+    const ap = (o) => E.apply(db3, Object.assign({}, base, o), NOW);
+    let r = await ap({ members: vm([v2, v3, v4, v5], '2010-05-21').slice(0, 3) });
+    assert(!r.success, '4명 거부');
+    r = await ap({ birthdate: '', members: vm([v2, v3, v4, v5], '2010-05-21') });
+    assert(!r.success && /생년월일/.test(r.msg), '리더 생년월일 필수');
+    r = await ap({ members: vm([v2, v3, v4], '2010-05-21').concat([{ id: v5, tier: '골드' }]) });
+    assert(!r.success && /생년월일/.test(r.msg), '팀원 생년월일 누락 거부');
+    r = await ap({ members: vm([v2, v3, v4], '2010-05-21').concat([{ id: v5, tier: '골드', birthdate: '2010-13-40' }]) });
+    assert(!r.success, '잘못된 날짜 거부');
+    r = await ap({ members: vm([v2, v3, v4], '2010-05-21').concat([{ id: v5, tier: '골드', birthdate: '2011-11-11' }]) });
+    assert(!r.success && /만 15세/.test(r.msg), '팀원 생일 안 지남(만 14세) 거부: ' + r.msg);
+    r = await ap({ birthdate: '2012-03-01', members: vm([v2, v3, v4, v5], '2010-05-21') });
+    assert(!r.success && /만 15세/.test(r.msg), '리더 만 15세 미만 거부');
+    r = await ap({ birthdate: '2027-01-01', members: vm([v2, v3, v4, v5], '2010-05-21') });
+    assert(!r.success, '미래 날짜 거부');
+    assert.strictEqual(db3.tables.esports_teams.length, 0, '거부 시 저장 없음');
+    // 모두 통과 (오늘이 만 15세 생일인 학생 포함)
+    r = await ap({ members: vm([v2, v3, v4], '2010-05-21').concat([{ id: v5, tier: '플래', birthdate: '2011-11-10' }]) });
+    assert(r.success, r.msg);
+    assert.strictEqual(r.team.members.length, 5);
+    assert(r.team.members.every(m => m.birthdate === undefined), '학생 응답에는 생년월일 미포함');
+    assert.strictEqual(db3.tables.esports_members.filter(m => m.birthdate).length, 5, 'DB에는 5명 모두 저장');
+    // 다른 종목은 생년월일 요구/저장 안 함
+    const [w1, w2, w3] = ids(2, 1, 3);
+    r = await E.apply(db3, { studentId: w1, game: 'brawl', teamName: 'B', tier: '1', birthdate: '2000-01-01', members: mem([w2, w3]) }, NOW);
+    assert(r.success, r.msg);
+    assert(db3.tables.esports_members.filter(m => [w1, w2, w3].includes(m.student_id)).every(m => !m.birthdate), '비발로란트는 생년월일 저장 안 함');
+
+    // 중계: 개인, 티어 없이 가능, 한마디 선택, 인원 제한 없음(2명 초과 신청 가능), 1인 1신청 유지
+    const c = ids(3, 1, 4);
+    r = await E.apply(db3, { studentId: c[0], game: 'caster' }, NOW);
+    assert(r.success, r.msg); assert.strictEqual(r.team.members.length, 1); assert.strictEqual(r.team.members[0].tier, '');
+    r = await E.apply(db3, { studentId: c[1], game: 'caster', message: '말하기 좋아해요', tier: '무시됨' }, NOW);
+    assert(r.success, r.msg); assert.strictEqual(r.team.members[0].message, '말하기 좋아해요'); assert.strictEqual(r.team.members[0].tier, '');
+    r = await E.apply(db3, { studentId: c[2], game: 'caster' }, NOW); assert(r.success);
+    r = await E.apply(db3, { studentId: c[3], game: 'caster', members: mem([ids(3, 10, 1)[0]]) }, NOW);
+    assert(!r.success, '중계는 개인만');
+    r = await E.apply(db3, { studentId: c[0], game: 'steppin', tier: '골드' }, NOW);
+    assert(!r.success, '중계 신청자는 다른 종목 불가');
+    r = await E.apply(db3, { studentId: v1, game: 'caster' }, NOW);
+    assert(!r.success, '발로란트 팀원은 중계 불가');
+    r = await E.apply(db3, { studentId: ids(3, 11, 1)[0], game: 'lol', teamName: 'L', tier: '1', members: mem([c[0], ids(3, 12, 1)[0], ids(3, 13, 1)[0], ids(3, 14, 1)[0]]) }, NOW);
+    assert(!r.success, '중계 신청자는 팀원으로도 불가');
+    // 교사 조회: 생년월일/한마디 포함, 종목 5개, 중계 note
+    const L2 = await E.list(db3, 'T001');
+    assert.strictEqual(L2.games.length, 5);
+    const vg = L2.games.find(x => x.key === 'valorant'); assert(vg.minAge === 15 && vg.teams[0].members.every(m => /^\d{4}-\d{2}-\d{2}$/.test(m.birthdate)));
+    const cg = L2.games.find(x => x.key === 'caster'); assert(cg.note === '2명 선발 예정' && cg.noTier && cg.teams.length === 3);
+    assert(cg.teams.some(t => t.members[0].message === '말하기 좋아해요'));
+    const st = await E.status(db3, c[0]); assert(st.games.length === 5 && st.games.find(g => g.key === 'caster').noTier);
+    // 중계 취소 후 재신청
+    assert((await E.cancel(db3, c[0])).success);
+    assert((await E.apply(db3, { studentId: c[0], game: 'steppin', tier: '실버' }, NOW)).success);
+  }
   console.log('esports tests passed');
 })().catch(e => { console.error(e); process.exit(1); });
