@@ -2,13 +2,14 @@
 -- Supabase SQL Editor에서 직접 실행하세요. (배포 전 승인 후 적용)
 -- 기존 테이블/데이터(통일조사 복권 survey_logs 등)는 건드리지 않습니다.
 --
--- game: lol(롤, 5명) | brawl(브롤스타즈, 3명) | steppin(스테핀, 개인 1명) | valorant(발로란트, 5명)
+-- game: lol(롤, 5명) | brawl(브롤스타즈, 3명) | steppin(스테핀, 개인 1명) | valorant(발로란트, 5명) | caster(중계, 개인 1명, 2명 선발 예정)
+-- (v2 반영본: 이미 적용된 DB는 sql/esports_v2.sql 로 증분 변경)
 -- 한 학생은 전체 종목을 통틀어 하나의 팀에만 속할 수 있음
 --   → esports_members.student_id UNIQUE (리더 본인도 멤버 행으로 저장하므로 리더/팀원 구분 없이 1인 1팀)
 
 CREATE TABLE IF NOT EXISTS esports_teams (
   id BIGSERIAL PRIMARY KEY,
-  game TEXT NOT NULL CHECK (game IN ('lol','brawl','steppin','valorant')),
+  game TEXT NOT NULL CHECK (game IN ('lol','brawl','steppin','valorant','caster')),
   team_name TEXT NOT NULL DEFAULT '',
   leader_id TEXT NOT NULL,            -- 신청자(리더) 학번 5자리
   leader_name TEXT NOT NULL DEFAULT '',
@@ -22,7 +23,9 @@ CREATE TABLE IF NOT EXISTS esports_members (
   team_id BIGINT NOT NULL REFERENCES esports_teams(id) ON DELETE CASCADE,
   student_id TEXT NOT NULL,           -- 학번 5자리 (3학년: 3xxxx)
   name TEXT NOT NULL DEFAULT '',
-  tier TEXT NOT NULL DEFAULT '',      -- 자유 입력 (예: 골드 2)
+  tier TEXT NOT NULL DEFAULT '',      -- 자유 입력 (예: 골드 2). 중계는 빈 값
+  birthdate DATE NULL,                -- 발로란트만 입력 (만 15세 이상 확인)
+  message TEXT NOT NULL DEFAULT '',   -- 중계 지원 한마디(선택, 신청자 행에만)
   is_leader BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT esports_members_student_unique UNIQUE (student_id)
