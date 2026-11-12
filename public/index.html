@@ -97,7 +97,7 @@
       <div class="container pb-5">
         <ul class="nav nav-tabs mb-3" role="tablist">
           <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab">💯 점수</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석부</button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석/학급관리</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab">📢 제보함</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab">💌 칭찬</button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#noticeTab">📢 공지사항</button></li>
@@ -118,6 +118,7 @@
              <div class="d-flex justify-content-center mb-3"><div class="btn-group w-100" role="group">
                <input type="radio" class="btn-check" name="attMode" id="attModePeriod" autocomplete="off" checked onclick="setAttMode('period')"><label class="btn btn-outline-primary fw-bold" for="attModePeriod">🕘 학급 출석부 (교시)</label>
                <input type="radio" class="btn-check" name="attMode" id="attModeClub" autocomplete="off" onclick="setAttMode('club')"><label class="btn btn-outline-primary fw-bold" for="attModeClub">🏫 동아리 출석부</label>
+               <input type="radio" class="btn-check" name="attMode" id="attModeRoles" autocomplete="off" onclick="setAttMode('roles')"><label class="btn btn-outline-primary fw-bold" for="attModeRoles">🧹 1인 1역</label>
              </div></div>
 
              <div id="periodAttSection">
@@ -135,6 +136,20 @@
                  </div>
                </div></div>
                <div id="paBody"></div>
+             </div>
+
+             <div id="rolesSection" style="display:none;">
+               <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">
+                 <h6 class="fw-bold mb-2">🧹 1인 1역 (봉사도우미)</h6>
+                 <div class="row g-2 mb-2">
+                   <div class="col-3"><select id="crGrade" class="form-select form-select-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+                   <div class="col-3"><select id="crClass" class="form-select form-select-sm"><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
+                   <div class="col-3"><input type="number" id="crYear" class="form-control form-control-sm" min="2020" max="2100" title="학년도"></div>
+                   <div class="col-3"><select id="crSemester" class="form-select form-select-sm"><option value="1">1학기</option><option value="2">2학기</option></select></div>
+                 </div>
+                 <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="crLoad()"><i class="bi bi-search"></i> 불러오기</button>
+               </div></div>
+               <div id="crBody"></div>
              </div>
 
              <div id="clubAttSection" style="display:none;">
@@ -184,7 +199,7 @@
             <div id="teacherNoticeList"></div>
           </div>
 
-          <div class="tab-pane fade" id="statsTab"><div class="alert alert-info d-flex align-items-start gap-2 py-2 small mb-3 shadow-sm border-0"><i class="bi bi-lightbulb-fill text-warning fs-5"></i><div><b>학생 이름을 누르면</b> 마일리지 내역 확인, <b>상담 기록 작성·조회</b>, 생활교육위원회 징계 관리를 할 수 있습니다.</div></div><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div id="penaltyListArea" class="mb-3"></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
+          <div class="tab-pane fade" id="statsTab"><div class="d-grid mb-3"><button type="button" class="btn shadow-sm fw-bold text-white py-2" style="background:linear-gradient(to right,#5f72bd,#9b23ea);" onclick="openCounselAll()"><i class="bi bi-journal-text"></i> 📚 상담 목록 전체보기 <span class="small fw-normal opacity-75">(내가 쓴 기록 + 공유받은 기록)</span></button></div><div class="alert alert-info d-flex align-items-start gap-2 py-2 small mb-3 shadow-sm border-0"><i class="bi bi-lightbulb-fill text-warning fs-5"></i><div><b>학생 이름을 누르면</b> 마일리지 내역 확인, <b>상담 기록 작성·조회</b>, 생활교육위원회 징계 관리를 할 수 있습니다.</div></div><div class="card border-0 shadow-sm mb-3"><div class="card-body p-3 bg-light rounded"><div class="input-group mb-3"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" id="statSearch" class="form-control" placeholder="이름 또는 학번(5자리) 검색" onkeyup="renderStats()"></div><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted fw-bold">학년</label><select id="statGrade" class="form-select" onchange="renderStats()"><option value="">전체</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="col-6"><label class="small text-muted fw-bold">반</label><select id="statClass" class="form-select" onchange="renderStats()"><option value="">전체</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}</option>`);</script></select></div></div><div class="btn-group w-100" role="group"><input type="radio" class="btn-check" name="sortOpt" id="sortPoint" autocomplete="off" checked onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortPoint">점수순</label><input type="radio" class="btn-check" name="sortOpt" id="sortId" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortId">학번순</label><input type="radio" class="btn-check" name="sortOpt" id="sortName" autocomplete="off" onclick="renderStats()"><label class="btn btn-outline-primary btn-sm" for="sortName">이름순</label></div></div></div><div id="penaltyListArea" class="mb-3"></div><div class="alert alert-secondary py-2 small d-flex justify-content-between"><span>총원: <strong id="statCount">0</strong></span><span>평균: <strong id="statAvg">0</strong></span></div><div class="table-responsive bg-white border rounded"><table class="table table-hover mb-0" style="min-width:300px;"><thead class="table-light"><tr><th width="15%">#</th><th>이름</th><th class="text-end" width="25%">점수</th></tr></thead><tbody id="statTableBody"></tbody></table></div></div>
 
           <div class="tab-pane fade" id="rentalTab">
             <ul class="nav nav-pills nav-fill mb-3 bg-light rounded p-1">
@@ -783,6 +798,36 @@
           <div id="unifyScratchDetail" class="mt-3"></div>
         </div>
         <div class="modal-footer"><button type="button" id="unifyRevealBtn" class="btn btn-outline-success btn-sm" onclick="unifyRevealAll()">한 번에 보기</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>
+      </div></div>
+    </div>
+    <div class="modal fade" id="counselAllModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content">
+        <div class="modal-header text-white" style="background:linear-gradient(to right,#5f72bd,#9b23ea);"><h5 class="modal-title fw-bold">📚 상담 목록 전체보기</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="alert alert-light border small py-2 mb-2"><i class="bi bi-shield-lock"></i> 내가 작성한 기록과 다른 선생님이 나에게 <b>공유한</b> 기록만 보입니다.</div>
+          <div class="row g-2 mb-2">
+            <div class="col-3"><select id="caGrade" class="form-select form-select-sm"><option value="">전체 학년</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+            <div class="col-3"><select id="caClass" class="form-select form-select-sm"><option value="">전체 반</option><script>for(let i=1;i<=15;i++)document.write(`<option value="${i}">${i}반</option>`);</script></select></div>
+            <div class="col-6"><input type="text" id="caQ" class="form-control form-control-sm" placeholder="학생 이름 또는 학번" onkeyup="if(event.keyCode===13){loadCounselAll()}"></div>
+            <div class="col-4"><input type="date" id="caFrom" class="form-control form-control-sm" title="시작일"></div>
+            <div class="col-4"><input type="date" id="caTo" class="form-control form-control-sm" title="종료일"></div>
+            <div class="col-4"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="loadCounselAll()"><i class="bi bi-search"></i> 조회</button></div>
+          </div>
+          <div id="counselAllList"></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="modal fade" id="counselShareModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi bi-share"></i> 상담 기록 공유</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="small text-muted mb-2">공유받은 선생님은 <b>읽기만</b> 할 수 있어요(수정·삭제·재공유 불가). 공동 상담은 같은 상담의 모든 학생 기록에 함께 적용돼요.</div>
+          <div class="fw-bold small mb-1">공유 중인 선생님</div>
+          <div id="csSelected" class="d-flex flex-wrap gap-1 mb-3"></div>
+          <input type="text" id="csSearch" class="form-control form-control-sm mb-1" placeholder="선생님 이름 검색" oninput="csRenderResults()">
+          <div id="csResults" class="list-group small" style="max-height:220px;overflow:auto;"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button><button type="button" class="btn btn-primary fw-bold" onclick="csSave()">저장</button></div>
       </div></div>
     </div>
     <div class="modal fade" id="esportsModal" tabindex="-1" aria-hidden="true">
@@ -1654,6 +1699,8 @@
       function setAttMode(m) {
         document.getElementById('periodAttSection').style.display = m === 'period' ? '' : 'none';
         document.getElementById('clubAttSection').style.display = m === 'club' ? '' : 'none';
+        var rs = document.getElementById('rolesSection'); if (rs) rs.style.display = m === 'roles' ? '' : 'none';
+        if (m === 'roles') { try { crInit(); } catch (e) {} }
       }
       function paKstToday() {
         var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -3642,44 +3689,222 @@
         // 목록 로딩
         loadCounselingRecords();
       }
+      // ===== 상담 기록 카드 (작성자만 삭제·공유, 공유받은 기록은 읽기 전용) =====
+      var counselCache = {}; var counselAllCache = {};
+      function counselCardHtml(rec, showStudent) {
+        var typeBadge = rec.counselType === '회복적 상담' ? '<span class="badge bg-warning text-dark">회복적 상담</span>' : '<span class="badge bg-info">일반 상담</span>';
+        var joinBadge = rec.sessionId ? '<span class="badge bg-success ms-1"><i class="bi bi-people-fill"></i> 공동</span>' : '';
+        var sharedBadge = rec.isMine ? '' : '<span class="badge bg-secondary ms-1"><i class="bi bi-share-fill"></i> 공유받음 (from ' + escapeHtml(rec.sharedFrom || rec.teacherName || '') + ')</span>';
+        var sharedWithRow = (rec.isMine && rec.sharedWith && rec.sharedWith.length) ? '<div class="small text-secondary mb-2"><i class="bi bi-share"></i> 공유 중: ' + rec.sharedWith.map(function(t) { return escapeHtml(t.name); }).join(', ') + '</div>' : '';
+        var studentRow = showStudent ? '<div class="fw-bold mb-1"><i class="bi bi-person"></i> ' + escapeHtml(rec.studentName || '') + ' <span class="text-muted small">(' + escapeHtml(rec.studentId) + ')</span></div>' : '';
+        var participantsRow = rec.participants ? '<div class="small text-primary mb-2"><i class="bi bi-people-fill"></i> 참여 학생: ' + escapeHtml(rec.participants) + '</div>' : '';
+        var fileLink = rec.fileUrl ? '<a href="' + escapeHtml(rec.fileUrl) + '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip"></i> ' + escapeHtml(rec.fileName || '첨부파일') + '</a>' : '';
+        var actions = rec.isMine
+          ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openCounselShare(' + Number(rec.id) + ')"><i class="bi bi-share"></i> 공유</button><button class="btn btn-sm btn-outline-danger" onclick="deleteCounselRecord(' + Number(rec.id) + ', ' + (rec.sessionId ? 'true' : 'false') + ')"><i class="bi bi-trash"></i> 삭제</button>'
+          : '<span class="small text-muted">읽기 전용</span>';
+        return '<div class="card mb-2 border-0 shadow-sm"><div class="card-body p-3">' + studentRow +
+          '<div class="d-flex justify-content-between align-items-start mb-2"><div><strong>' + escapeHtml(rec.counselDateStr) + '</strong> ' + typeBadge + joinBadge + sharedBadge + '</div><small class="text-muted">' + escapeHtml(rec.teacherName || '') + '</small></div>' +
+          participantsRow + sharedWithRow +
+          '<div class="small mb-2" style="white-space:pre-wrap; line-height:1.6;">' + escapeHtml(rec.content) + '</div>' +
+          '<div class="d-flex justify-content-between align-items-center"><div>' + fileLink + '</div><div>' + actions + '</div></div></div></div>';
+      }
+      function counselAllOpen() { var m = document.getElementById('counselAllModal'); return !!(m && m.classList.contains('show')); }
+      function openCounselAll() { bootstrap.Modal.getOrCreateInstance(document.getElementById('counselAllModal')).show(); loadCounselAll(); }
+      async function loadCounselAll() {
+        var el = document.getElementById('counselAllList');
+        el.innerHTML = '<div class="text-center py-3 text-muted small">불러오는 중...</div>';
+        var r;
+        try { r = await apiCall('/counseling', { action: 'listAll', teacherId: currentUser.id, grade: document.getElementById('caGrade').value, classNm: document.getElementById('caClass').value, q: document.getElementById('caQ').value.trim(), from: document.getElementById('caFrom').value, to: document.getElementById('caTo').value }); }
+        catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        if (!r || !r.success) { el.innerHTML = '<div class="text-danger small">' + escapeHtml((r && r.msg) || '불러오기 실패') + '</div>'; return; }
+        counselAllCache = {}; (r.records || []).forEach(function(rec) { counselAllCache[rec.id] = rec; });
+        if (!r.records.length) { el.innerHTML = '<div class="text-center py-4 text-muted small">볼 수 있는 상담 기록이 없습니다.</div>'; return; }
+        var mine = r.records.filter(function(x) { return x.isMine; }).length;
+        el.innerHTML = '<div class="small text-muted mb-2">총 ' + r.total + '건 (내 기록 ' + mine + ' · 공유받음 ' + (r.records.length - mine) + ')' + (r.truncated ? ' · 최근 ' + r.records.length + '건만 표시' : '') + '</div>' +
+          r.records.map(function(rec) { return counselCardHtml(rec, true); }).join('');
+      }
+      // ----- 공유 설정 -----
+      var csCtx = { id: null, selected: [], teachers: null };
+      async function openCounselShare(id) {
+        var rec = counselCache[id] || counselAllCache[id];
+        if (!rec || !rec.isMine) return;
+        csCtx.id = id; csCtx.selected = (rec.sharedWith || []).map(function(t) { return { id: t.id, name: t.name }; });
+        document.getElementById('csSearch').value = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('counselShareModal')).show();
+        csRenderSelected();
+        document.getElementById('csResults').innerHTML = '<div class="list-group-item text-muted">불러오는 중...</div>';
+        if (!csCtx.teachers) {
+          try { var r = await apiCall('/counseling', { action: 'teachers', teacherId: currentUser.id }); csCtx.teachers = (r && r.success) ? r.teachers : []; }
+          catch (e) { csCtx.teachers = []; }
+        }
+        csRenderResults();
+      }
+      function csRenderSelected() {
+        var el = document.getElementById('csSelected');
+        if (!csCtx.selected.length) { el.innerHTML = '<span class="small text-muted">아직 공유하지 않았어요 (나만 볼 수 있음).</span>'; return; }
+        el.innerHTML = csCtx.selected.map(function(t, i) { return '<span class="badge bg-primary d-inline-flex align-items-center gap-1 py-2">' + escapeHtml(t.name) + ' <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem;" aria-label="해제" onclick="csRemove(' + i + ')"></button></span>'; }).join('');
+      }
+      function csRenderResults() {
+        var el = document.getElementById('csResults');
+        var q = (document.getElementById('csSearch').value || '').trim();
+        var sel = {}; csCtx.selected.forEach(function(t) { sel[t.id] = 1; });
+        var list = (csCtx.teachers || []).filter(function(t) { return !sel[t.id] && (!q || String(t.name).indexOf(q) !== -1); }).slice(0, 50);
+        if (!q) { el.innerHTML = '<div class="list-group-item text-muted">선생님 이름을 입력해 검색하세요.</div>'; return; }
+        if (!list.length) { el.innerHTML = '<div class="list-group-item text-muted">검색 결과가 없어요.</div>'; return; }
+        el.innerHTML = list.map(function(t) { return '<button type="button" class="list-group-item list-group-item-action" data-id="' + escapeHtml(t.id) + '" data-name="' + escapeHtml(t.name) + '" onclick="csAdd(this.dataset.id,this.dataset.name)"><i class="bi bi-plus-circle"></i> ' + escapeHtml(t.name) + '</button>'; }).join('');
+      }
+      function csAdd(id, name) { if (!csCtx.selected.some(function(t) { return t.id === id; })) csCtx.selected.push({ id: id, name: name }); csRenderSelected(); csRenderResults(); }
+      function csRemove(i) { csCtx.selected.splice(i, 1); csRenderSelected(); csRenderResults(); }
+      async function csSave() {
+        showLoading(true);
+        var r;
+        try { r = await apiCall('/counseling', { action: 'setShares', teacherId: currentUser.id, id: csCtx.id, teacherIds: csCtx.selected.map(function(t) { return t.id; }) }); }
+        catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        showLoading(false);
+        alert((r && r.msg) || '처리됨');
+        if (r && r.success) {
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('counselShareModal')).hide();
+          var cm = document.getElementById('counselingModal'); if (cm && cm.classList.contains('show')) loadCounselingRecords();
+          if (counselAllOpen()) loadCounselAll();
+        }
+      }
+
+      // ===== 1인 1역 (봉사도우미) =====
+      var cr = { inited: false, data: null };
+      function crDefaultTerm() {
+        var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit' }).format(new Date()).split('-');
+        var y = +p[0], m = +p[1];
+        return { year: m >= 3 ? y : y - 1, semester: (m >= 3 && m <= 8) ? 1 : 2 };
+      }
+      function crInit() {
+        if (cr.inited) return; cr.inited = true;
+        var t = crDefaultTerm();
+        document.getElementById('crYear').value = t.year;
+        document.getElementById('crSemester').value = String(t.semester);
+        try {
+          var last = JSON.parse(localStorage.getItem('crLastClass') || localStorage.getItem('paLastClass') || 'null');
+          if (last && last.g) { document.getElementById('crGrade').value = String(last.g); document.getElementById('crClass').value = String(last.c); }
+        } catch (e) {}
+      }
+      function crScope() { return { teacherId: currentUser.id, grade: document.getElementById('crGrade').value, classNm: document.getElementById('crClass').value, year: document.getElementById('crYear').value, semester: document.getElementById('crSemester').value }; }
+      async function crCall(action, extra, quiet) {
+        var body = Object.assign(crScope(), extra || {}, { action: action });
+        if (cr.data && action !== 'load') { body.grade = cr.data.grade; body.classNm = cr.data.classNm; body.year = cr.data.year; body.semester = cr.data.semester; }
+        var r;
+        try { r = await apiCall('/class-roles', body); } catch (e) { r = { success: false, msg: '네트워크 오류' }; }
+        if (!r || !r.success) { alert((r && r.msg) || '처리 실패'); return null; }
+        cr.data = r; crRender();
+        return r;
+      }
+      async function crLoad() {
+        crInit();
+        try { localStorage.setItem('crLastClass', JSON.stringify({ g: document.getElementById('crGrade').value, c: document.getElementById('crClass').value })); } catch (e) {}
+        cr.data = null;
+        document.getElementById('crBody').innerHTML = '<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm"></span> 불러오는 중...</div>';
+        var r = await crCall('load');
+        if (!r) document.getElementById('crBody').innerHTML = '';
+      }
+      function crRoleName(id) { var r = (cr.data.roles || []).find(function(x) { return String(x.id) === String(id); }); return r ? r.name : ''; }
+      function crRender() {
+        var d = cr.data; var el = document.getElementById('crBody'); if (!d || !el) return;
+        var amap = {}; d.assignments.forEach(function(a) { amap[a.studentId] = a; });
+        var title = d.year + '학년도 ' + d.semester + '학기 · ' + d.grade + '학년 ' + d.classNm + '반';
+        var h = '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3">' +
+          '<div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold mb-0">📝 역할 종류 <span class="small text-muted fw-normal">(' + escapeHtml(title) + ')</span></h6>' +
+          (d.semester === 2 ? '<button class="btn btn-sm btn-outline-secondary" onclick="crCopyFirst()"><i class="bi bi-files"></i> 1학기 역할 가져오기</button>' : '') + '</div>' +
+          '<div class="input-group input-group-sm mb-2"><input type="text" id="crNewRole" class="form-control" maxlength="30" placeholder="예: 칠판 정리, 우유 배달, 분리수거" onkeyup="if(event.keyCode===13){crAddRole()}"><button class="btn btn-primary fw-bold" onclick="crAddRole()"><i class="bi bi-plus-lg"></i> 추가</button></div>';
+        if (!d.roles.length) h += '<div class="small text-muted">등록된 역할이 없어요. 위에서 역할을 먼저 추가해 주세요.</div>';
+        else h += '<div class="d-flex flex-wrap gap-1">' + d.roles.map(function(r) {
+          var n = d.assignments.filter(function(a) { return String(a.roleId) === String(r.id); }).length;
+          return '<span class="badge bg-light text-dark border d-inline-flex align-items-center gap-1 py-2">' + escapeHtml(r.name) + ' <span class="badge bg-primary">' + n + '</span>' +
+            '<button type="button" class="btn btn-link btn-sm p-0 text-secondary" title="이름 수정" onclick="crRenameRole(' + Number(r.id) + ')"><i class="bi bi-pencil"></i></button>' +
+            '<button type="button" class="btn btn-link btn-sm p-0 text-danger" title="삭제" onclick="crDeleteRole(' + Number(r.id) + ')"><i class="bi bi-trash"></i></button></span>';
+        }).join('') + '</div>';
+        h += '</div></div>';
+        // 명단 + 배정
+        var opts = function(sel) { return '<option value="">— 미배정 —</option>' + d.roles.map(function(r) { return '<option value="' + Number(r.id) + '"' + (String(sel) === String(r.id) ? ' selected' : '') + '>' + escapeHtml(r.name) + '</option>'; }).join(''); };
+        h += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold mb-0">👥 학급 명단 <span class="small text-muted fw-normal">' + d.roster.length + '명 · 미배정 ' + d.unassigned + '명</span></h6>' +
+          '<div><button class="btn btn-sm btn-outline-secondary me-1" onclick="crCsv()"><i class="bi bi-download"></i> CSV</button><button class="btn btn-sm btn-outline-secondary" onclick="crPrint()"><i class="bi bi-printer"></i> 인쇄</button></div></div>';
+        if (!d.roster.length) h += '<div class="small text-muted">이 학급 학생이 없어요.</div>';
+        else h += '<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead class="table-light"><tr><th style="width:50px;">번호</th><th>이름</th><th style="min-width:150px;">1인 1역</th></tr></thead><tbody>' +
+          d.roster.map(function(s) {
+            var a = amap[s.id];
+            return '<tr><td>' + s.no + '</td><td>' + escapeHtml(s.name) + '<div class="small text-muted">' + escapeHtml(s.id) + '</div></td><td><select class="form-select form-select-sm" data-sid="' + escapeHtml(s.id) + '" onchange="crAssign(this.dataset.sid,this.value)"' + (d.roles.length ? '' : ' disabled') + '>' + opts(a ? a.roleId : '') + '</select>' +
+              (a && a.assignedByName ? '<div class="small text-muted">배정: ' + escapeHtml(a.assignedByName) + '</div>' : '') + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+        h += '</div></div>';
+        // 요약
+        h += '<div class="card border-0 shadow-sm mb-3"><div class="card-body p-3"><h6 class="fw-bold mb-2">📊 역할별 요약</h6>' + crSummaryHtml() + '</div></div>';
+        el.innerHTML = h;
+      }
+      function crSummaryRows() {
+        var d = cr.data; var name = {}; d.roster.forEach(function(s) { name[s.id] = s; });
+        var rows = d.roles.map(function(r) {
+          var st = d.assignments.filter(function(a) { return String(a.roleId) === String(r.id); }).map(function(a) { return name[a.studentId]; }).filter(Boolean).sort(function(x, y) { return x.id.localeCompare(y.id); });
+          return { role: r.name, students: st };
+        });
+        var assigned = {}; d.assignments.forEach(function(a) { assigned[a.studentId] = 1; });
+        return { rows: rows, unassigned: d.roster.filter(function(s) { return !assigned[s.id]; }) };
+      }
+      function crSummaryHtml() {
+        var x = crSummaryRows();
+        var h = x.rows.length ? '<ul class="list-group mb-2">' + x.rows.map(function(r) { return '<li class="list-group-item small"><b>' + escapeHtml(r.role) + '</b> <span class="badge bg-primary">' + r.students.length + '</span><br>' + (r.students.length ? r.students.map(function(s) { return s.no + '. ' + escapeHtml(s.name); }).join(', ') : '<span class="text-muted">배정된 학생 없음</span>') + '</li>'; }).join('') + '</ul>' : '<div class="small text-muted mb-2">등록된 역할이 없어요.</div>';
+        h += '<div class="small"><b>미배정 ' + x.unassigned.length + '명</b>' + (x.unassigned.length ? ': ' + x.unassigned.map(function(s) { return s.no + '. ' + escapeHtml(s.name); }).join(', ') : '') + '</div>';
+        return h;
+      }
+      async function crAddRole() {
+        var v = (document.getElementById('crNewRole').value || '').trim();
+        if (!v) { alert('역할 이름을 입력해 주세요.'); return; }
+        await crCall('addRole', { name: v });
+      }
+      async function crRenameRole(id) {
+        var v = prompt('새 역할 이름', crRoleName(id)); if (v === null) return;
+        v = v.trim(); if (!v) return;
+        await crCall('renameRole', { roleId: id, name: v });
+      }
+      async function crDeleteRole(id) {
+        var n = cr.data.assignments.filter(function(a) { return String(a.roleId) === String(id); }).length;
+        if (!confirm('"' + crRoleName(id) + '" 역할을 삭제할까요?' + (n ? '\n배정된 학생 ' + n + '명은 미배정이 됩니다.' : ''))) return;
+        await crCall('deleteRole', { roleId: id });
+      }
+      async function crAssign(sid, roleId) { await crCall('assign', { studentId: sid, roleId: roleId === '' ? null : Number(roleId) }); }
+      async function crCopyFirst() { if (!confirm('1학기 역할 종류를 2학기로 가져올까요?\n(이름이 같은 역할은 건너뛰고, 학생 배정은 가져오지 않아요)')) return; var r = await crCall('copyFromFirst'); if (r && r.msg) alert(r.msg); }
+      function crCsv() {
+        var d = cr.data; if (!d) return;
+        var amap = {}; d.assignments.forEach(function(a) { amap[a.studentId] = a; });
+        var cell = function(v) { v = String(v == null ? '' : v); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+        var rows = [['학년도', '학기', '학년', '반', '번호', '학번', '이름', '1인 1역', '배정 교사']];
+        d.roster.forEach(function(s) { var a = amap[s.id]; rows.push([d.year, d.semester, d.grade, d.classNm, s.no, s.id, s.name, a ? crRoleName(a.roleId) : '', a ? a.assignedByName : '']); });
+        var csv = '\uFEFF' + rows.map(function(r) { return r.map(cell).join(','); }).join('\r\n');
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.download = '1인1역_' + d.year + '_' + d.semester + '학기_' + d.grade + '-' + d.classNm + '.csv';
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      }
+      function crPrint() {
+        var d = cr.data; if (!d) return;
+        var amap = {}; d.assignments.forEach(function(a) { amap[a.studentId] = a; });
+        var title = d.year + '학년도 ' + d.semester + '학기 ' + d.grade + '학년 ' + d.classNm + '반 1인 1역';
+        var x = crSummaryRows();
+        var html = '<html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title><style>body{font-family:sans-serif;padding:16px}table{border-collapse:collapse;width:100%;margin-bottom:16px}td,th{border:1px solid #999;padding:4px 8px;font-size:13px}th{background:#eee}</style></head><body>' +
+          '<h3>' + escapeHtml(title) + '</h3><table><tr><th>번호</th><th>이름</th><th>1인 1역</th></tr>' +
+          d.roster.map(function(s) { var a = amap[s.id]; return '<tr><td>' + s.no + '</td><td>' + escapeHtml(s.name) + '</td><td>' + escapeHtml(a ? crRoleName(a.roleId) : '') + '</td></tr>'; }).join('') + '</table>' +
+          '<h4>역할별</h4><table><tr><th>역할</th><th>학생</th></tr>' + x.rows.map(function(r) { return '<tr><td>' + escapeHtml(r.role) + '</td><td>' + r.students.map(function(s) { return s.no + '. ' + escapeHtml(s.name); }).join(', ') + '</td></tr>'; }).join('') + '</table>' +
+          '<div>미배정 ' + x.unassigned.length + '명</div></body></html>';
+        var w = window.open('', '_blank'); if (!w) { alert('팝업이 차단되었어요.'); return; }
+        w.document.write(html); w.document.close(); w.focus(); w.print();
+      }
       async function loadCounselingRecords() {
         var el = document.getElementById('counselRecordList');
         el.innerHTML = '<div class="text-center py-3 text-muted small">불러오는 중...</div>';
-        var r = await apiCall('/counseling', { action: 'list', studentId: currentHistStudentId });
+        var r = await apiCall('/counseling', { action: 'list', teacherId: currentUser.id, studentId: currentHistStudentId });
         if (!r.success) { el.innerHTML = '<div class="text-center py-3 text-danger small">불러오기 실패: ' + (r.msg || '') + '</div>'; return; }
         if (!r.records || r.records.length === 0) {
-          el.innerHTML = '<div class="text-center py-4 text-muted small">아직 상담 기록이 없습니다.</div>';
+          el.innerHTML = '<div class="text-center py-4 text-muted small">볼 수 있는 상담 기록이 없습니다. (다른 선생님이 쓴 기록은 공유받아야 보여요)</div>';
           return;
         }
-        var html = '';
-        r.records.forEach(function(rec) {
-          var typeBadge = rec.counselType === '회복적 상담'
-            ? '<span class="badge bg-warning text-dark">회복적 상담</span>'
-            : '<span class="badge bg-info">일반 상담</span>';
-          var joinBadge = rec.sessionId
-            ? '<span class="badge bg-success ms-1"><i class="bi bi-people-fill"></i> 공동</span>'
-            : '';
-          var participantsRow = rec.participants
-            ? `<div class="small text-primary mb-2"><i class="bi bi-people-fill"></i> 참여 학생: ${escapeHtml(rec.participants)}</div>`
-            : '';
-          var fileLink = rec.fileUrl
-            ? `<a href="${rec.fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip"></i> ${escapeHtml(rec.fileName || '첨부파일')}</a>`
-            : '';
-          var hasSession = rec.sessionId ? 'true' : 'false';
-          html += `<div class="card mb-2 border-0 shadow-sm"><div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div><strong>${escapeHtml(rec.counselDateStr)}</strong> ${typeBadge}${joinBadge}</div>
-              <small class="text-muted">${escapeHtml(rec.teacherName || '')}</small>
-            </div>
-            ${participantsRow}
-            <div class="small mb-2" style="white-space:pre-wrap; line-height:1.6;">${escapeHtml(rec.content)}</div>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>${fileLink}</div>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteCounselRecord(${rec.id}, ${hasSession})"><i class="bi bi-trash"></i> 삭제</button>
-            </div>
-          </div></div>`;
-        });
-        el.innerHTML = html;
+        counselCache = {}; r.records.forEach(function(rec) { counselCache[rec.id] = rec; });
+        el.innerHTML = r.records.map(function(rec) { return counselCardHtml(rec, false); }).join('');
       }
       async function saveCounselingRecord() {
         var date = document.getElementById('counselDateInput').value;
@@ -3727,6 +3952,7 @@
         showLoading(true);
         var r = await apiCall('/counseling', {
           action: 'create',
+          teacherId: currentUser.id,
           studentId: currentHistStudentId,
           participantIds: counselParticipants.map(p => p.id),
           teacherName: currentUser.name,
@@ -3759,10 +3985,11 @@
           if (!confirm("이 상담 기록을 삭제하시겠습니까?\n첨부파일도 함께 삭제됩니다.")) return;
         }
         showLoading(true);
-        var r = await apiCall('/counseling', { action: 'delete', id: id, mode: mode });
+        var r = await apiCall('/counseling', { action: 'delete', teacherId: currentUser.id, id: id, mode: mode });
         showLoading(false);
         alert(r.msg);
         loadCounselingRecords();
+        if (counselAllOpen()) loadCounselAll();
       }
 
       // ========== 마일리지 상품 교환 (일괄) ==========
