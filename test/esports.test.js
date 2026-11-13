@@ -231,5 +231,67 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
       assert.strictEqual(L3.games.find(g => g.key === k).format, fmt[k], 'list format ' + k);
     }
   }
+
+  // ===== 교사 대리 등록 (teacherRegister / teacherSearch) =====
+  {
+    const NOW = new Date('2026-11-10T03:00:00Z');
+    const dbT = makeDb(users());
+    const [p1, p2, p3, p4, p5] = ids(1, 1, 5);
+    const memT = (arr) => arr.map(id => ({ id, tier: '골드' }));
+
+    // 권한: 학생은 검색/등록 불가, 교사만 가능, 리더 미지정 거부
+    assert(!(await E.teacherSearch(dbT, p1, '학생')).success, '학생은 teacherSearch 불가');
+    assert(!(await E.teacherRegister(dbT, { teacherId: p1, leaderId: p2, game: 'steppin', tier: '골드' }, NOW)).success, '학생은 teacherRegister 불가');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', game: 'steppin', tier: '골드' }, NOW)).success, '리더 미지정 거부');
+    const tsEmpty = await E.teacherSearch(dbT, 'T001', '');
+    assert(tsEmpty.success && tsEmpty.list.length === 0);
+
+    // 교사 검색: 3학년 전원(자기 제외 없음), 이미 신청한 학생 taken
+    assert((await E.apply(dbT, { studentId: p1, game: 'steppin', tier: '실버' }, NOW)).success);
+    const ts = await E.teacherSearch(dbT, 'T001', '학생3');
+    assert(ts.success && ts.list.every(x => x.id[0] === '3'));
+    assert(ts.list.find(x => x.id === p1).taken === true);
+    assert(ts.list.find(x => x.id === p2).taken === false);
+    assert.strictEqual((await E.teacherSearch(dbT, 'T001', '20101')).list.length, 0, '2학년 검색 안 됨');
+    assert.strictEqual((await E.teacherSearch(dbT, 'T001', p1)).list[0].id, p1, '학번으로 본인도 검색(교사)');
+
+    // 이미 신청한 학생을 리더/팀원으로 등록 거부
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p1, game: 'brawl', teamName: 'X', tier: '1', members: memT([p2, p3]) }, NOW)).success);
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'brawl', teamName: 'X', tier: '1', members: memT([p1, p3]) }, NOW)).success);
+
+    // 인원/학년/티어 규칙도 apply와 동일
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'lol', teamName: 'T', tier: '골드', members: memT([p3, p4]) }, NOW)).success, '인원 부족 거부');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'steppin', tier: '골드', members: memT([p3]) }, NOW)).success, '개인종목 팀원 거부');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: '20101', game: 'steppin', tier: '골드' }, NOW)).success, '2학년 리더 거부');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'lol', teamName: 'T', tier: '골드', members: memT([p3, p4, p5, '20101']) }, NOW)).success, '2학년 팀원 거부');
+
+    // 정상: 교사가 브롤 팀 등록, 리더는 p2 (학생 본인이 신청한 것과 동일하게 보임)
+    const tr = await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'brawl', teamName: '교사팀', tier: '플래', members: memT([p3, p4]) }, NOW);
+    assert(tr.success, tr.msg);
+    assert.strictEqual(tr.msg, '학생 신청을 등록했어요.');
+    assert.strictEqual(tr.team.leaderId, p2);
+    assert.strictEqual(tr.team.members.length, 3);
+    const stP2 = await E.status(dbT, p2);
+    assert(stP2.team && stP2.isLeader && stP2.team.teamName === '교사팀');
+    const stP3 = await E.status(dbT, p3);
+    assert(stP3.team && stP3.isLeader === false && stP3.team.leaderId === p2);
+
+    // 중계 개인 + 한마디
+    const [c1] = ids(3, 1, 1);
+    const tc = await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: c1, game: 'caster', message: '교사가 등록' }, NOW);
+    assert(tc.success, tc.msg);
+    assert.strictEqual(tc.team.members[0].message, '교사가 등록');
+
+    // 발로란트 만 15세 검증
+    const [v1, v2, v3, v4, v5] = ids(2, 1, 5);
+    const vm = (arr, b) => arr.map(id => ({ id, tier: '골드', birthdate: b }));
+    const tvFail = await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: v1, game: 'valorant', teamName: 'V', tier: '골드', birthdate: '2010-05-21', members: vm([v2, v3, v4], '2010-05-21').concat([{ id: v5, tier: '골드', birthdate: '2011-11-11' }]) }, NOW);
+    assert(!tvFail.success && /만 15세/.test(tvFail.msg), '교사 등록도 만 15세 미만 거부: ' + tvFail.msg);
+    const tvOk = await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: v1, game: 'valorant', teamName: 'V', tier: '골드', birthdate: '2010-05-21', members: vm([v2, v3, v4, v5], '2010-05-21') }, NOW);
+    assert(tvOk.success, tvOk.msg);
+    const LT = await E.list(dbT, 'T001');
+    assert(LT.games.find(x => x.key === 'brawl').teams.some(t => t.teamName === '교사팀'));
+    assert(LT.games.find(x => x.key === 'valorant').teams[0].members.every(m => /^\d{4}-\d{2}-\d{2}$/.test(m.birthdate)));
+  }
   console.log('esports tests passed');
 })().catch(e => { console.error(e); process.exit(1); });

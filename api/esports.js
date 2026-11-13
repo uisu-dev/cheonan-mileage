@@ -16,6 +16,8 @@ module.exports = async (req, res) => {
     if (action === 'apply') return res.json(await esports.apply(supabase, body));
     if (action === 'cancel') return res.json(await esports.cancel(supabase, body.studentId));
     if (action === 'list') return res.json(await esports.list(supabase, body.teacherId));
+    if (action === 'teacherSearch') return res.json(await esports.teacherSearch(supabase, body.teacherId, body.q));
+    if (action === 'teacherRegister') return res.json(await esports.teacherRegister(supabase, body));
     if (action === 'teacherRemove') return res.json(await esports.teacherRemove(supabase, body.teacherId, body.teamId));
   } catch (e) {
     return res.json({ success: false, msg: String(e.message || e) });
