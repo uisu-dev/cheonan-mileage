@@ -347,7 +347,7 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
-        <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2">3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
+        <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2">2·3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
         <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
@@ -2186,8 +2186,8 @@
           }
       }
       // ===== 상점 우수자(전교 상위 5명) 설문 =====
-      // ===== 찾아가는 이스포츠 대회 신청 (3학년 전용) =====
-      // 학생: 3학년(학번 3xxxx)만 배너 노출. 1·2학년은 아무것도 보이지 않음. 서버(/api/esports)에서도 3학년만 허용.
+      // ===== 찾아가는 이스포츠 대회 신청 (2·3학년) =====
+      // 학생: 2·3학년(학번 2xxxx/3xxxx)만 배너 노출. 1학년은 배너 없음. 서버(/api/esports)에서도 2·3학년만 허용. 혼성 팀 가능.
       var esp = { games: [], team: null, isLeader: false, game: null, members: [], myTier: '', myBirth: '', myMessage: '', teamName: '', results: [], q: '', busy: false };
       function espTodayStr() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
       // 만 나이 (서버가 최종 판정, 여기는 안내용)
@@ -2197,12 +2197,12 @@
       function initEsportsBanner() {
           var el = document.getElementById('esportsBanner');
           if (!el) return;
-          var ok = currentUser && currentUser.role === 'student' && /^3\d{4}$/.test(String(currentUser.id || ''));
+          var ok = currentUser && currentUser.role === 'student' && /^[23]\d{4}$/.test(String(currentUser.id || ''));
           el.style.display = ok ? 'block' : 'none';
       }
       function espGame(k) { return (esp.games || []).filter(function(g) { return g.key === k; })[0]; }
       async function openEsports() {
-          if (!currentUser || !/^3\d{4}$/.test(String(currentUser.id || ''))) return;
+          if (!currentUser || !/^[23]\d{4}$/.test(String(currentUser.id || ''))) return;
           bootstrap.Modal.getOrCreateInstance(document.getElementById('esportsModal')).show();
           document.getElementById('esportsBody').innerHTML = '<div class="text-center text-muted py-4">불러오는 중...</div>';
           await espLoad();
@@ -2212,7 +2212,7 @@
           try {
               var r = await apiCall('/esports', { action: 'status', studentId: currentUser.id });
               if (!r || !r.success) { body.innerHTML = '<div class="text-danger">' + espEsc((r && r.msg) || '불러오기 실패') + '</div>'; return; }
-              if (!r.eligible) { body.innerHTML = '<div class="text-muted">3학년 학생만 참여할 수 있어요.</div>'; return; }
+              if (!r.eligible) { body.innerHTML = '<div class="text-muted">2·3학년 학생만 참여할 수 있어요.</div>'; return; }
               esp.games = r.games || []; esp.team = r.team || null; esp.isLeader = !!r.isLeader;
               esp.game = null; esp.members = []; esp.myTier = ''; esp.myBirth = ''; esp.myMessage = ''; esp.teamName = ''; esp.results = []; esp.q = '';
               espRender();
@@ -2259,7 +2259,7 @@
           if (g.minAge) h += '<label class="form-label small fw-bold mb-1">내 생년월일 (' + espEsc(currentUser.name) + ')</label><input type="date" id="espMyBirth" class="form-control form-control-sm mb-2" max="' + espTodayStr() + '" value="' + espEsc(esp.myBirth) + '" onchange="esp.myBirth=this.value" oninput="esp.myBirth=this.value">';
           if (g.noTier) h += '<label class="form-label small fw-bold mb-1">한마디 / 지원 동기 (선택)</label><input type="text" id="espMyMessage" class="form-control form-control-sm mb-2" maxlength="100" placeholder="간단히 적어 주세요 (선택)" value="' + espEsc(esp.myMessage) + '" oninput="esp.myMessage=this.value">';
           if (g.size > 1) {
-              h += '<div class="fw-bold small mb-1">팀원 (3학년 학생 검색) <span id="espCount" class="badge bg-primary"></span></div>' +
+              h += '<div class="fw-bold small mb-1">팀원 (2·3학년 학생 검색) <span id="espCount" class="badge bg-primary"></span></div>' +
                   '<div class="input-group input-group-sm mb-1"><input type="text" id="espSearch" class="form-control" placeholder="이름 또는 학번" value="' + espEsc(esp.q) + '" oninput="espSearchDebounced(this.value)"><span class="input-group-text"><i class="bi bi-search"></i></span></div>' +
                   '<div id="espResults" class="list-group mb-2" style="max-height:200px;overflow:auto;"></div>' +
                   '<div id="espPicked" class="mb-2"></div>';
@@ -2392,7 +2392,7 @@
       function espTGame(k) { return ((espAdminData && espAdminData.games) || []).filter(function(g) { return g.key === k; })[0]; }
       function espTFormHtml() {
           var html = '<div class="border rounded-3 p-3 mb-3" style="background:#f7f8ff;"><div class="d-flex justify-content-between align-items-center mb-2"><div class="fw-bold">학생 대신 등록</div><button type="button" class="btn btn-sm btn-outline-secondary py-0" onclick="espAdminStartRegister()">닫기</button></div>';
-          html += '<div class="small text-muted mb-2">종목을 고르고 3학년 학생을 검색해 팀을 만드세요. 한 사람은 하나의 팀에만 들어갈 수 있어요. 규칙(인원·만 15세 등)은 학생 신청과 같아요.</div><div class="row g-2 mb-3">';
+          html += '<div class="small text-muted mb-2">종목을 고르고 2·3학년 학생을 검색해 팀을 만드세요. 한 사람은 하나의 팀에만 들어갈 수 있어요. 규칙(인원·만 15세 등)은 학생 신청과 같아요.</div><div class="row g-2 mb-3">';
           (espAdminData.games || []).forEach(function(g) {
               var on = espT.game === g.key;
               html += '<div class="col-6 col-md-4"><button type="button" class="btn w-100 ' + (on ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold py-2" data-game="' + g.key + '" onclick="espTPick(this.dataset.game)">' + espEsc(g.short) + '<br><span class="small fw-normal">' + espSub(g) + (g.minAge ? ' · 만 ' + g.minAge + '세↑' : '') + (g.note ? ' · ' + espEsc(g.note) : '') + '</span>' + (g.format ? '<br><span class="fw-normal" style="font-size:0.72rem;opacity:.85;">🎯 ' + espEsc(g.format) + '</span>' : '') + '</button></div>';
@@ -2409,7 +2409,7 @@
           if (g.format) h += '<div class="alert alert-secondary small py-2 mb-2">🎯 <b>경기 방식</b>: ' + espEsc(g.format) + '</div>';
           if (g.note) h += '<div class="alert alert-info small py-2 mb-2">📣 ' + espEsc(g.name) + '은(는) <b>' + espEsc(g.note) + '</b>이에요.</div>';
           if (g.size > 1) h += '<label class="form-label small fw-bold mb-1">팀 이름</label><input type="text" id="espTTeamName" class="form-control form-control-sm mb-2" maxlength="20" placeholder="팀 이름" value="' + espEsc(espT.teamName) + '" oninput="espT.teamName=this.value">';
-          h += '<div class="fw-bold small mb-1">학생 검색 (3학년) <span id="espTCount" class="badge bg-primary"></span></div>' +
+          h += '<div class="fw-bold small mb-1">학생 검색 (2·3학년) <span id="espTCount" class="badge bg-primary"></span></div>' +
               '<div class="input-group input-group-sm mb-1"><input type="text" id="espTSearch" class="form-control" placeholder="이름 또는 학번" value="' + espEsc(espT.q) + '" oninput="espTSearchDebounced(this.value)"><span class="input-group-text"><i class="bi bi-search"></i></span></div>' +
               '<div id="espTResults" class="list-group mb-2" style="max-height:200px;overflow:auto;"></div>' +
               '<div id="espTPicked" class="mb-2"></div>';
