@@ -18,10 +18,11 @@
       #error-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:none; align-items:center; justify-content:center; color:white; text-align:center; padding:20px; }
 
       .nav-tabs { display: flex; flex-wrap: wrap; border-bottom: none; }
-      .nav-tabs .nav-link { border: 1px solid transparent; border-top-left-radius: .25rem; border-top-right-radius: .25rem; background-color: #f8f9fa; margin-bottom: 2px; font-size: 0.9rem; padding: 8px 5px; }
+      .nav-tabs .nav-link { border: 1px solid transparent; border-top-left-radius: .25rem; border-top-right-radius: .25rem; background-color: #f8f9fa; margin-bottom: 2px; font-size: 0.9rem; padding: 8px 5px; word-break: keep-all; line-height: 1.25; }
       .nav-tabs .nav-item { flex: 0 0 25%; text-align: center; max-width: 25%; flex-grow: 1; }
+      .nav-tabs .nav-link .nav-ico { margin-right: 0.12em; }
+      .nav-tabs .nav-link .nav-label { display: inline; }
       .nav-link.active { color: var(--school-blue) !important; border-bottom: 4px solid var(--school-blue); background-color: #fff; font-weight: bold; }
-      @media (max-width: 576px) { .nav-link { font-size: 0.8rem; padding: 5px 2px; } }
 
       .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
       @media (max-width: 768px) { .grid-container { grid-template-columns: repeat(2, 1fr); } }
@@ -56,6 +57,102 @@
       .roulette-word-card { cursor: pointer; border: 2px solid #dee2e6; border-radius: 12px; padding: 14px 8px; text-align: center; font-weight: 700; transition: all 0.15s; background: #fff; }
       .roulette-word-card:hover { border-color: var(--school-blue); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
       .roulette-word-card.selected { border-color: var(--school-blue); background: var(--school-blue); color: #fff; }
+
+      /* 모바일: 메뉴·탭·배너·헤더 글씨를 박스에 맞춤 (데스크톱 거의 유지) */
+      .promo-banner-title { word-break: keep-all; overflow-wrap: normal; line-height: 1.35; font-size: clamp(0.95rem, 2.6vw, 1.25rem); }
+      .promo-banner-sub { word-break: keep-all; }
+      #esportsBanner .esp-banner-title,
+      #esportsBanner .esp-banner-sub { word-break: keep-all; }
+      .att-subtabs > label.btn { word-break: keep-all; }
+
+      @media (max-width: 576px) {
+        .nav-tabs .nav-link {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          font-size: clamp(0.62rem, 2.5vw, 0.78rem);
+          padding: 6px 2px 5px;
+        }
+        .nav-tabs .nav-link .nav-ico {
+          margin-right: 0;
+          font-size: 1.05rem;
+          line-height: 1;
+        }
+        .nav-tabs .nav-link .nav-label {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          overflow: hidden;
+          text-align: center;
+          white-space: nowrap;
+          word-break: keep-all;
+          line-height: 1.2;
+        }
+
+        .app-header {
+          flex-wrap: wrap;
+          align-items: center !important;
+          row-gap: 8px;
+        }
+        .app-header .navbar-brand {
+          font-size: clamp(0.95rem, 4.2vw, 1.25rem);
+          margin-right: 0.5rem;
+          white-space: nowrap;
+          max-width: 100%;
+        }
+        .app-header-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          justify-content: flex-end;
+          margin-left: auto;
+        }
+        .app-header-actions .btn {
+          font-size: clamp(0.68rem, 2.5vw, 0.8rem);
+          padding: 0.22rem 0.45rem;
+          white-space: nowrap;
+          margin-right: 0 !important;
+        }
+
+        .promo-banner .card-body { padding: 0.75rem 0.85rem !important; gap: 0.4rem; }
+        .promo-banner-title { font-size: clamp(0.86rem, 3.5vw, 1.1rem); }
+        .promo-banner-sub { font-size: clamp(0.7rem, 2.8vw, 0.8rem); }
+
+        .att-subtabs { display: flex; width: 100%; }
+        .att-subtabs > label.btn {
+          flex: 1 1 0;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          font-size: clamp(0.62rem, 2.3vw, 0.8rem);
+          padding: 0.4rem 0.15rem;
+          line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .att-subtabs > label.btn .nav-ico { font-size: 0.95rem; line-height: 1; }
+        .att-subtabs > label.btn .nav-label {
+          display: block;
+          width: 100%;
+          overflow: hidden;
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        #esportsBanner .esp-banner-title { font-size: clamp(0.88rem, 3.6vw, 1rem) !important; }
+        #esportsBanner .esp-banner-sub { font-size: clamp(0.7rem, 2.8vw, 0.8rem); }
+      }
+      @media (max-width: 400px) {
+        #teacherPage .app-header-actions {
+          width: 100%;
+          justify-content: flex-start;
+        }
+      }
     </style>
   </head>
   <body>
@@ -82,28 +179,28 @@
     </div>
 
     <div id="teacherPage" class="container-fluid p-0" style="display:none;">
-      <nav class="navbar navbar-dark bg-school px-3 mb-3 shadow-sm">
+      <nav class="navbar navbar-dark bg-school px-3 mb-3 shadow-sm app-header">
         <span class="navbar-brand mb-0 h1 fw-bold">👨‍🏫 <span id="tName"></span> 선생님</span>
-        <div>
-          <button onclick="openTeacherMessages()" class="btn btn-sm btn-warning fw-bold me-1 position-relative" title="감사 메시지함">
+        <div class="app-header-actions">
+          <button onclick="openTeacherMessages()" class="btn btn-sm btn-warning fw-bold position-relative fit-text" title="감사 메시지함">
             <i class="bi bi-envelope-heart-fill"></i> 감사 메시지
             <span id="teacherMsgBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size:0.6rem;">0</span>
           </button>
-          <button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button>
-          <button onclick="loadDashboard()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
-          <button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button>
+          <button onclick="openPwModal()" class="btn btn-sm btn-outline-light fit-text"><i class="bi bi-lock-fill"></i> 비번변경</button>
+          <button onclick="loadDashboard()" class="btn btn-sm btn-outline-light fit-text"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
+          <button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold fit-text">로그아웃</button>
         </div>
       </nav>
       <div class="container pb-5">
         <ul class="nav nav-tabs mb-3" role="tablist">
-          <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab">💯 점수</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab">📋 출석/학급관리</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab">📢 제보함</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab">💌 칭찬</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#noticeTab">📢 공지사항</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab">📊 통계/상담</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#rentalTab">📦 대여</button></li>
-          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#surveyTab">📝 설문</button></li>
+          <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab"><span class="nav-ico">💯</span><span class="nav-label fit-text">점수</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab"><span class="nav-ico">📋</span><span class="nav-label fit-text">출석/<wbr>학급관리</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#reportListTab"><span class="nav-ico">📢</span><span class="nav-label fit-text">제보함</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#praiseTab"><span class="nav-ico">💌</span><span class="nav-label fit-text">칭찬</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#noticeTab"><span class="nav-ico">📢</span><span class="nav-label fit-text">공지사항</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#statsTab"><span class="nav-ico">📊</span><span class="nav-label fit-text">통계/<wbr>상담</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#rentalTab"><span class="nav-ico">📦</span><span class="nav-label fit-text">대여</span></button></li>
+          <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#surveyTab"><span class="nav-ico">📝</span><span class="nav-label fit-text">설문</span></button></li>
         </ul>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="giveTab">
@@ -115,10 +212,10 @@
           </div>
 
           <div class="tab-pane fade" id="attendanceTab">
-             <div class="d-flex justify-content-center mb-3"><div class="btn-group w-100" role="group">
-               <input type="radio" class="btn-check" name="attMode" id="attModePeriod" autocomplete="off" checked onclick="setAttMode('period')"><label class="btn btn-outline-primary fw-bold" for="attModePeriod">🕘 학급 출석부 (교시)</label>
-               <input type="radio" class="btn-check" name="attMode" id="attModeClub" autocomplete="off" onclick="setAttMode('club')"><label class="btn btn-outline-primary fw-bold" for="attModeClub">🏫 동아리 출석부</label>
-               <input type="radio" class="btn-check" name="attMode" id="attModeRoles" autocomplete="off" onclick="setAttMode('roles')"><label class="btn btn-outline-primary fw-bold" for="attModeRoles">🧹 1인 1역</label>
+             <div class="d-flex justify-content-center mb-3"><div class="btn-group w-100 att-subtabs" role="group">
+               <input type="radio" class="btn-check" name="attMode" id="attModePeriod" autocomplete="off" checked onclick="setAttMode('period')"><label class="btn btn-outline-primary fw-bold" for="attModePeriod"><span class="nav-ico">🕘</span><span class="nav-label fit-text">학급 출석부 (교시)</span></label>
+               <input type="radio" class="btn-check" name="attMode" id="attModeClub" autocomplete="off" onclick="setAttMode('club')"><label class="btn btn-outline-primary fw-bold" for="attModeClub"><span class="nav-ico">🏫</span><span class="nav-label fit-text">동아리 출석부</span></label>
+               <input type="radio" class="btn-check" name="attMode" id="attModeRoles" autocomplete="off" onclick="setAttMode('roles')"><label class="btn btn-outline-primary fw-bold" for="attModeRoles"><span class="nav-ico">🧹</span><span class="nav-label fit-text">1인 1역</span></label>
              </div></div>
 
              <div id="periodAttSection">
@@ -244,11 +341,11 @@
 
         <div class="mt-4 mb-2">
           <a href="https://script.google.com/macros/s/AKfycbxto6yNcdypwbkdzx0DOYDIMaQk6JE7uYaoDSrif-EkPiST1Q4Jsj8icCRXxPe060wf6A/exec" target="_blank" class="text-decoration-none">
-            <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #00c6ff, #0072ff);">
+            <div class="card border-0 shadow-sm text-white mb-2 promo-banner" style="background: linear-gradient(to right, #00c6ff, #0072ff);">
               <div class="card-body d-flex align-items-center justify-content-between p-3">
                 <div>
-                  <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check-fill me-2"></i>천안중학교 교육활동 계획(주간, 월간)</h5>
-                  <small style="opacity:0.9">학교 교육활동 계획 조회 바로가기</small>
+                  <h5 class="fw-bold mb-0 promo-banner-title"><i class="bi bi-calendar-check-fill me-2"></i>천안중학교 교육활동 계획<wbr>(주간, 월간)</h5>
+                  <small class="promo-banner-sub" style="opacity:0.9">학교 교육활동 계획 조회 바로가기</small>
                 </div>
                 <i class="bi bi-chevron-right fs-4"></i>
               </div>
@@ -256,11 +353,11 @@
           </a>
 
           <a href="https://notebooklm.google.com/notebook/8be904bb-6a38-4666-b1af-fc5ccb38ae94/preview" target="_blank" class="text-decoration-none">
-            <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #11998e, #38ef7d);">
+            <div class="card border-0 shadow-sm text-white mb-2 promo-banner" style="background: linear-gradient(to right, #11998e, #38ef7d);">
               <div class="card-body d-flex align-items-center justify-content-between p-3">
                 <div>
-                  <h5 class="fw-bold mb-0"><i class="bi bi-robot me-2"></i>천안중학교 학생생활규정 챗봇</h5>
-                  <small style="opacity:0.9">생활규정 질문에 AI가 즉시 답변</small>
+                  <h5 class="fw-bold mb-0 promo-banner-title"><i class="bi bi-robot me-2"></i>천안중학교 학생생활규정 챗봇</h5>
+                  <small class="promo-banner-sub" style="opacity:0.9">생활규정 질문에 AI가 즉시 답변</small>
                 </div>
                 <i class="bi bi-chevron-right fs-4"></i>
               </div>
@@ -268,11 +365,11 @@
           </a>
 
           <a href="https://docs.google.com/spreadsheets/d/1I8f_CWChqeabqiPpcdqjcLqPbbsr7bqe/edit?usp=sharing&ouid=103603006942933020847&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
-            <div class="card border-0 shadow-sm text-white mb-2" style="background: linear-gradient(to right, #f2994a, #f2c94c);">
+            <div class="card border-0 shadow-sm text-white mb-2 promo-banner" style="background: linear-gradient(to right, #f2994a, #f2c94c);">
               <div class="card-body d-flex align-items-center justify-content-between p-3">
                 <div>
-                  <h5 class="fw-bold mb-0"><i class="bi bi-info-square-fill me-2"></i>2026 천안중학교 정보게시판</h5>
-                  <small style="opacity:0.9">학교 주요 정보 및 자료 공유 바로가기</small>
+                  <h5 class="fw-bold mb-0 promo-banner-title"><i class="bi bi-info-square-fill me-2"></i>2026 천안중학교 정보게시판</h5>
+                  <small class="promo-banner-sub" style="opacity:0.9">학교 주요 정보 및 자료 공유 바로가기</small>
                 </div>
                 <i class="bi bi-chevron-right fs-4"></i>
               </div>
@@ -337,9 +434,9 @@
     </div>
 
     <div id="studentPage" class="container-fluid p-0" style="display:none;">
-      <nav class="navbar navbar-dark bg-school px-3 mb-3">
+      <nav class="navbar navbar-dark bg-school px-3 mb-3 app-header">
         <span class="navbar-brand mb-0 h1">🎓 <span id="sName"></span><span id="myTierBadge"></span><span id="umbrellaBadge" class="badge bg-danger ms-1" style="display:none; font-size: 0.7rem;">☂️ 대여중</span><span id="ballBadge" class="badge bg-success ms-1" style="display:none; font-size: 0.7rem;">⚽ 대여중</span></span>
-        <div><button onclick="openPwModal()" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-lock-fill"></i> 비번변경</button><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold">로그아웃</button></div>
+        <div class="app-header-actions"><button onclick="openPwModal()" class="btn btn-sm btn-outline-light fit-text"><i class="bi bi-lock-fill"></i> 비번변경</button><button onclick="logout()" class="btn btn-sm btn-light text-primary fw-bold fit-text">로그아웃</button></div>
       </nav>
       <div class="container">
         <div id="studentPointCard" class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
@@ -347,10 +444,10 @@
         <div id="todayInfoArea" class="mb-3"></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
-        <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2">2·3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
+        <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1 esp-banner-title" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2 esp-banner-sub">2·3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
         <div id="studentNoticeArea" class="mb-3"></div>
-        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab">📋 내역</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab">🎁 교환소</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent">📝 설문</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent">📢 제보</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent">💖 칭찬</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent">🏆 랭킹</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent">💌 감사</button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent">💡 퀴즈</button></li></ul>
+        <ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="pill" data-bs-target="#historyTab"><span class="nav-ico">📋</span><span class="nav-label fit-text">내역</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#shopTab"><span class="nav-ico">🎁</span><span class="nav-label fit-text">교환소</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#surveyTabStudent"><span class="nav-ico">📝</span><span class="nav-label fit-text">설문</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#reportTabStudent"><span class="nav-ico">📢</span><span class="nav-label fit-text">제보</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#praiseTabStudent"><span class="nav-ico">💖</span><span class="nav-label fit-text">칭찬</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#rankTabStudent"><span class="nav-ico">🏆</span><span class="nav-label fit-text">랭킹</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#thanksTabStudent"><span class="nav-ico">💌</span><span class="nav-label fit-text">감사</span></button></li><li class="nav-item"><button class="nav-link w-100" data-bs-toggle="pill" data-bs-target="#quizTabStudent"><span class="nav-ico">💡</span><span class="nav-label fit-text">퀴즈</span></button></li></ul>
         <div class="tab-content">
           <div class="tab-pane fade show active" id="historyTab"><ul class="list-group list-group-flush" id="logList"></ul></div>
           <div class="tab-pane fade" id="shopTab"><div class="alert alert-warning text-center small mb-3 shadow-sm border-0"><i class="bi bi-info-circle-fill"></i> 교환은 학생부에 문의하세요.</div><div class="row g-2" id="rewardListStudent"></div></div>
@@ -1078,6 +1175,7 @@
 
       function setupStudentUI(data) {
         document.getElementById('studentPage').style.display = 'block';
+        scheduleFitText();
         document.getElementById('sName').innerText = currentUser.name;
         document.getElementById('sTotal').innerText = data.myPoints || 0;
         document.getElementById('myTierBadge').innerHTML = getTierBadge(data.myPoints || 0);
@@ -1209,6 +1307,7 @@
       function setupTeacherUI(data) {
         try { paInit(); } catch (e) {}
         document.getElementById('teacherPage').style.display = 'block'; document.getElementById('tName').innerText = currentUser.name;
+        scheduleFitText();
         // 미확인 감사 메시지 뱃지
         var unread = Number(data.unreadMessageCount) || 0;
         var badge = document.getElementById('teacherMsgBadge');
@@ -4344,7 +4443,41 @@
         }
       });
 
+      function fitTextInBoxes(root) {
+        var scope = (root && root.querySelectorAll) ? root : document;
+        var els = scope.querySelectorAll('.fit-text');
+        Array.prototype.forEach.call(els, function(el) {
+          el.style.fontSize = '';
+          el.style.whiteSpace = '';
+          var maxPx = parseFloat(window.getComputedStyle(el).fontSize);
+          if (!maxPx || el.clientWidth <= 0) return;
+          var minPx = 9;
+          var size = maxPx;
+          el.style.whiteSpace = 'nowrap';
+          var guard = 0;
+          while (size > minPx && el.scrollWidth > el.clientWidth + 1 && guard++ < 48) {
+            size -= 0.5;
+            el.style.fontSize = size + 'px';
+          }
+          if (el.scrollWidth > el.clientWidth + 1) {
+            el.style.whiteSpace = 'normal';
+          }
+        });
+      }
+
+      var _fitTextTimer = null;
+      function scheduleFitText() {
+        if (_fitTextTimer) cancelAnimationFrame(_fitTextTimer);
+        _fitTextTimer = requestAnimationFrame(function() {
+          _fitTextTimer = requestAnimationFrame(function() { fitTextInBoxes(); });
+        });
+      }
+
+      window.addEventListener('resize', scheduleFitText);
+      document.addEventListener('shown.bs.tab', scheduleFitText);
+
       window.onload = function() {
+        scheduleFitText();
       };
     </script>
   </body>
