@@ -838,7 +838,7 @@
     </div>
     <div class="modal fade" id="esportsAdminModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-scrollable modal-lg"><div class="modal-content">
-        <div class="modal-header" style="background:linear-gradient(135deg,#e8eaff,#c5c9ff);"><h5 class="modal-title fw-bold">🎮 이스포츠 신청 현황</h5><button type="button" class="btn btn-sm btn-outline-dark ms-auto me-1" onclick="downloadEsportsCsv()"><i class="bi bi-download"></i> CSV</button><button type="button" class="btn btn-sm btn-outline-dark me-2" onclick="loadEsportsAdmin()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header" style="background:linear-gradient(135deg,#e8eaff,#c5c9ff);"><h5 class="modal-title fw-bold">🎮 이스포츠 신청 현황</h5><button type="button" class="btn btn-sm btn-primary ms-auto me-1" onclick="espAdminStartRegister()"><i class="bi bi-person-plus"></i> 학생 등록</button><button type="button" class="btn btn-sm btn-outline-dark me-1" onclick="downloadEsportsCsv()"><i class="bi bi-download"></i> CSV</button><button type="button" class="btn btn-sm btn-outline-dark me-2" onclick="loadEsportsAdmin()"><i class="bi bi-arrow-clockwise"></i> 새로고침</button><button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button></div>
         <div class="modal-body" id="esportsAdminBody"></div>
       </div></div>
     </div>
@@ -2350,8 +2350,10 @@
               if (r && r.success) await espLoad();
           } catch (e) { showLoading(false); alert('오류: ' + (e.message || e)); }
       }
-      // 교사: 신청 현황 (종목별 팀/멤버/티어) + CSV
+      // 교사: 신청 현황 (종목별 팀/멤버/티어) + CSV + 학생 대리 등록
       var espAdminData = null;
+      var espT = { open: false, game: null, members: [], teamName: '', leaderId: '', results: [], q: '', busy: false, searchMsg: '' };
+      function espTReset() { espT.game = null; espT.members = []; espT.teamName = ''; espT.leaderId = ''; espT.results = []; espT.q = ''; espT.searchMsg = ''; }
       function openEsportsAdmin() { bootstrap.Modal.getOrCreateInstance(document.getElementById('esportsAdminModal')).show(); loadEsportsAdmin(); }
       async function loadEsportsAdmin() {
           var body = document.getElementById('esportsAdminBody');
@@ -2360,17 +2362,149 @@
               var r = await apiCall('/esports', { action: 'list', teacherId: currentUser.id });
               if (!r || !r.success) { body.innerHTML = '<div class="text-danger">' + espEsc((r && r.msg) || '불러오기 실패') + '</div>'; return; }
               espAdminData = r;
-              var html = '<div class="small text-muted mb-2">총 ' + r.totalTeams + '팀 · ' + r.totalPeople + '명</div>';
-              r.games.forEach(function(g) {
-                  html += '<h6 class="fw-bold mt-3">' + espEsc(g.name) + ' <span class="badge bg-primary">' + g.teams.length + (g.size === 1 ? '명' : '팀') + '</span> <span class="small text-muted fw-normal">(' + g.people + '명)</span>' + (g.note ? ' <span class="badge bg-info text-dark">' + espEsc(g.note) + '</span>' : '') + (g.minAge ? ' <span class="badge bg-warning text-dark">만 ' + g.minAge + '세↑</span>' : '') + '</h6>' + (g.format ? '<div class="small text-muted mb-1">🎯 ' + espEsc(g.format) + '</div>' : '');
-                  if (!g.teams.length) { html += '<div class="small text-muted">아직 신청이 없습니다.</div>'; return; }
-                  html += g.teams.map(function(t) {
-                      return '<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between align-items-center mb-1"><b>' + (g.size === 1 ? '개인' : espEsc(t.teamName)) + '</b><button type="button" class="btn btn-sm btn-outline-danger py-0" data-tid="' + t.id + '" onclick="espAdminRemove(this.dataset.tid)">삭제</button></div>' +
-                          t.members.map(function(m) { return '<div class="small d-flex justify-content-between"><span><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + (m.isLeader ? ' <span class="badge bg-warning text-dark">신청자</span>' : '') + '</span><span class="text-muted">' + espEsc(m.tier) + (m.birthdate ? ' · 🎂 ' + espEsc(m.birthdate) : '') + '</span></div>' + (m.message ? '<div class="small text-muted ps-2">💬 ' + espEsc(m.message) + '</div>' : ''); }).join('') + '</div></div>';
-                  }).join('');
-              });
-              body.innerHTML = html;
+              espAdminRender();
           } catch (e) { body.innerHTML = '<div class="text-danger">오류: ' + espEsc(e.message || e) + '</div>'; }
+      }
+      function espAdminStartRegister() {
+          if (!espAdminData) { loadEsportsAdmin().then(function() { espT.open = true; espTReset(); espAdminRender(); }); return; }
+          if (espT.open) { if (espT.members.length && !confirm('등록 창을 닫을까요? 입력한 내용이 지워져요.')) return; espT.open = false; espTReset(); }
+          else { espT.open = true; espTReset(); }
+          espAdminRender();
+      }
+      function espAdminRender() {
+          var body = document.getElementById('esportsAdminBody');
+          var r = espAdminData;
+          if (!r) { body.innerHTML = '<div class="text-muted">불러오는 중...</div>'; return; }
+          var html = '';
+          if (espT.open) html += espTFormHtml();
+          html += '<div class="small text-muted mb-2">총 ' + r.totalTeams + '팀 · ' + r.totalPeople + '명. 선생님이 대신 등록하거나 잘못 들어간 신청을 삭제할 수 있어요.</div>';
+          r.games.forEach(function(g) {
+              html += '<h6 class="fw-bold mt-3">' + espEsc(g.name) + ' <span class="badge bg-primary">' + g.teams.length + (g.size === 1 ? '명' : '팀') + '</span> <span class="small text-muted fw-normal">(' + g.people + '명)</span>' + (g.note ? ' <span class="badge bg-info text-dark">' + espEsc(g.note) + '</span>' : '') + (g.minAge ? ' <span class="badge bg-warning text-dark">만 ' + g.minAge + '세↑</span>' : '') + '</h6>' + (g.format ? '<div class="small text-muted mb-1">🎯 ' + espEsc(g.format) + '</div>' : '');
+              if (!g.teams.length) { html += '<div class="small text-muted">아직 신청이 없습니다.</div>'; return; }
+              html += g.teams.map(function(t) {
+                  return '<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between align-items-center mb-1"><b>' + (g.size === 1 ? '개인' : espEsc(t.teamName)) + '</b><button type="button" class="btn btn-sm btn-outline-danger py-0" data-tid="' + t.id + '" onclick="espAdminRemove(this.dataset.tid)">삭제</button></div>' +
+                      t.members.map(function(m) { return '<div class="small d-flex justify-content-between"><span><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + (m.isLeader ? ' <span class="badge bg-warning text-dark">신청자</span>' : '') + '</span><span class="text-muted">' + espEsc(m.tier) + (m.birthdate ? ' · 🎂 ' + espEsc(m.birthdate) : '') + '</span></div>' + (m.message ? '<div class="small text-muted ps-2">💬 ' + espEsc(m.message) + '</div>' : ''); }).join('') + '</div></div>';
+              }).join('');
+          });
+          body.innerHTML = html;
+          if (espT.open && espT.game) { espTRenderResults(); espTRenderPicked(); }
+      }
+      function espTGame(k) { return ((espAdminData && espAdminData.games) || []).filter(function(g) { return g.key === k; })[0]; }
+      function espTFormHtml() {
+          var html = '<div class="border rounded-3 p-3 mb-3" style="background:#f7f8ff;"><div class="d-flex justify-content-between align-items-center mb-2"><div class="fw-bold">학생 대신 등록</div><button type="button" class="btn btn-sm btn-outline-secondary py-0" onclick="espAdminStartRegister()">닫기</button></div>';
+          html += '<div class="small text-muted mb-2">종목을 고르고 3학년 학생을 검색해 팀을 만드세요. 한 사람은 하나의 팀에만 들어갈 수 있어요. 규칙(인원·만 15세 등)은 학생 신청과 같아요.</div><div class="row g-2 mb-3">';
+          (espAdminData.games || []).forEach(function(g) {
+              var on = espT.game === g.key;
+              html += '<div class="col-6 col-md-4"><button type="button" class="btn w-100 ' + (on ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold py-2" data-game="' + g.key + '" onclick="espTPick(this.dataset.game)">' + espEsc(g.short) + '<br><span class="small fw-normal">' + espSub(g) + (g.minAge ? ' · 만 ' + g.minAge + '세↑' : '') + (g.note ? ' · ' + espEsc(g.note) : '') + '</span>' + (g.format ? '<br><span class="fw-normal" style="font-size:0.72rem;opacity:.85;">🎯 ' + espEsc(g.format) + '</span>' : '') + '</button></div>';
+          });
+          html += '</div>';
+          if (espT.game) html += espTInnerHtml();
+          html += '</div>';
+          return html;
+      }
+      function espTInnerHtml() {
+          var g = espTGame(espT.game); if (!g) return '';
+          var h = '<div class="fw-bold mb-2">' + espEsc(g.name) + ' · ' + espSub(g) + '</div>';
+          if (g.minAge) h += '<div class="alert alert-warning small py-2 mb-2">⚠️ ' + espEsc(g.short) + '는 <b>만 ' + g.minAge + '세(생일이 지난 학생)</b>만 참가할 수 있어요. 팀원 전원의 생년월일을 입력해야 해요.</div>';
+          if (g.format) h += '<div class="alert alert-secondary small py-2 mb-2">🎯 <b>경기 방식</b>: ' + espEsc(g.format) + '</div>';
+          if (g.note) h += '<div class="alert alert-info small py-2 mb-2">📣 ' + espEsc(g.name) + '은(는) <b>' + espEsc(g.note) + '</b>이에요.</div>';
+          if (g.size > 1) h += '<label class="form-label small fw-bold mb-1">팀 이름</label><input type="text" id="espTTeamName" class="form-control form-control-sm mb-2" maxlength="20" placeholder="팀 이름" value="' + espEsc(espT.teamName) + '" oninput="espT.teamName=this.value">';
+          h += '<div class="fw-bold small mb-1">학생 검색 (3학년) <span id="espTCount" class="badge bg-primary"></span></div>' +
+              '<div class="input-group input-group-sm mb-1"><input type="text" id="espTSearch" class="form-control" placeholder="이름 또는 학번" value="' + espEsc(espT.q) + '" oninput="espTSearchDebounced(this.value)"><span class="input-group-text"><i class="bi bi-search"></i></span></div>' +
+              '<div id="espTResults" class="list-group mb-2" style="max-height:200px;overflow:auto;"></div>' +
+              '<div id="espTPicked" class="mb-2"></div>';
+          h += '<button type="button" class="btn btn-primary w-100 fw-bold" onclick="espTSubmit()">등록하기</button>';
+          return h;
+      }
+      function espTPick(k) {
+          if (espT.game && espT.game !== k && (espT.members.length || espT.teamName)) { if (!confirm('종목을 바꾸면 입력한 학생이 초기화돼요. 바꿀까요?')) return; }
+          if (espT.game !== k) { espT.members = []; espT.results = []; espT.q = ''; espT.leaderId = ''; espT.teamName = ''; }
+          espT.game = k; espAdminRender();
+      }
+      var espTTimer = null;
+      function espTSearchDebounced(v) { espT.q = v; clearTimeout(espTTimer); espTTimer = setTimeout(espTDoSearch, 250); }
+      async function espTDoSearch() {
+          var q = (espT.q || '').trim();
+          if (!q) { espT.results = []; espTRenderResults(); return; }
+          var mine = q;
+          try {
+              var r = await apiCall('/esports', { action: 'teacherSearch', teacherId: currentUser.id, q: q });
+              if ((espT.q || '').trim() !== mine) return;
+              espT.results = (r && r.success) ? r.list : []; espT.searchMsg = (r && !r.success) ? (r.msg || '검색 실패') : '';
+          } catch (e) { espT.results = []; espT.searchMsg = '검색 오류'; }
+          espTRenderResults();
+      }
+      function espTRenderResults() {
+          var el = document.getElementById('espTResults'); if (!el) return;
+          var picked = {}; espT.members.forEach(function(m) { picked[m.id] = 1; });
+          var g = espTGame(espT.game); var full = g && espT.members.length >= g.size;
+          if (!(espT.q || '').trim()) { el.innerHTML = ''; return; }
+          if (!espT.results.length) { el.innerHTML = '<div class="list-group-item small text-muted">' + espEsc(espT.searchMsg || '검색 결과가 없어요.') + '</div>'; return; }
+          el.innerHTML = espT.results.map(function(u) {
+              var dis = u.taken || picked[u.id] || full;
+              var tag = u.taken ? '<span class="badge bg-danger">이미 신청됨</span>' : (picked[u.id] ? '<span class="badge bg-success">선택됨</span>' : '');
+              return '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" ' + (dis ? 'disabled' : '') + ' data-id="' + espEsc(u.id) + '" data-name="' + espEsc(u.name) + '" onclick="espTAdd(this.dataset.id,this.dataset.name)"><span><b>' + espEsc(u.id) + '</b> ' + espEsc(u.name) + '</span>' + tag + '</button>';
+          }).join('');
+      }
+      function espTAdd(id, name) {
+          var g = espTGame(espT.game); if (!g) return;
+          if (espT.members.length >= g.size) return;
+          if (espT.members.some(function(m) { return m.id === id; })) return;
+          espT.members.push({ id: id, name: name, tier: '', birth: '', message: '' });
+          if (!espT.leaderId) espT.leaderId = id;
+          if (g.size === 1) espT.leaderId = id;
+          espTRenderResults(); espTRenderPicked();
+      }
+      function espTRemove(i) {
+          var gone = espT.members.splice(i, 1)[0];
+          if (gone && espT.leaderId === gone.id) espT.leaderId = espT.members[0] ? espT.members[0].id : '';
+          espTRenderResults(); espTRenderPicked();
+      }
+      function espTSetLeader(id) { espT.leaderId = id; espTRenderPicked(); }
+      function espTRenderPicked() {
+          var g = espTGame(espT.game);
+          var c = document.getElementById('espTCount'); if (c && g) c.textContent = espT.members.length + ' / ' + g.size + '명';
+          var el = document.getElementById('espTPicked'); if (!el) return;
+          var gg = g || {};
+          if (!espT.members.length) { el.innerHTML = '<div class="small text-muted">검색해서 학생을 추가하세요.' + (gg.size > 1 ? ' 신청자(리더)도 여기서 고르고, 티어' + (gg.minAge ? '와 생년월일' : '') + '을 입력해요.' : (gg.noTier ? ' 한마디는 선택이에요.' : ' 티어를 입력해요.')) + '</div>'; return; }
+          el.innerHTML = espT.members.map(function(m, i) {
+              var lead = '<label class="small flex-shrink-0 mb-0"><input type="radio" name="espTLeader" ' + (espT.leaderId === m.id ? 'checked ' : '') + 'onchange="espTSetLeader(\'' + espEsc(m.id) + '\')"> 신청자</label>';
+              return '<div class="d-flex align-items-center gap-2 mb-1 flex-wrap"><span class="small flex-shrink-0" style="min-width:90px;"><b>' + espEsc(m.id) + '</b> ' + espEsc(m.name) + '</span>' + (gg.size > 1 ? lead : '') +
+                  (gg.noTier ? '<input type="text" class="form-control form-control-sm" maxlength="100" placeholder="한마디 / 지원 동기 (선택)" value="' + espEsc(m.message) + '" oninput="espT.members[' + i + '].message=this.value">' :
+                      '<input type="text" class="form-control form-control-sm" style="max-width:110px;" maxlength="20" placeholder="티어" value="' + espEsc(m.tier) + '" oninput="espT.members[' + i + '].tier=this.value">') +
+                  (gg.minAge ? '<input type="date" class="form-control form-control-sm" style="max-width:150px;" title="생년월일" max="' + espTodayStr() + '" value="' + espEsc(m.birth) + '" onchange="espT.members[' + i + '].birth=this.value" oninput="espT.members[' + i + '].birth=this.value">' : '') +
+                  '<button type="button" class="btn btn-sm btn-outline-danger" onclick="espTRemove(' + i + ')"><i class="bi bi-x-lg"></i></button></div>';
+          }).join('');
+      }
+      async function espTSubmit() {
+          if (espT.busy) return;
+          var g = espTGame(espT.game); if (!g) return;
+          if (g.size > 1 && !(espT.teamName || '').trim()) { alert('팀 이름을 입력해 주세요.'); return; }
+          if (espT.members.length !== g.size) { alert(g.short + '은(는) 정확히 ' + g.size + '명이어야 해요. (현재 ' + espT.members.length + '명)'); return; }
+          if (!espT.leaderId || !espT.members.some(function(m) { return m.id === espT.leaderId; })) { alert('신청자(리더)를 선택해 주세요.'); return; }
+          var leader = espT.members.filter(function(m) { return m.id === espT.leaderId; })[0];
+          if (!g.noTier && !(leader.tier || '').trim()) { alert('신청자(' + leader.name + ')의 티어를 입력해 주세요.'); return; }
+          if (!g.noTier && espT.members.some(function(m) { return !(m.tier || '').trim(); })) { alert('모든 학생의 티어를 입력해 주세요.'); return; }
+          if (g.minAge) {
+              for (var bi = 0; bi < espT.members.length; bi++) {
+                  var m0 = espT.members[bi]; var a0 = espAgeOf(m0.birth);
+                  if (a0 === null) { alert(m0.name + ' 학생의 생년월일을 입력해 주세요.'); return; }
+                  if (a0 < g.minAge) { alert(m0.name + ' 학생은 만 ' + a0 + '세예요. ' + g.short + '는 만 ' + g.minAge + '세(생일 지난 학생)부터 참가할 수 있어요.'); return; }
+              }
+          }
+          var names = espT.members.map(function(m) { return m.id + ' ' + m.name + (m.id === espT.leaderId ? '(신청자)' : ''); }).join(', ');
+          if (!confirm(g.name + '으로 등록할까요?\n' + names)) return;
+          var mates = espT.members.filter(function(m) { return m.id !== espT.leaderId; }).map(function(m) { return { id: m.id, tier: m.tier, birthdate: m.birth }; });
+          espT.busy = true; showLoading(true);
+          try {
+              var r = await apiCall('/esports', { action: 'teacherRegister', teacherId: currentUser.id, leaderId: espT.leaderId, game: espT.game, teamName: espT.teamName, tier: leader.tier, birthdate: leader.birth, message: leader.message, members: mates });
+              showLoading(false);
+              if (!r || !r.success) { alert((r && r.msg) || '등록 실패'); if (espT.q) espTDoSearch(); return; }
+              alert(r.msg || '등록 완료');
+              espT.open = false; espTReset();
+              await loadEsportsAdmin();
+          } catch (e) { showLoading(false); alert('오류: ' + (e.message || e)); }
+          finally { espT.busy = false; }
       }
       async function espAdminRemove(tid) {
           if (!confirm('이 팀 신청을 삭제할까요? (팀원 모두 신청이 풀려요)')) return;
