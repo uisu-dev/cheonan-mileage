@@ -1,5 +1,5 @@
 const { getSupabase, cors } = require('../lib/supabase');
-const esports = require('../lib/esports'); // 찾아가는 이스포츠 대회 신청 (3학년 전용)
+const esports = require('../lib/esports'); // 찾아가는 이스포츠 대회 신청 (2·3학년)
 
 module.exports = async (req, res) => {
   cors(res);

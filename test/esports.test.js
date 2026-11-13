@@ -61,10 +61,11 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
   const db = makeDb(users());
   // 대상 여부
   assert.strictEqual((await E.status(db, '10101')).eligible, false);
-  assert.strictEqual((await E.status(db, '20105')).eligible, false);
+  assert.strictEqual((await E.status(db, '20105')).eligible, true);
   assert.strictEqual((await E.status(db, 'T001')).eligible, false);
   assert.strictEqual((await E.status(db, '30101')).eligible, true);
-  // 1,2학년은 신청/검색 불가
+  assert(E.isEligibleId('20101') && E.isEligibleId('30101') && !E.isEligibleId('10101'));
+  // 1학년은 신청/검색 불가
   assert(!(await E.apply(db, { studentId: '10101', game: 'steppin', tier: '실버' })).success);
   assert(!(await E.search(db, '10101', '학생')).success);
 
@@ -79,7 +80,7 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
   assert(!(await E.apply(db, { studentId: a, game: 'lol', teamName: 'T', tier: '골드', members: [{ id: b, tier: '' }, ...mem([c, d, e])] })).success, '팀원 티어 필수');
   assert(!(await E.apply(db, { studentId: a, game: 'lol', teamName: 'T', tier: '골드', members: mem([b, b, c, d]) })).success, '팀 내 중복 거부');
   assert(!(await E.apply(db, { studentId: a, game: 'lol', teamName: 'T', tier: '골드', members: mem([a, b, c, d]) })).success, '본인 중복 거부');
-  assert(!(await E.apply(db, { studentId: a, game: 'lol', teamName: 'T', tier: '골드', members: mem([b, c, d, '20101']) })).success, '2학년 팀원 거부');
+  assert(!(await E.apply(db, { studentId: a, game: 'lol', teamName: 'T', tier: '골드', members: mem([b, c, d, '10101']) })).success, '1학년 팀원 거부');
   assert(!(await E.apply(db, { studentId: a, game: 'chess', tier: '골드' })).success, '없는 종목');
   assert.strictEqual(db.tables.esports_teams.length, 0, '실패 시 아무것도 저장 안 됨');
 
@@ -95,12 +96,13 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
   assert(!(await E.apply(db, { studentId: f, game: 'brawl', teamName: 'X', tier: '1', members: mem([g, c]) })).success, '이미 팀인 학생 영입 거부');
   assert.strictEqual(db.tables.esports_teams.length, 1);
 
-  // 검색: 3학년만, 본인 제외, taken 표시
+  // 검색: 2·3학년, 본인 제외, taken 표시
   const s = await E.search(db, f, '학생3');
   assert(s.success && s.list.every(x => x.id[0] === '3') && s.list.every(x => x.id !== f));
   assert(s.list.find(x => x.id === b).taken === true);
   assert(s.list.find(x => x.id === g).taken === false);
-  assert.strictEqual((await E.search(db, f, '20101')).list.length, 0, '2학년 학번 검색 불가');
+  assert.strictEqual((await E.search(db, f, '10101')).list.length, 0, '1학년 학번 검색 불가');
+  assert.strictEqual((await E.search(db, f, '20101')).list[0].id, '20101', '2학년 학번 검색');
   assert.strictEqual((await E.search(db, f, b)).list[0].id, b, '학번 검색');
   assert.deepStrictEqual((await E.search(db, f, '')).list, []);
 
@@ -246,13 +248,14 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
     const tsEmpty = await E.teacherSearch(dbT, 'T001', '');
     assert(tsEmpty.success && tsEmpty.list.length === 0);
 
-    // 교사 검색: 3학년 전원(자기 제외 없음), 이미 신청한 학생 taken
+    // 교사 검색: 2·3학년 전원(자기 제외 없음), 이미 신청한 학생 taken
     assert((await E.apply(dbT, { studentId: p1, game: 'steppin', tier: '실버' }, NOW)).success);
     const ts = await E.teacherSearch(dbT, 'T001', '학생3');
     assert(ts.success && ts.list.every(x => x.id[0] === '3'));
     assert(ts.list.find(x => x.id === p1).taken === true);
     assert(ts.list.find(x => x.id === p2).taken === false);
-    assert.strictEqual((await E.teacherSearch(dbT, 'T001', '20101')).list.length, 0, '2학년 검색 안 됨');
+    assert.strictEqual((await E.teacherSearch(dbT, 'T001', '10101')).list.length, 0, '1학년 검색 안 됨');
+    assert.strictEqual((await E.teacherSearch(dbT, 'T001', '20101')).list[0].id, '20101', '2학년 검색');
     assert.strictEqual((await E.teacherSearch(dbT, 'T001', p1)).list[0].id, p1, '학번으로 본인도 검색(교사)');
 
     // 이미 신청한 학생을 리더/팀원으로 등록 거부
@@ -262,8 +265,8 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
     // 인원/학년/티어 규칙도 apply와 동일
     assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'lol', teamName: 'T', tier: '골드', members: memT([p3, p4]) }, NOW)).success, '인원 부족 거부');
     assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'steppin', tier: '골드', members: memT([p3]) }, NOW)).success, '개인종목 팀원 거부');
-    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: '20101', game: 'steppin', tier: '골드' }, NOW)).success, '2학년 리더 거부');
-    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'lol', teamName: 'T', tier: '골드', members: memT([p3, p4, p5, '20101']) }, NOW)).success, '2학년 팀원 거부');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: '10101', game: 'steppin', tier: '골드' }, NOW)).success, '1학년 리더 거부');
+    assert(!(await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'lol', teamName: 'T', tier: '골드', members: memT([p3, p4, p5, '10101']) }, NOW)).success, '1학년 팀원 거부');
 
     // 정상: 교사가 브롤 팀 등록, 리더는 p2 (학생 본인이 신청한 것과 동일하게 보임)
     const tr = await E.teacherRegister(dbT, { teacherId: 'T001', leaderId: p2, game: 'brawl', teamName: '교사팀', tier: '플래', members: memT([p3, p4]) }, NOW);
@@ -292,6 +295,45 @@ const mem = (arr) => arr.map(id => ({ id, tier: '골드' }));
     const LT = await E.list(dbT, 'T001');
     assert(LT.games.find(x => x.key === 'brawl').teams.some(t => t.teamName === '교사팀'));
     assert(LT.games.find(x => x.key === 'valorant').teams[0].members.every(m => /^\d{4}-\d{2}-\d{2}$/.test(m.birthdate)));
+  }
+
+  // ===== 2·3학년 혼성 팀, 2학년 본인 신청, 1학년은 계속 불가 =====
+  {
+    const dbM = makeDb(users());
+    const r2 = await E.apply(dbM, { studentId: '20105', game: 'steppin', tier: '실버' });
+    assert(r2.success, r2.msg);
+    assert.strictEqual((await E.status(dbM, '20105')).isLeader, true);
+    // 2학년이 3학년을 팀원으로, 3학년이 2학년을 리더로
+    const mix = await E.apply(dbM, { studentId: '20201', game: 'brawl', teamName: '혼성', tier: '골드', members: mem(['30301', '30110']) });
+    assert(mix.success, mix.msg);
+    assert.strictEqual(mix.team.members.length, 3);
+    assert(mix.team.members.some(m => m.id[0] === '2') && mix.team.members.some(m => m.id[0] === '3'));
+    const s23 = await E.search(dbM, '20201', '30301');
+    assert(s23.success && s23.list[0].id === '30301' && s23.list[0].taken === true);
+    const s2q = await E.search(dbM, '30110', '20101');
+    assert(s2q.success && s2q.list[0].id === '20101' && s2q.list[0].taken === false);
+    // 교사: 2학년 리더 + 3학년 팀원
+    const trMix = await E.teacherRegister(dbM, { teacherId: 'T001', leaderId: '20301', game: 'lol', teamName: '교사혼성', tier: '골드', members: mem(['30111', '30112', '20106', '30113']) });
+    assert(trMix.success, trMix.msg);
+    assert.strictEqual(trMix.team.leaderId, '20301');
+    assert.strictEqual(trMix.team.members.length, 5);
+    // 1학년은 여전히 불가, 발로란트 만 15세는 2학년에도 그대로 적용
+    assert(!(await E.apply(dbM, { studentId: '10101', game: 'steppin', tier: '골드' })).success);
+    const NOW = new Date('2026-11-10T03:00:00Z');
+    const vFail = await E.apply(dbM, { studentId: '20107', game: 'valorant', teamName: 'V2', tier: '골드', birthdate: '2011-11-11', members: [
+      { id: '20108', tier: '골드', birthdate: '2010-05-21' },
+      { id: '20109', tier: '골드', birthdate: '2010-05-21' },
+      { id: '30114', tier: '골드', birthdate: '2010-05-21' },
+      { id: '30115', tier: '골드', birthdate: '2010-05-21' }
+    ] }, NOW);
+    assert(!vFail.success && /만 15세/.test(vFail.msg), '2학년 리더도 만 15세 미만이면 거부: ' + vFail.msg);
+    const vOk = await E.apply(dbM, { studentId: '20107', game: 'valorant', teamName: 'V2', tier: '골드', birthdate: '2010-05-21', members: [
+      { id: '20108', tier: '골드', birthdate: '2010-05-21' },
+      { id: '20109', tier: '골드', birthdate: '2010-05-21' },
+      { id: '30114', tier: '골드', birthdate: '2010-05-21' },
+      { id: '30115', tier: '골드', birthdate: '2010-05-21' }
+    ] }, NOW);
+    assert(vOk.success, vOk.msg);
   }
   console.log('esports tests passed');
 })().catch(e => { console.error(e); process.exit(1); });
