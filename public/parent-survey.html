@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>천안중학교 학부모 설문</title>
+  <link rel="canonical" href="/parent-survey.html">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/official-survey.css">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+  </style>
+</head>
+<body class="os-page">
+  <main class="os-wrap">
+    <header class="os-hero">
+      <h1>천안중학교 학부모 설문</h1>
+      <p>로그인하지 않아도 됩니다. 교육과정 만족도 조사와 참여예산제 조사를 이 페이지에서 진행합니다. 문자는 이 주소로 보내 주세요.</p>
+    </header>
+    <div id="surveys"><p class="os-note">설문을 불러오는 중입니다.</p></div>
+  </main>
+  <noscript><p>설문에 참여하려면 자바스크립트를 켜 주세요.</p></noscript>
+  <script src="/official-survey.js"></script>
+  <script>
+    var DEVICE_KEY = 'cheonan_parent_survey_device';
+    var DONE_KEY = 'cheonan_parent_survey_done';
+    var parentToken = '';
+    var parentForms = {};
+
+    function fallbackUuid() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0;
+        var v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+    function deviceToken() {
+      var t = '';
+      try { t = localStorage.getItem(DEVICE_KEY) || ''; } catch (e) {}
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(t)) {
+        t = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackUuid();
+        try { localStorage.setItem(DEVICE_KEY, t); } catch (e) {}
+      }
+      return t;
+    }
+    function localDoneMap() {
+      try { return JSON.parse(localStorage.getItem(DONE_KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function markLocal(surveyId) {
+      var map = localDoneMap();
+      map[surveyId] = Date.now();
+      try { localStorage.setItem(DONE_KEY, JSON.stringify(map)); } catch (e) {}
+    }
+    async function parentApi(body) {
+      var resp = await fetch('/api/official-survey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return resp.json();
+    }
+    function paint(bundle) {
+      var localDone = localDoneMap();
+      var root = document.getElementById('surveys');
+      parentForms = {};
+      var html = '';
+      if (bundle.warning) html += '<p class="os-warn">' + OfficialSurvey.esc(bundle.warning) + '</p>';
+      (bundle.forms || []).forEach(function (form) {
+        parentForms[form.surveyId] = form;
+        var existing = bundle.existing ? bundle.existing[form.surveyId] : null;
+        html += '<article class="os-card" id="survey-' + form.surveyId + '">';
+        html += '<h2>' + OfficialSurvey.esc(form.title) + '</h2>';
+        if (!existing && localDone[form.surveyId]) html += '<p class="os-done">이 기기에 제출 기록이 있습니다.</p>';
+        html += form.kind === 'budget' ? OfficialSurvey.renderBudget(form, existing) : OfficialSurvey.renderCurriculum(form, existing);
+        html += '<div class="os-submitbar"><button type="button" class="os-primary" data-submit="' + form.surveyId + '" data-kind="' + form.kind + '">' + (existing ? '수정 제출' : '제출하기') + '</button></div>';
+        html += '</article>';
+      });
+      root.innerHTML = html || '<p class="os-empty">설문을 불러오지 못했습니다.</p>';
+      OfficialSurvey.mount(root);
+    }
+    async function boot() {
+      parentToken = deviceToken();
+      try {
+        var res = await parentApi({ action: 'parentBundle', deviceToken: parentToken });
+        if (!res.success) {
+          document.getElementById('surveys').innerHTML = '<p class="os-warn">' + OfficialSurvey.esc(res.msg || '불러오지 못했습니다.') + '</p>';
+          return;
+        }
+        paint(res);
+      } catch (e) {
+        document.getElementById('surveys').innerHTML = '<p class="os-warn">설문을 불러오지 못했습니다. 네트워크를 확인한 뒤 다시 열어 주세요.</p>';
+      }
+    }
+    document.addEventListener('click', async function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-submit]') : null;
+      if (!btn) return;
+      var card = btn.closest('article');
+      var kind = btn.getAttribute('data-kind');
+      var surveyId = btn.getAttribute('data-submit');
+      var form = parentForms[surveyId];
+      var payload = kind === 'budget' ? OfficialSurvey.readBudget(card) : { answers: OfficialSurvey.readCurriculum(card) };
+      var problem = OfficialSurvey.problems(kind, form, kind === 'budget' ? payload : payload.answers);
+      if (problem) { alert(problem); return; }
+      btn.disabled = true;
+      var body = { action: 'parentSubmit', deviceToken: parentToken, surveyId: surveyId };
+      if (kind === 'budget') {
+        body.consent = payload.consent;
+        body.identity = payload.identity;
+        body.proposals = payload.proposals;
+      } else body.answers = payload.answers;
+      try {
+        var res = await parentApi(body);
+        btn.disabled = false;
+        if (!res.success) { alert(res.msg || '제출하지 못했습니다.'); return; }
+        markLocal(surveyId);
+        alert(res.msg || '제출했습니다.');
+        boot();
+      } catch (err) {
+        btn.disabled = false;
+        alert('제출하지 못했습니다.');
+      }
+    });
+    boot();
+  </script>
+</body>
+</html>

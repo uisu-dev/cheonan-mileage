@@ -1,5 +1,8 @@
 {
   "rewrites": [
+    { "source": "/parent-survey", "destination": "/parent-survey.html" },
+    { "source": "/survey/parent", "destination": "/parent-survey.html" },
+    { "source": "/survey/parent.html", "destination": "/parent-survey.html" },
     { "source": "/((?!api/).*)", "destination": "/public/index.html" }
   ]
 }
