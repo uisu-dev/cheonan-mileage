@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/official-survey.css">
     <style>
       :root { --school-blue: #0054a6; --school-yellow: #ffcd00; }
       body { background-color: #f0f2f5; font-family: 'Noto Sans KR', sans-serif; }
@@ -192,6 +193,11 @@
         </div>
       </nav>
       <div class="container pb-5">
+        <button type="button" id="officialTeacherCurriculumBtn" class="official-survey-btn mb-3" data-official-survey="curriculum_sat_2026" onclick="openOfficialSurvey('curriculum_sat_2026')" style="background:linear-gradient(to right,#0054a6,#3a7bd5);color:#fff;">
+          <span class="official-survey-btn-title">2026학년도 교육과정 만족도 조사</span>
+          <span class="official-survey-btn-sub">교직원용 · 마일리지 없음</span>
+          <span class="official-survey-btn-action">참여하기</span>
+        </button>
         <ul class="nav nav-tabs mb-3" role="tablist">
           <li class="nav-item"><button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#giveTab"><span class="nav-ico">💯</span><span class="nav-label fit-text">점수</span></button></li>
           <li class="nav-item"><button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#attendanceTab"><span class="nav-ico">📋</span><span class="nav-label fit-text">출석/<wbr>학급관리</span></button></li>
@@ -428,6 +434,11 @@
                 </div>
               </a>
             </div>
+            <button type="button" id="officialResultsBanner" class="official-results-banner" onclick="openOfficialResults()">
+              <span class="official-results-kicker">교사 전용</span>
+              <span class="official-survey-btn-title">공식 조사 결과 보기</span>
+              <span class="official-survey-btn-sub">교육과정 만족도 · 참여예산제 · 학생/학부모/교사 · 출력 · 엑셀</span>
+            </button>
           </div>
         </div>
       </div>
@@ -442,6 +453,18 @@
         <div id="studentPointCard" class="card shadow-sm mb-3 border-0 bg-school text-white"><div class="card-body text-center p-3"><p class="mb-1 opacity-75">나의 천중마일리지</p><h1 class="display-4 fw-bold"><span id="sTotal">0</span> P</h1><button id="btnAttend" class="btn btn-light text-school fw-bold btn-sm mt-2 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div id="studentPenaltyCard" class="card shadow-sm mb-3 border-0" style="display:none; background:linear-gradient(135deg,#dc3545,#8b0000); color:white;"><div class="card-body text-center p-3"><div class="fw-bold mb-1" style="font-size:0.95rem;">🚨 생활교육위원회 교내봉사 징계 중</div><div class="small opacity-75 mb-2">징계가 해제될 때까지 마일리지 획득 현황만 표시됩니다.</div><div class="my-3"><span style="font-size:2.2rem;font-weight:bold;" id="sPenaltyEarned">0</span><span class="opacity-75"> / </span><span style="font-size:1.6rem;" id="sPenaltyTotal">0</span> P</div><div class="progress mb-2" style="height:10px;background:rgba(255,255,255,0.3);"><div id="sPenaltyBar" class="progress-bar bg-warning" role="progressbar" style="width:0%"></div></div><div class="small">앞으로 <strong><span id="sPenaltyLeft">0</span>P</strong> 더 획득하면 징계가 해제됩니다.</div><button class="btn btn-light text-danger fw-bold btn-sm mt-3 rounded-pill px-3" onclick="doAttendance()">📅 출석체크 (+10P)</button></div></div>
         <div id="todayInfoArea" class="mb-3"></div>
+        <div id="officialStudentBanners" class="d-grid gap-2 mb-3">
+          <button type="button" class="official-survey-btn" data-official-survey="curriculum_sat_2026" onclick="openOfficialSurvey('curriculum_sat_2026')" style="background:linear-gradient(to right,#0054a6,#3a7bd5);color:#fff;">
+            <span class="official-survey-btn-title">2026학년도 교육과정 만족도 조사</span>
+            <span class="official-survey-btn-sub">학생용 12문항 · 서술형 선택 · 학번과 이름은 결과에 보이지 않습니다</span>
+            <span class="official-survey-btn-action">참여하기</span>
+          </button>
+          <button type="button" class="official-survey-btn" data-official-survey="budget_participation_2027" onclick="openOfficialSurvey('budget_participation_2027')" style="background:linear-gradient(to right,#0b7a56,#11998e);color:#fff;">
+            <span class="official-survey-btn-title">2027학년도 학생·학부모 참여예산제 조사</span>
+            <span class="official-survey-btn-sub">사업 제안 1~3건 · 마일리지 없음</span>
+            <span class="official-survey-btn-action">참여하기</span>
+          </button>
+        </div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div class="d-grid gap-2 mb-3"><button onclick="openHumanRightsPoem()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#667eea,#764ba2);"><i class="bi bi-hearts"></i> ✊ 인권 생활시 쓰기</button></div>
         <div id="esportsBanner" class="card shadow-sm border-0 mb-3" style="display:none;background:linear-gradient(135deg,#4e54c8,#8f94fb);color:#fff;"><div class="card-body p-3"><div class="fw-bold mb-1 esp-banner-title" style="font-size:1rem;">🎮 찾아가는 이스포츠 대회 참가</div><div class="small opacity-75 mb-2 esp-banner-sub">2·3학년 학생 대상 · 롤 / 브롤스타즈 / 스테핀 / 발로란트</div><button type="button" id="esportsBannerBtn" class="btn btn-light w-100 fw-bold" style="color:#4e54c8;" onclick="openEsports()">참가 신청하기 <i class="bi bi-controller"></i></button></div></div>
@@ -992,9 +1015,62 @@
       </div>
     </div>
 
+    <div class="modal fade" id="officialSurveyModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-school text-white">
+            <h5 class="modal-title fw-bold" id="officialSurveyTitle">공식 조사</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="officialSurveyBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            <button type="button" class="btn btn-primary fw-bold" id="officialSurveySubmit">제출하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="officialResultsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-school text-white">
+            <h5 class="modal-title fw-bold">공식 조사 결과</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="officialResultsBody">
+            <div id="officialResultsFilters" class="no-print os-filters mb-3">
+              <select id="osFilterSurvey" class="form-select" onchange="changeOfficialFilter()">
+                <option value="curriculum_sat_2026">2026학년도 교육과정 만족도 조사</option>
+                <option value="budget_participation_2027">2027학년도 학생·학부모 참여예산제 조사</option>
+              </select>
+              <select id="osFilterGroup" class="form-select" onchange="changeOfficialFilter()">
+                <option value="all">전체</option>
+                <option value="student">학생</option>
+                <option value="parent">학부모</option>
+                <option value="teacher">교사</option>
+              </select>
+              <select id="osFilterGrade" class="form-select" onchange="changeOfficialFilter()">
+                <option value="">전체 학년</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+              </select>
+            </div>
+            <div id="officialResultsContent"></div>
+          </div>
+          <div class="modal-footer no-print">
+            <button type="button" class="btn btn-outline-dark" onclick="printOfficialResults()">출력</button>
+            <button type="button" class="btn btn-success fw-bold" id="officialExcelBtn" onclick="downloadOfficialExcel()">엑셀 다운로드</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <datalist id="studentDataListAll"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/official-survey.js"></script>
     <script>
       // ========== API 헬퍼 ==========
       var API_BASE = '/api';
@@ -1302,6 +1378,7 @@
                 }
             });
         }
+        loadOfficialSurveyStatus();
       }
 
       function setupTeacherUI(data) {
@@ -1352,6 +1429,7 @@
         if(data.unreturnedUmbrella.length > 0) document.getElementById('unreturnedUmbrellaList').innerHTML = '<div class="alert alert-warning py-2 small mb-0">미반납: ' + data.unreturnedUmbrella.map(u => `${u.name}(${u.id})`).join(', ') + '</div>'; else document.getElementById('unreturnedUmbrellaList').innerHTML = '<div class="alert alert-success py-2 small mb-0">모두 반납 완료</div>';
         if(data.unreturnedBall.length > 0) document.getElementById('unreturnedBallList').innerHTML = '<div class="alert alert-warning py-2 small mb-0">미반납: ' + data.unreturnedBall.map(u => `${u.name}(${u.id})`).join(', ') + '</div>'; else document.getElementById('unreturnedBallList').innerHTML = '<div class="alert alert-success py-2 small mb-0">모두 반납 완료</div>';
         var logHtml = ""; if(data.teacherHistory.length > 0) { data.teacherHistory.forEach(log=>{ logHtml += `<tr><td>${log.date}</td><td>${log.target}</td><td>${log.item}</td><td>${log.point}</td><td><button class="btn btn-outline-danger btn-sm" style="font-size:0.7em; padding:1px 5px;" onclick="deleteLog('${log.rowIndex}', '${log.target}', ${log.point})">삭제</button></td></tr>`; }); } else { logHtml = "<tr><td colspan='5' class='text-center text-muted'>내역 없음</td></tr>"; } document.getElementById('myLogsTable').innerHTML = logHtml;
+        loadOfficialSurveyStatus();
       }
 
       function selectRedeemUser() {
@@ -4463,6 +4541,130 @@
             el.style.whiteSpace = 'normal';
           }
         });
+      }
+
+      var officialResultsQuery = { surveyId: 'curriculum_sat_2026', group: 'all', grade: '' };
+      var officialFormCache = null;
+
+      async function loadOfficialSurveyStatus() {
+        if (!currentUser || !currentUser.id) return;
+        try {
+          var res = await apiCall('/official-survey', { action: 'status', userId: currentUser.id });
+          if (!res || !res.success || !res.submitted) return;
+          Object.keys(res.submitted).forEach(function (id) {
+            var label = res.submitted[id] ? '참여 완료 · 수정' : '참여하기';
+            document.querySelectorAll('[data-official-survey="' + id + '"] .official-survey-btn-action').forEach(function (el) {
+              el.textContent = label;
+            });
+          });
+        } catch (e) {}
+      }
+
+      async function openOfficialSurvey(surveyId) {
+        if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
+        if (!window.OfficialSurvey) return alert('설문 화면을 불러오지 못했습니다.');
+        showLoading(true);
+        try {
+          var res = await apiCall('/official-survey', { action: 'form', userId: currentUser.id, surveyId: surveyId });
+          showLoading(false);
+          if (!res.success) return alert(res.msg || '설문을 열 수 없습니다.');
+          officialFormCache = res.form;
+          var html = res.form.kind === 'budget' ? OfficialSurvey.renderBudget(res.form, res.existing) : OfficialSurvey.renderCurriculum(res.form, res.existing);
+          document.getElementById('officialSurveyTitle').innerText = res.form.title;
+          var body = document.getElementById('officialSurveyBody');
+          body.innerHTML = html;
+          body.scrollTop = 0;
+          OfficialSurvey.mount(body);
+          var submitBtn = document.getElementById('officialSurveySubmit');
+          submitBtn.textContent = res.submitted ? '수정 제출' : '제출하기';
+          submitBtn.onclick = function () { submitOfficialSurvey(surveyId); };
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('officialSurveyModal')).show();
+        } catch (e) {
+          showLoading(false);
+          alert('설문을 열 수 없습니다.');
+        }
+      }
+
+      async function submitOfficialSurvey(surveyId) {
+        var bodyEl = document.getElementById('officialSurveyBody');
+        var kindEl = bodyEl.querySelector('[data-kind]');
+        var kind = kindEl ? kindEl.getAttribute('data-kind') : '';
+        var payload = kind === 'budget' ? OfficialSurvey.readBudget(bodyEl) : { answers: OfficialSurvey.readCurriculum(bodyEl) };
+        var problem = OfficialSurvey.problems(kind, officialFormCache, kind === 'budget' ? payload : payload.answers);
+        if (problem) return alert(problem);
+        var btn = document.getElementById('officialSurveySubmit');
+        btn.disabled = true;
+        var req = { action: 'submit', userId: currentUser.id, surveyId: surveyId };
+        if (kind === 'budget') {
+          req.consent = payload.consent;
+          req.identity = payload.identity;
+          req.proposals = payload.proposals;
+        } else req.answers = payload.answers;
+        try {
+          var res = await apiCall('/official-survey', req);
+          btn.disabled = false;
+          if (!res.success) return alert(res.msg || '제출하지 못했습니다.');
+          alert(res.msg || '제출했습니다.');
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('officialSurveyModal')).hide();
+          loadOfficialSurveyStatus();
+        } catch (e) {
+          btn.disabled = false;
+          alert('제출하지 못했습니다.');
+        }
+      }
+
+      function changeOfficialFilter() {
+        officialResultsQuery.surveyId = document.getElementById('osFilterSurvey').value;
+        officialResultsQuery.group = document.getElementById('osFilterGroup').value;
+        officialResultsQuery.grade = document.getElementById('osFilterGrade').value;
+        refreshOfficialResults();
+      }
+
+      async function openOfficialResults() {
+        if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('officialResultsModal')).show();
+        document.body.classList.add('official-results-open');
+        refreshOfficialResults();
+      }
+
+      async function refreshOfficialResults() {
+        var box = document.getElementById('officialResultsContent');
+        box.innerHTML = '<p class="text-muted">불러오는 중...</p>';
+        try {
+          var res = await apiCall('/official-survey', {
+            action: 'results',
+            userId: currentUser.id,
+            surveyId: officialResultsQuery.surveyId,
+            group: officialResultsQuery.group,
+            grade: officialResultsQuery.grade
+          });
+          if (!res.success) {
+            box.innerHTML = '<div class="alert alert-warning">' + OfficialSurvey.esc(res.msg || '결과를 볼 수 없습니다.') + '</div>';
+            return;
+          }
+          box.innerHTML = OfficialSurvey.renderResults(res.view);
+        } catch (e) {
+          box.innerHTML = '<div class="alert alert-warning">결과를 불러오지 못했습니다.</div>';
+        }
+      }
+
+      function printOfficialResults() {
+        var html = document.getElementById('officialResultsContent').innerHTML;
+        if (!html || html.indexOf('불러오는 중') >= 0) return alert('결과를 불러온 뒤 출력해 주세요.');
+        OfficialSurvey.printResults('천안중학교 공식 조사 결과', html);
+      }
+
+      async function downloadOfficialExcel() {
+        var btn = document.getElementById('officialExcelBtn');
+        btn.disabled = true;
+        try {
+          var res = await apiCall('/official-survey', { action: 'export', userId: currentUser.id });
+          if (!res.success) { btn.disabled = false; return alert(res.msg || '엑셀을 만들지 못했습니다.'); }
+          await OfficialSurvey.downloadXlsx(res.sheets, res.filename);
+        } catch (e) {
+          alert('엑셀 다운로드에 실패했습니다. 네트워크를 확인해 주세요.');
+        }
+        btn.disabled = false;
       }
 
       var _fitTextTimer = null;
