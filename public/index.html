@@ -464,6 +464,11 @@
             <span class="official-survey-btn-sub">제안하고 싶은 사업이 있을 때 작성</span>
             <span class="official-survey-btn-action">참여하기</span>
           </button>
+          <button type="button" class="official-survey-btn" data-official-survey="sdq_kr" onclick="openOfficialSurvey('sdq_kr')" style="background:linear-gradient(to right,#3d348b,#7678ed);color:#fff;">
+            <span class="official-survey-btn-title">SDQ 정신건강 설문</span>
+            <span class="official-survey-btn-sub">강점·난점 설문지 · 자기보고 25문항 · 실명 저장 · 회차마다 1회</span>
+            <span class="official-survey-btn-action">참여하기</span>
+          </button>
         </div>
         <div class="d-grid gap-2 mb-3"><button onclick="openRouletteStudent()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f093fb,#f5576c);"><i class="bi bi-dice-5-fill"></i> 🎡 행운의 돌림판</button></div>
         <div id="meritSurveyBanner" class="d-grid gap-2 mb-3" style="display:none !important;"><button id="meritSurveyBtn" onclick="openMeritSurvey()" class="btn shadow-sm fw-bold text-white" style="background:linear-gradient(to right,#f7971e,#ffd200);"><i class="bi bi-trophy-fill"></i> 🏅 상점 우수자 설문</button></div>
@@ -1052,6 +1057,11 @@
                 <option value="1">1학년</option>
                 <option value="2">2학년</option>
                 <option value="3">3학년</option>
+              </select>
+              <select id="osFilterClass" class="form-select" hidden onchange="changeOfficialFilter()">
+                <option value="">전체 반</option>
+              </select>
+              <select id="osFilterWave" class="form-select" hidden onchange="changeOfficialFilter()">
               </select>
             </div>
             <div id="officialResultsContent"></div>
@@ -4541,33 +4551,46 @@
         });
       }
 
-      var officialResultsQuery = { surveyId: 'curriculum_sat_2026', group: 'all', grade: '' };
+      var officialResultsQuery = { surveyId: 'curriculum_sat_2026', group: 'all', grade: '', classNo: '', wave: '' };
       var officialFormCache = null;
+
+      function setOfficialActionLabel(id, label) {
+        document.querySelectorAll('[data-official-survey="' + id + '"] .official-survey-btn-action').forEach(function (el) {
+          el.textContent = label;
+        });
+      }
 
       async function loadOfficialSurveyStatus() {
         if (!currentUser || !currentUser.id) return;
         try {
           var res = await apiCall('/official-survey', { action: 'status', userId: currentUser.id });
-          if (!res || !res.success || !res.submitted) return;
-          Object.keys(res.submitted).forEach(function (id) {
-            var label = res.submitted[id] ? '참여 완료 · 수정' : '참여하기';
-            document.querySelectorAll('[data-official-survey="' + id + '"] .official-survey-btn-action').forEach(function (el) {
-              el.textContent = label;
+          if (res && res.success && res.submitted) {
+            Object.keys(res.submitted).forEach(function (id) {
+              setOfficialActionLabel(id, res.submitted[id] ? '참여 완료 · 수정' : '참여하기');
             });
-          });
+          }
+        } catch (e) {}
+        if (!currentUser || currentUser.role !== 'student') return;
+        try {
+          var sdq = await apiCall('/sdq', { action: 'status', userId: currentUser.id });
+          if (!sdq || !sdq.success) return;
+          setOfficialActionLabel('sdq_kr', sdq.submitted ? '참여 완료 · 수정' : '참여하기');
         } catch (e) {}
       }
 
       async function openOfficialSurvey(surveyId) {
         if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
         if (!window.OfficialSurvey) return alert('설문 화면을 불러오지 못했습니다.');
+        var endpoint = surveyId === 'sdq_kr' ? '/sdq' : '/official-survey';
         showLoading(true);
         try {
-          var res = await apiCall('/official-survey', { action: 'form', userId: currentUser.id, surveyId: surveyId });
+          var res = await apiCall(endpoint, { action: 'form', userId: currentUser.id, surveyId: surveyId });
           showLoading(false);
           if (!res.success) return alert(res.msg || '설문을 열 수 없습니다.');
           officialFormCache = res.form;
-          var html = res.form.kind === 'budget' ? OfficialSurvey.renderBudget(res.form, res.existing) : OfficialSurvey.renderCurriculum(res.form, res.existing);
+          var html = res.form.kind === 'budget'
+            ? OfficialSurvey.renderBudget(res.form, res.existing)
+            : (res.form.kind === 'sdq' ? OfficialSurvey.renderSdq(res.form, res.existing) : OfficialSurvey.renderCurriculum(res.form, res.existing));
           document.getElementById('officialSurveyTitle').innerText = res.form.title;
           var body = document.getElementById('officialSurveyBody');
           body.innerHTML = html;
@@ -4587,7 +4610,7 @@
         var bodyEl = document.getElementById('officialSurveyBody');
         var kindEl = bodyEl.querySelector('[data-kind]');
         var kind = kindEl ? kindEl.getAttribute('data-kind') : '';
-        var payload = kind === 'budget' ? OfficialSurvey.readBudget(bodyEl) : { answers: OfficialSurvey.readCurriculum(bodyEl) };
+        var payload = kind === 'budget' ? OfficialSurvey.readBudget(bodyEl) : (kind === 'sdq' ? { answers: OfficialSurvey.readSdq(bodyEl) } : { answers: OfficialSurvey.readCurriculum(bodyEl) });
         var problem = OfficialSurvey.problems(kind, officialFormCache, kind === 'budget' ? payload : payload.answers);
         if (problem) return alert(problem);
         var btn = document.getElementById('officialSurveySubmit');
@@ -4599,7 +4622,7 @@
           req.proposals = payload.proposals;
         } else req.answers = payload.answers;
         try {
-          var res = await apiCall('/official-survey', req);
+          var res = await apiCall(surveyId === 'sdq_kr' ? '/sdq' : '/official-survey', req);
           btn.disabled = false;
           if (!res.success) return alert(res.msg || '제출하지 못했습니다.');
           alert(res.msg || '제출했습니다.');
@@ -4611,15 +4634,69 @@
         }
       }
 
+      function syncSdqFilterVisibility() {
+        var sdq = officialResultsQuery.surveyId === 'sdq_kr';
+        var group = document.getElementById('osFilterGroup');
+        var classEl = document.getElementById('osFilterClass');
+        var waveEl = document.getElementById('osFilterWave');
+        var modal = document.getElementById('officialResultsModal');
+        if (group) group.hidden = sdq;
+        if (classEl) classEl.hidden = !sdq;
+        if (waveEl) waveEl.hidden = !sdq;
+        if (modal) modal.classList.toggle('os-sdq-open', sdq);
+      }
+
+      function fillSdqFilters(view) {
+        var waveEl = document.getElementById('osFilterWave');
+        var classEl = document.getElementById('osFilterClass');
+        if (waveEl && view.waves) {
+          var wave = view.wave || waveEl.value;
+          waveEl.innerHTML = view.waves.map(function (w) {
+            return '<option value="' + OfficialSurvey.esc(w) + '">회차 ' + OfficialSurvey.esc(w) + '</option>';
+          }).join('');
+          if (wave) waveEl.value = wave;
+          officialResultsQuery.wave = waveEl.value;
+        }
+        if (classEl) {
+          var current = String(officialResultsQuery.classNo || '');
+          var classes = view.classes || [];
+          var known = classes.map(String);
+          classEl.innerHTML = '<option value="">전체 반</option>' + known.map(function (c) {
+            return '<option value="' + OfficialSurvey.esc(c) + '">' + OfficialSurvey.esc(c) + '반</option>';
+          }).join('');
+          var next = known.indexOf(current) >= 0 ? current : '';
+          classEl.value = next;
+          officialResultsQuery.classNo = next;
+          if (current && next !== current) return true;
+        }
+        return false;
+      }
+
       function changeOfficialFilter() {
         officialResultsQuery.surveyId = document.getElementById('osFilterSurvey').value;
         officialResultsQuery.group = document.getElementById('osFilterGroup').value;
         officialResultsQuery.grade = document.getElementById('osFilterGrade').value;
+        var classEl = document.getElementById('osFilterClass');
+        var waveEl = document.getElementById('osFilterWave');
+        officialResultsQuery.classNo = classEl ? classEl.value : '';
+        officialResultsQuery.wave = waveEl ? waveEl.value : '';
+        syncSdqFilterVisibility();
         refreshOfficialResults();
       }
 
       async function openOfficialResults() {
         if (!currentUser || !currentUser.id) return alert('로그인이 필요합니다.');
+        var allowed = false;
+        try {
+          var access = await apiCall('/sdq', { action: 'status', userId: currentUser.id });
+          allowed = !!(access && access.success && access.allowed);
+        } catch (e) {}
+        if (window.OfficialSurvey) OfficialSurvey.syncSurveySelect(document.getElementById('osFilterSurvey'), allowed);
+        if (!allowed && officialResultsQuery.surveyId === 'sdq_kr') {
+          officialResultsQuery.surveyId = 'curriculum_sat_2026';
+          document.getElementById('osFilterSurvey').value = 'curriculum_sat_2026';
+        }
+        syncSdqFilterVisibility();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('officialResultsModal')).show();
         document.body.classList.add('official-results-open');
         refreshOfficialResults();
@@ -4628,16 +4705,36 @@
       async function refreshOfficialResults() {
         var box = document.getElementById('officialResultsContent');
         box.innerHTML = '<p class="text-muted">불러오는 중...</p>';
+        syncSdqFilterVisibility();
         try {
-          var res = await apiCall('/official-survey', {
-            action: 'results',
-            userId: currentUser.id,
-            surveyId: officialResultsQuery.surveyId,
-            group: officialResultsQuery.group,
-            grade: officialResultsQuery.grade
-          });
+          var res;
+          if (officialResultsQuery.surveyId === 'sdq_kr') {
+            res = await apiCall('/sdq', {
+              action: 'results',
+              userId: currentUser.id,
+              wave: officialResultsQuery.wave,
+              grade: officialResultsQuery.grade,
+              classNo: officialResultsQuery.classNo
+            });
+          } else {
+            res = await apiCall('/official-survey', {
+              action: 'results',
+              userId: currentUser.id,
+              surveyId: officialResultsQuery.surveyId,
+              group: officialResultsQuery.group,
+              grade: officialResultsQuery.grade
+            });
+          }
           if (!res.success) {
             box.innerHTML = '<div class="alert alert-warning">' + OfficialSurvey.esc(res.msg || '결과를 볼 수 없습니다.') + '</div>';
+            return;
+          }
+          if (officialResultsQuery.surveyId === 'sdq_kr') {
+            if (fillSdqFilters(res.view)) {
+              refreshOfficialResults();
+              return;
+            }
+            box.innerHTML = OfficialSurvey.renderSdqResults(res.view);
             return;
           }
           box.innerHTML = OfficialSurvey.renderResults(res.view);
@@ -4649,14 +4746,20 @@
       function printOfficialResults() {
         var html = document.getElementById('officialResultsContent').innerHTML;
         if (!html || html.indexOf('불러오는 중') >= 0) return alert('결과를 불러온 뒤 출력해 주세요.');
-        OfficialSurvey.printResults('천안중학교 공식 조사 결과', html);
+        var title = officialResultsQuery.surveyId === 'sdq_kr' ? '천안중학교 SDQ 정신건강 설문' : '천안중학교 공식 조사 결과';
+        OfficialSurvey.printResults(title, html);
       }
 
       async function downloadOfficialExcel() {
         var btn = document.getElementById('officialExcelBtn');
         btn.disabled = true;
         try {
-          var res = await apiCall('/official-survey', { action: 'export', userId: currentUser.id });
+          var sdq = officialResultsQuery.surveyId === 'sdq_kr';
+          var res = await apiCall(sdq ? '/sdq' : '/official-survey', {
+            action: 'export',
+            userId: currentUser.id,
+            wave: officialResultsQuery.wave
+          });
           if (!res.success) { btn.disabled = false; return alert(res.msg || '엑셀을 만들지 못했습니다.'); }
           await OfficialSurvey.downloadXlsx(res.sheets, res.filename);
         } catch (e) {

@@ -127,6 +127,7 @@
 }
 #officialSurveyModal .modal-dialog,
 #officialResultsModal .modal-dialog { max-width: 760px; margin-left: auto; margin-right: auto; }
+#officialResultsModal.os-sdq-open .modal-dialog { max-width: 1100px; }
 #officialSurveyModal .modal-footer,
 #officialResultsModal .modal-footer {
   display: flex;
@@ -144,6 +145,33 @@
 .os-bar > span { display: block; height: 100%; background: #0054a6; min-width: 0; }
 .os-optnum { font-size: 0.82rem; white-space: nowrap; }
 .os-empty { color: #667085; }
+.os-band { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 800; line-height: 1.5; white-space: nowrap; }
+.os-band-normal { background: #e7f6ee; color: #067647; }
+.os-band-borderline { background: #fff6db; color: #b54708; }
+.os-band-clinical { background: #fde8e8; color: #b42318; }
+.os-band-unscored { background: #f2f4f7; color: #475467; }
+.os-bar-normal > span { background: #067647; }
+.os-bar-borderline > span { background: #b54708; }
+.os-bar-clinical > span { background: #b42318; }
+.os-sdq-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.os-sdq-table { min-width: 760px; font-size: 0.82rem; }
+.os-sdq-table td, .os-sdq-table th { white-space: nowrap; }
+.os-sdq-scale td, .os-sdq-scale th { white-space: normal; }
+.os-sdq-card { border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 12px; padding: 10px 12px; margin: 0 0 8px; background: #fff; }
+.os-sdq-card-clinical { border-left-color: #b42318; }
+.os-sdq-card-borderline { border-left-color: #b54708; }
+.os-sdq-card-normal { border-left-color: #067647; }
+.os-sdq-card-unscored { border-left-color: #98a2b3; }
+.os-sdq-who { font-weight: 800; word-break: keep-all; }
+.os-sdq-total { margin-top: 4px; }
+.os-sdq-scales { margin-top: 4px; font-size: 0.82rem; line-height: 1.6; word-break: keep-all; }
+.os-sdq-legend { margin-top: 8px; }
+@media (max-width: 760px) {
+  .os-sdq-desktop { display: none; }
+}
+@media (min-width: 761px) {
+  .os-sdq-mobile { display: none; }
+}
 .os-person { margin-top: 12px; }
 .os-results h3, .os-results h4 { word-break: keep-all; }
 blockquote.os-open { margin: 8px 0; padding: 8px 10px; background: #f8fafc; border-left: 4px solid #0054a6; border-radius: 8px; }
@@ -152,10 +180,13 @@ blockquote.os-open { margin: 8px 0; padding: 8px 10px; background: #f8fafc; bord
 @media (max-width: 560px) {
   .os-wrap { padding: 16px 14px 40px; }
   .os-optrow { grid-template-columns: 1fr; }
+  .os-sdq-stats .os-optrow { grid-template-columns: 4.2rem 1fr auto; }
 }
 @media print {
   body { background: #fff; }
   .no-print, .os-submitbar, .official-results-banner, .official-survey-btn { display: none !important; }
   .os-card, .os-results section { box-shadow: none; }
-  .os-bar > span, .os-table th, .os-example th { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .os-bar > span, .os-table th, .os-example th, .os-band { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .os-sdq-mobile { display: none !important; }
+  .os-sdq-desktop { display: block !important; }
 }
