@@ -201,6 +201,16 @@
   }
 
   function problems(kind, form, data) {
+    if (kind === 'sdq') {
+      var answers = data || {};
+      for (var n = 1; n <= 25; n++) {
+        var v = answers[String(n)];
+        if (v !== 0 && v !== 1 && v !== 2 && v !== '0' && v !== '1' && v !== '2') {
+          return '25문항을 모두 선택해 주세요. (' + n + '번)';
+        }
+      }
+      return '';
+    }
     if (kind === 'curriculum') {
       var questions = (form && form.questions) || [];
       for (var i = 0; i < questions.length; i++) {
@@ -232,6 +242,177 @@
       }
     }
     return '';
+  }
+
+  function renderSdq(form, existing) {
+    var saved = existing && existing.answers ? existing.answers : {};
+    var who = form && form.identity ? form.identity : {};
+    var html = '<div class="os-form" data-kind="sdq" data-survey="' + esc(form.surveyId) + '">';
+    html += doneNote(existing);
+    html += '<p class="os-doc">강점·난점 설문지 (SDQ-Kr) · 자기보고용 · 회차 ' + esc(form.wave || '') + '</p>';
+    if (who.name) {
+      html += '<p class="os-note">저장되는 학생: ' + esc(who.grade) + '학년 ' + esc(who.classNo) + '반 ' + esc(who.number) + '번 ' + esc(who.name) + ' (' + esc(who.studentId) + ')</p>';
+    }
+    html += '<div class="os-intro">' + esc(form.intro || '') + '</div>';
+    if (form.notice) html += '<p class="os-note">' + esc(form.notice) + '</p>';
+    (form.questions || []).forEach(function (q) {
+      html += '<div class="os-q" data-qid="' + esc(q.id) + '" data-qtype="sdq">';
+      html += '<div class="os-qtext"><span class="os-ind">' + esc(q.number || q.id) + '.</span>' + esc(q.text) + '</div>';
+      html += '<div class="os-likert">';
+      (q.options || []).forEach(function (opt) {
+        var value = opt.value != null ? opt.value : opt;
+        var label = opt.label != null ? opt.label : opt;
+        var checked = String(saved[q.id]) === String(value) ? ' checked' : '';
+        html += '<label><input type="radio" name="sdq-' + esc(q.id) + '" value="' + esc(value) + '"' + checked + '> ' + esc(label) + '</label>';
+      });
+      html += '</div></div>';
+    });
+    html += '<p class="os-optional">문항: 한국어판 강점·난점 설문지(SDQ-Kr) 자기보고용. 안정숙·전성균·한준규·노경선·Robert Goodman(2003).</p>';
+    html += '</div>';
+    return html;
+  }
+
+  function readSdq(root) {
+    var answers = {};
+    if (!root) return answers;
+    var nodes = root.querySelectorAll('[data-qtype="sdq"]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      var checked = el.querySelector('input[type="radio"]:checked');
+      answers[el.getAttribute('data-qid')] = checked ? Number(checked.value) : '';
+    }
+    return answers;
+  }
+
+  function bandMark(band) {
+    if (!band) return '';
+    var id = band.id || 'normal';
+    return '<span class="os-band os-band-' + esc(id) + '">' + esc(band.label || '') + '</span>';
+  }
+
+  function renderSdqStats(view) {
+    var stats = view.stats || {};
+    var all = stats.all || { count: 0, options: [], mean: null };
+    var html = '<section class="os-sdq-stats"><h3>전체 · 학년별 위험 수준 <span class="os-count">채점 ' + Number(all.count || 0) + '명</span></h3>';
+    html += '<p class="os-meta">총난점 분포입니다. 학년·반 필터와 상관없이 이번 회차 전체입니다.';
+    if (all.mean != null) html += ' 평균 총난점 ' + Number(all.mean).toFixed(2) + '.';
+    html += '</p>';
+    html += renderBandBars(all);
+    (stats.byGrade || []).forEach(function (g) {
+      html += '<h4>' + esc(g.grade) + '학년 <span class="os-count">' + Number(g.count || 0) + '명</span></h4>';
+      html += renderBandBars(g);
+    });
+    if (stats.scales && stats.scales.length) {
+      html += '<h4>하위척도 분포 (전체)</h4><div class="os-sdq-tablewrap"><table class="os-table os-sdq-scale"><thead><tr><th>척도</th><th>정상</th><th>경계</th><th>임상</th><th>평균</th></tr></thead><tbody>';
+      stats.scales.forEach(function (scale) {
+        html += '<tr><td>' + esc(scale.label) + '</td><td>' + Number(scale.bands.정상 || 0) + '</td><td>' + Number(scale.bands.경계 || 0) + '</td><td>' + Number(scale.bands.임상 || 0) + '</td><td>' + (scale.mean == null ? '-' : Number(scale.mean).toFixed(2)) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '<div class="os-sdq-legend"><p class="os-meta">자기보고 표준 3밴드입니다. 친사회성은 높을수록 강점이고, 임상은 0–4입니다.</p><ul class="os-list">';
+    (view.cutoffs || []).forEach(function (row) {
+      html += '<li>' + esc(row.label) + ' 정상 ' + esc(row.normal) + ' · 경계 ' + esc(row.borderline) + ' · 임상 ' + esc(row.clinical) + (row.note ? ' (' + esc(row.note) + ')' : '') + '</li>';
+    });
+    html += '</ul></div></section>';
+    return html;
+  }
+
+  function renderBandBars(dist) {
+    var html = '';
+    (dist.options || []).forEach(function (opt) {
+      var width = Math.max(0, Math.min(100, Number(opt.pct) || 0));
+      var id = opt.label === '임상' ? 'clinical' : (opt.label === '경계' ? 'borderline' : 'normal');
+      html += '<div class="os-optrow"><div>' + bandMark({ label: opt.label, id: id }) + '</div><div class="os-bar os-bar-' + id + '" role="img" aria-label="' + esc(opt.label) + ' ' + opt.count + '"><span style="width:' + width + '%"></span></div><div class="os-optnum">' + opt.count + '명 (' + opt.pct + '%)</div></div>';
+    });
+    return html;
+  }
+
+  function sdqScoreCell(scores, bands, key) {
+    if (!scores) return '<td>-</td>';
+    return '<td><b>' + Number(scores[key]) + '</b> ' + bandMark(bands[key]) + '</td>';
+  }
+
+  function renderSdqStudentTable(students) {
+    var html = '<div class="os-sdq-desktop"><div class="os-sdq-tablewrap"><table class="os-table os-sdq-table"><thead><tr><th>위험</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>학번</th><th>정서</th><th>품행</th><th>과잉</th><th>또래</th><th>친사회</th><th>총난점</th></tr></thead><tbody>';
+    students.forEach(function (row) {
+      html += '<tr><td>' + bandMark(row.bands && row.bands.total) + '</td><td>' + esc(row.grade) + '</td><td>' + esc(row.classNo) + '</td><td>' + esc(row.number) + '</td><td>' + esc(row.name) + '</td><td>' + esc(row.studentId) + '</td>';
+      html += sdqScoreCell(row.scores, row.bands, 'emotional');
+      html += sdqScoreCell(row.scores, row.bands, 'conduct');
+      html += sdqScoreCell(row.scores, row.bands, 'hyperactivity');
+      html += sdqScoreCell(row.scores, row.bands, 'peer');
+      html += sdqScoreCell(row.scores, row.bands, 'prosocial');
+      html += sdqScoreCell(row.scores, row.bands, 'total');
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  function renderSdqStudentCards(students) {
+    var html = '<div class="os-sdq-mobile">';
+    students.forEach(function (row) {
+      var id = row.bands && row.bands.total ? row.bands.total.id : 'normal';
+      html += '<article class="os-sdq-card os-sdq-card-' + esc(id) + '">';
+      html += '<div class="os-sdq-who">' + bandMark(row.bands && row.bands.total) + ' ' + esc(row.grade) + '학년 ' + esc(row.classNo) + '반 ' + esc(row.number) + '번 ' + esc(row.name) + '</div>';
+      html += '<div class="os-optional">' + esc(row.studentId) + '</div>';
+      if (!row.scores) {
+        html += '<p class="os-empty">채점할 수 없는 응답입니다.</p>';
+      } else {
+        html += '<div class="os-sdq-total">총난점 <b>' + Number(row.scores.total) + '</b></div>';
+        html += '<div class="os-sdq-scales">정서 ' + row.scores.emotional + ' ' + bandMark(row.bands.emotional);
+        html += ' · 품행 ' + row.scores.conduct + ' ' + bandMark(row.bands.conduct);
+        html += ' · 과잉 ' + row.scores.hyperactivity + ' ' + bandMark(row.bands.hyperactivity);
+        html += ' · 또래 ' + row.scores.peer + ' ' + bandMark(row.bands.peer);
+        html += ' · 친사회 ' + row.scores.prosocial + ' ' + bandMark(row.bands.prosocial) + '</div>';
+      }
+      html += '</article>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderSdqResults(view) {
+    if (!view) return '<p class="os-empty">결과가 없습니다.</p>';
+    var html = '<div class="os-results os-sdq-results">';
+    html += '<h2>' + esc(view.title) + '</h2>';
+    html += '<p class="os-meta">회차 ' + esc(view.wave) + ' · ' + esc(view.gradeLabel) + ' · ' + esc(view.classLabel) + ' · 명단 ' + Number(view.responseCount || 0) + '명</p>';
+    html += '<p class="os-note">임상 학생을 위에 두고, 같은 수준에서는 총난점이 높은 순입니다. 선별 참고 점수이며 진단이 아닙니다.</p>';
+    html += renderSdqStats(view);
+    var students = view.students || [];
+    if (!students.length) {
+      html += '<p class="os-empty">이 조건의 응답이 없습니다.</p></div>';
+      return html;
+    }
+    if (view.unscoredCount) html += '<p class="os-note">채점할 수 없는 응답 ' + Number(view.unscoredCount) + '건이 명단 아래에 있습니다.</p>';
+    html += '<h3>학생별 결과</h3>';
+    html += renderSdqStudentTable(students);
+    html += renderSdqStudentCards(students);
+    html += '</div>';
+    return html;
+  }
+
+  function syncSurveySelect(select, allowed) {
+    if (!select || !select.querySelector || !select.appendChild) return false;
+    var existing = select.querySelector('option[value="sdq_kr"]');
+    if (!allowed) {
+      if (existing) {
+        if (select.value === 'sdq_kr') {
+          var fallback = select.querySelector('option[value="curriculum_sat_2026"]');
+          if (fallback) select.value = fallback.value;
+        }
+        if (existing.remove) existing.remove();
+        else if (existing.parentNode) existing.parentNode.removeChild(existing);
+      }
+      return false;
+    }
+    if (existing) return true;
+    var doc = select.ownerDocument;
+    if (!doc || !doc.createElement) return false;
+    var opt = doc.createElement('option');
+    opt.value = 'sdq_kr';
+    opt.textContent = 'SDQ 정신건강 설문';
+    select.appendChild(opt);
+    return true;
   }
 
   function renderResults(view) {
@@ -358,10 +539,14 @@
     esc: esc,
     renderCurriculum: renderCurriculum,
     renderBudget: renderBudget,
+    renderSdq: renderSdq,
     readCurriculum: readCurriculum,
     readBudget: readBudget,
+    readSdq: readSdq,
     problems: problems,
     renderResults: renderResults,
+    renderSdqResults: renderSdqResults,
+    syncSurveySelect: syncSurveySelect,
     printResults: printResults,
     downloadXlsx: downloadXlsx,
     mount: mount
