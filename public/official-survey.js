@@ -12,6 +12,22 @@
     return '<p class="os-done">이미 제출한 응답입니다. 고친 뒤 다시 제출하면 기존 응답을 바꿉니다. 같은 사람이 두 번 쌓이지 않습니다.</p>';
   }
 
+  function noticeLine(line) {
+    return String(line || '').replace(/^\s*[▪•·∙◆■□▶►‣⁃]\s*/, '');
+  }
+
+  function renderNoticeList(lines) {
+    var items = (lines || []).map(function (line) { return String(line || ''); }).filter(function (line) { return line.trim(); });
+    if (!items.length) return '';
+    var numbered = items.every(function (line) { return /^\s*\d+\.\s/.test(line); });
+    var html = '<ul class="os-list' + (numbered ? ' os-list-plain' : '') + '">';
+    items.forEach(function (line) {
+      html += '<li>' + esc(numbered ? line.trim() : noticeLine(line)) + '</li>';
+    });
+    html += '</ul>';
+    return html;
+  }
+
   function renderCurriculum(form, existing) {
     var saved = existing && existing.answers ? existing.answers : {};
     var html = '<div class="os-form" data-kind="curriculum" data-survey="' + esc(form.surveyId) + '">';
@@ -20,7 +36,7 @@
     if (form.dateLine) html += '<p class="os-date">' + esc(form.dateLine) + '</p>';
     if (form.signer) html += '<p class="os-signer">' + esc(form.signer) + '</p>';
     html += '<div class="os-intro">' + esc(form.intro || '') + '</div>';
-    html += '<p class="os-note">만족도 문항은 모두 필수입니다. 서술형은 선택입니다. 이 조사는 마일리지를 지급하지 않으며, 결과에는 학번과 이름을 표시하지 않습니다.</p>';
+    html += '<p class="os-note">만족도 문항은 모두 선택해 주세요. 서술형은 비워 두어도 됩니다. 결과에는 학번과 이름을 표시하지 않습니다.</p>';
     var section = '';
     (form.questions || []).forEach(function (q) {
       if (q.section && q.section !== section) {
@@ -47,15 +63,14 @@
     return html;
   }
 
-  function field(label, id, value, required, kind) {
-    var req = required ? ' <span class="os-req">필수</span>' : ' <span class="os-optional">(선택)</span>';
+  function field(label, id, value, kind) {
     var control;
     if (kind === 'textarea') {
       control = '<textarea class="form-control" rows="3" maxlength="2000" data-pfield="' + esc(id) + '">' + esc(value || '') + '</textarea>';
     } else {
       control = '<input class="form-control" maxlength="200" data-pfield="' + esc(id) + '" value="' + esc(value || '') + '">';
     }
-    return '<label class="os-field"><span>' + esc(label) + req + '</span>' + control + '</label>';
+    return '<label class="os-field"><span>' + esc(label) + '</span>' + control + '</label>';
   }
 
   function proposalCard(index, item) {
@@ -63,10 +78,10 @@
     return '<div class="os-proposal" data-proposal>' +
       '<div class="d-flex justify-content-between align-items-center mb-2"><strong>제안 <span data-proposal-seq>' + (index + 1) + '</span></strong>' +
       '<button type="button" class="btn btn-sm btn-outline-secondary" data-remove-proposal>삭제</button></div>' +
-      field('사업명', 'title', item.title, true, 'text') +
-      field('사업내용', 'content', item.content, false, 'textarea') +
-      field('예산요구액', 'amount', item.amount, false, 'text') +
-      field('요구사유', 'reason', item.reason, false, 'textarea') +
+      field('사업명', 'title', item.title, 'text') +
+      field('사업내용', 'content', item.content, 'textarea') +
+      field('예산요구액', 'amount', item.amount, 'text') +
+      field('요구사유', 'reason', item.reason, 'textarea') +
       '</div>';
   }
 
@@ -98,19 +113,15 @@
     var html = '<div class="os-form" data-kind="budget" data-os-budget data-survey="' + esc(form.surveyId) + '">';
     html += doneNote(existing);
     html += '<p class="os-doc">' + esc(form.heading || form.title) + ' · ' + esc(form.groupLabel || '') + '</p>';
-    html += '<p class="os-note">이 조사는 마일리지를 지급하지 않습니다. 사업은 1건 이상 3건 이하이며, 사업명만 적어도 됩니다.</p>';
-    if (form.instructions && form.instructions.length) {
-      html += '<ul class="os-list">';
-      form.instructions.forEach(function (line) { html += '<li>' + esc(line) + '</li>'; });
-      html += '</ul>';
-    }
+    html += '<p class="os-note">제안하고 싶은 사업이 있을 때만 작성하면 됩니다. 최대 3건이며, 사업명만 적어도 됩니다.</p>';
+    html += renderNoticeList(form.instructions);
     if (form.example) {
       html += '<p class="os-optional">예시 (제출되지 않습니다)</p><div style="overflow-x:auto"><table class="os-example"><thead><tr><th>순</th><th>사업명</th><th>사업내용</th><th>예산요구액</th><th>요구사유</th></tr></thead><tbody><tr><td>1</td><td>' +
         esc(form.example.title) + '</td><td>' + esc(form.example.content) + '</td><td>' + esc(form.example.amount) + '</td><td>' + esc(form.example.reason) + '</td></tr></tbody></table></div>';
     }
     html += '<h3>제안자</h3><div class="os-grid">';
     (form.identityFields || []).forEach(function (info) {
-      html += '<label class="os-field"><span>' + esc(info.label) + (info.required ? ' <span class="os-req">필수</span>' : ' <span class="os-optional">(선택)</span>') + '</span>' +
+      html += '<label class="os-field"><span>' + esc(info.label) + '</span>' +
         identityControl(info, savedIdentity[info.id], !!form.identityLocked) + '</label>';
     });
     html += '</div>';
@@ -121,12 +132,10 @@
     var privacy = form.privacy || {};
     html += '<div class="os-privacy"><h3>' + esc(privacy.title || '개인정보 수집·이용 동의서') + '</h3>';
     if (privacy.body) html += '<p>' + esc(privacy.body) + '</p>';
-    html += '<ul class="os-list">';
-    (privacy.items || []).forEach(function (line) { html += '<li>' + esc(line) + '</li>'; });
-    html += '</ul>';
+    html += renderNoticeList(privacy.items);
     (privacy.notes || []).forEach(function (line) { html += '<p class="os-note">' + esc(line) + '</p>'; });
     if (form.under14Notice) html += '<p class="os-under14">' + esc(form.under14Notice) + '</p>';
-    html += '<div class="os-qtext">' + esc(privacy.consentLabel || '개인정보 수집·이용 동의') + ' <span class="os-req">필수</span></div><div class="os-consent">';
+    html += '<div class="os-qtext">' + esc(privacy.consentLabel || '개인정보 수집·이용 동의') + '</div><div class="os-consent">';
     (privacy.consentOptions || ['예', '아니요']).forEach(function (opt) {
       var checked = existing && existing.consent === opt ? ' checked' : '';
       html += '<label><input type="radio" data-consent name="os-consent-' + esc(form.surveyId) + '" value="' + esc(opt) + '"' + checked + '> ' + esc(opt) + '</label>';
@@ -210,10 +219,10 @@
       var title = String(item.title || '').trim();
       var rest = String(item.content || '').trim() || String(item.amount || '').trim() || String(item.reason || '').trim();
       if (!title && !rest) continue;
-      if (!title) return '사업명을 입력해 주세요. 내용·예산요구액·요구사유는 비워도 됩니다.';
+      if (!title) return '제출할 때는 사업명을 적어 주세요. 내용·예산요구액·요구사유는 비워도 됩니다.';
       filled += 1;
     }
-    if (filled < 1 || filled > 3) return '사업 제안은 1건 이상 3건 이하로 적어 주세요.';
+    if (filled < 1 || filled > 3) return '제출할 때는 사업명을 1건 이상 3건 이하로 적어 주세요.';
     var fields = (form && form.identityFields) || [];
     if (!form || !form.identityLocked) {
       for (var f = 0; f < fields.length; f++) {
