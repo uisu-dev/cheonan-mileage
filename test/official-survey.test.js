@@ -1,6 +1,8 @@
 // 공식 조사 검증 (실DB 미사용)
 // 실행: node test/official-survey.test.js
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const { makeDb } = require('./_mockdb');
 const S = require('../lib/official-surveys');
 
@@ -96,6 +98,7 @@ function budgetBody(extra) {
     name: '가짜이름'
   }, base);
   assert.strictEqual(res.body.success, true, res.body.msg);
+  assert.ok(!res.body.msg.includes('마일리지'));
   assert.strictEqual(store.tables.users.find(u => u.id === '10327').points, 10);
   assert.strictEqual(store.tables.survey_logs.length, 0);
   assert.strictEqual(store.tables.official_survey_responses.length, 1);
@@ -217,6 +220,7 @@ function budgetBody(extra) {
   assert.ok(formHtml.includes('2026. 12. 2.'));
   assert.ok(formHtml.includes('천안중학교장'));
   assert.ok(formHtml.includes('(선택)'));
+  assert.ok(!formHtml.includes('마일리지'));
   assert.ok(!formHtml.includes('교육([AI'));
   assert.ok(!formHtml.includes('2024'));
   assert.ok(!formHtml.includes('제출마감'));
@@ -224,12 +228,30 @@ function budgetBody(extra) {
   assert.ok(budgetHtml.includes(S.UNDER14_NOTICE));
   assert.ok(budgetHtml.includes('value="예"'));
   assert.ok(budgetHtml.includes('value="아니요"'));
+  assert.ok(budgetHtml.includes('학생들의 의견을 수렴하여 학생자치회에서 제출 가능합니다.'));
+  assert.ok(!budgetHtml.includes('▪'));
+  assert.ok(!budgetHtml.includes('os-req'));
+  assert.ok(!budgetHtml.includes('(선택)'));
+  assert.ok(!budgetHtml.includes('마일리지'));
   assert.ok(!budgetHtml.includes('2024'));
   assert.ok(!budgetHtml.includes('제출마감'));
   const parentHtml = OfficialSurvey.renderBudget(parentBudget, null);
   assert.ok(parentHtml.includes('자녀 번호'));
   assert.ok(parentHtml.includes('자녀 학년'));
+  assert.ok(!parentHtml.includes('▪'));
+  assert.ok(!parentHtml.includes('os-req'));
+  assert.ok(!parentHtml.includes('(선택)'));
   assert.ok(!parentHtml.includes(S.UNDER14_NOTICE));
+  const parentPage = fs.readFileSync(path.join(__dirname, '../public/parent-survey.html'), 'utf8');
+  const indexPage = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+  assert.ok(parentPage.includes('교육과정 만족도만 제출해도 됩니다'));
+  assert.ok(!parentPage.includes('마일리지'));
+  assert.ok(!indexPage.includes('마일리지 없음'));
+  assert.ok(!indexPage.includes('마일리지를 지급'));
+  const skipBudget = OfficialSurvey.problems('curriculum', parentForm, likert(parentForm, '보통이다', ''));
+  assert.strictEqual(skipBudget, '');
+  const budgetProblem = OfficialSurvey.problems('budget', parentBudget, { consent: '아니요', identity: {}, proposals: [{ title: '' }] });
+  assert.ok(budgetProblem && !budgetProblem.includes('필수') && !budgetProblem.includes('(선택)'));
   const resultHtml = OfficialSurvey.renderResults(view.view);
   assert.ok(resultHtml.includes('운동장이 좋아요'));
   assert.ok(resultHtml.includes('os-bar'));
@@ -247,6 +269,7 @@ function budgetBody(extra) {
   assert.ok(summary.includes('학번과 이름을 넣지 않습니다'));
   assert.ok(!summary.includes('2024'));
   assert.ok(!summary.includes('제출마감'));
+  assert.ok(!JSON.stringify(admin.body.sheets).includes('마일리지'));
   const curStudent = admin.body.sheets.find(s => s.name === '교육과정_학생');
   assert.ok(!curStudent.rows[0].includes('이름'));
   assert.ok(!JSON.stringify(curStudent.rows).includes('10327'));
@@ -292,6 +315,10 @@ function budgetBody(extra) {
   assert.strictEqual(four.ok, false);
   const noTitle = S.validateBudget('student', { consent: '예', proposals: [{ title: '', content: '내용만' }] }, { id: '10327', name: '홍길동' });
   assert.strictEqual(noTitle.ok, false);
+  assert.ok(!noTitle.msg.includes('필수'));
+  const emptyProposal = S.validateBudget('student', { consent: '예', proposals: [{ title: '' }] }, { id: '10327', name: '홍길동' });
+  assert.strictEqual(emptyProposal.ok, false);
+  assert.ok(!emptyProposal.msg.includes('필수'));
 
   const parsed = S.parseStudentId('10327');
   assert.deepStrictEqual(parsed, { grade: '1', classNo: '3', number: '27' });

@@ -38,7 +38,7 @@
 }
 
 .os-page { background: #f4f7fb; color: #1f2937; }
-.os-wrap { max-width: 720px; margin: 0 auto; padding: 16px 14px 40px; }
+.os-wrap { max-width: 760px; margin: 0 auto; padding: 24px 20px 48px; }
 .os-hero {
   background: linear-gradient(135deg, #0054a6, #3a7bd5);
   color: #fff;
@@ -60,8 +60,9 @@
 .os-date, .os-signer { margin: 0; text-align: right; }
 .os-intro, .os-note, .os-open, .os-person p { white-space: pre-wrap; word-break: break-word; line-height: 1.55; }
 .os-intro { background: #f8fafc; border-radius: 12px; padding: 12px; }
-.os-list { padding-left: 1.1rem; margin: 8px 0; }
-.os-list li { margin: 4px 0; word-break: keep-all; }
+.os-list { padding-left: 1.25rem; margin: 8px 0 12px; }
+.os-list li { margin: 6px 0; word-break: keep-all; line-height: 1.5; }
+.os-list-plain { list-style: none; padding-left: 0; }
 .os-q { margin: 14px 0; }
 .os-qtext { font-weight: 700; margin-bottom: 8px; word-break: keep-all; line-height: 1.45; }
 .os-ind { color: #0054a6; margin-right: 4px; }
@@ -82,9 +83,19 @@
 }
 .os-likert input { width: 1.15rem; height: 1.15rem; flex: 0 0 auto; }
 .os-form input, .os-form select, .os-form textarea { font-size: 16px; }
-.os-field { margin-bottom: 10px; }
-.os-field span { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; }
-.os-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.os-field { display: block; width: 100%; margin: 0 0 12px; }
+.os-field span { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; line-height: 1.35; }
+.os-form .form-control,
+.os-form .form-select { display: block; width: 100%; box-sizing: border-box; }
+.os-grid { display: block; }
+.os-proposal {
+  display: block;
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
 .os-done, .os-warn {
   background: #fff7e8;
   border: 1px solid #f5d48a;
@@ -100,7 +111,11 @@
 .os-example th, .os-example td, .os-table th, .os-table td { border: 1px solid #d0d7e2; padding: 6px; vertical-align: top; }
 .os-example th, .os-table th { background: #f3f6fb; }
 .os-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.os-submitbar { position: sticky; bottom: 0; background: linear-gradient(#fff0, #fff 20%); padding: 12px 0 4px; }
+.os-submitbar { position: static; margin-top: 16px; padding: 0; background: transparent; }
+#officialSurveyModal .modal-content,
+#officialResultsModal .modal-content { overflow: hidden; }
+#officialSurveyModal .modal-body,
+#officialResultsModal .modal-body { overflow-y: auto; }
 .os-primary {
   width: 100%;
   min-height: 48px;
@@ -110,13 +125,17 @@
   color: #fff;
   font-weight: 800;
 }
+#officialSurveyModal .modal-dialog,
+#officialResultsModal .modal-dialog { max-width: 760px; margin-left: auto; margin-right: auto; }
+#officialSurveyModal .modal-footer,
 #officialResultsModal .modal-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
 }
-#officialResultsModal .modal-footer .btn { width: auto; min-width: 88px; }
+#officialSurveyModal .modal-footer .btn,
+#officialResultsModal .modal-footer .btn { width: auto; min-width: 96px; }
 .os-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .os-filters select { flex: 1 1 140px; min-height: 42px; font-size: 16px; }
 .os-count { font-size: 0.95rem; color: #0054a6; }
@@ -131,12 +150,8 @@ blockquote.os-open { margin: 8px 0; padding: 8px 10px; background: #f8fafc; bord
 [hidden] { display: none !important; }
 
 @media (max-width: 560px) {
+  .os-wrap { padding: 16px 14px 40px; }
   .os-optrow { grid-template-columns: 1fr; }
-  .os-grid { grid-template-columns: 1fr; }
-}
-@media (min-width: 760px) {
-  .os-likert { flex-direction: row; flex-wrap: wrap; }
-  .os-likert label { flex: 1 1 30%; }
 }
 @media print {
   body { background: #fff; }
