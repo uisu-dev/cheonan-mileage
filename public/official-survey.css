@@ -111,7 +111,11 @@
 .os-example th, .os-example td, .os-table th, .os-table td { border: 1px solid #d0d7e2; padding: 6px; vertical-align: top; }
 .os-example th, .os-table th { background: #f3f6fb; }
 .os-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.os-submitbar { position: sticky; bottom: 0; background: linear-gradient(#fff0, #fff 20%); padding: 12px 0 4px; }
+.os-submitbar { position: static; margin-top: 16px; padding: 0; background: transparent; }
+#officialSurveyModal .modal-content,
+#officialResultsModal .modal-content { overflow: hidden; }
+#officialSurveyModal .modal-body,
+#officialResultsModal .modal-body { overflow-y: auto; }
 .os-primary {
   width: 100%;
   min-height: 48px;
