@@ -126,7 +126,7 @@ function borderlineAnswers() {
     action: 'submit', userId: '10327', answers: answers(2), studentName: '다른사람'
   }, { now: base.now + 5000 });
   assert.strictEqual(res.body.updated, true);
-  assert.strictEqual(res.body.msg, '수정했습니다.');
+  assert.strictEqual(res.body.msg, '이전 응답을 새 답으로 바꿨습니다.');
   assert.strictEqual(store.tables.sdq_responses.length, 1);
   assert.strictEqual(store.tables.sdq_responses[0].created_at, new Date(base.now).toISOString());
   assert.strictEqual(store.tables.sdq_responses[0].student_name, '홍길동');
@@ -190,6 +190,9 @@ function borderlineAnswers() {
   assert.strictEqual(view.view.students[0].classNo, 3);
   assert.strictEqual(view.view.students[0].number, 27);
   assert.strictEqual(view.view.students[0].answers, undefined);
+  assert.strictEqual(view.view.students[0].revised, true);
+  assert.strictEqual(view.view.students[1].revised, false);
+  assert.ok(view.view.students[0].updatedAt);
   assert.strictEqual(view.view.stats.all.count, 3);
   assert.strictEqual(view.view.stats.all.bands.임상, 1);
   assert.strictEqual(view.view.stats.all.bands.경계, 1);
@@ -233,9 +236,11 @@ function borderlineAnswers() {
   assert.ok(blob.includes('10327'));
   assert.ok(blob.includes(S.ITEMS[0]));
   assert.ok(blob.includes('임상'));
-  assert.strictEqual(studentSheet.rows[1][2], '10327');
-  assert.strictEqual(studentSheet.rows[1][17], 30);
-  assert.strictEqual(studentSheet.rows[1][18], '임상');
+  assert.strictEqual(studentSheet.rows[1][1], '재응답');
+  assert.strictEqual(studentSheet.rows[1][3], '10327');
+  assert.strictEqual(studentSheet.rows[1][18], 30);
+  assert.strictEqual(studentSheet.rows[1][19], '임상');
+  assert.strictEqual(studentSheet.rows[2][1], '');
   const info = JSON.stringify(exported.body.sheets[0].rows);
   assert.ok(info.includes('0–15') || info.includes('0-15'));
   assert.ok(info.includes('친사회'));
@@ -265,6 +270,8 @@ function borderlineAnswers() {
   assert.ok(resultHtml.includes('임상'));
   assert.ok(resultHtml.includes('경계'));
   assert.ok(resultHtml.includes('정상'));
+  assert.ok(resultHtml.includes('재응답'));
+  assert.ok(resultHtml.includes('2026-11-23 09:00'));
   assert.ok(resultHtml.includes('os-sdq-table'));
   assert.ok(resultHtml.includes('os-sdq-card'));
   assert.ok(resultHtml.includes('1학년'));
@@ -315,8 +322,58 @@ function borderlineAnswers() {
   assert.ok(!select.options.some(o => o.value === 'sdq_kr'));
   assert.strictEqual(select.value, 'curriculum_sat_2026');
 
+  const doneHtml = OfficialSurvey.renderSdqDone(form.body.form);
+  assert.ok(doneHtml.includes('다시 응답하기'));
+  assert.ok(doneHtml.includes('data-sdq-retry'));
+  assert.ok(doneHtml.includes('새 답으로 바뀝니다'));
+  assert.ok(doneHtml.includes('홍길동'));
+  const retryForm = OfficialSurvey.renderSdq(form.body.form, form.body.existing);
+  assert.ok(retryForm.includes('이전 응답을 새 답으로 바꿉니다'));
+
+  const redo = db();
+  await S.handleAction(redo, { action: 'submit', userId: '10327', answers: answers(2) }, base);
+  const fixed = await S.handleAction(redo, { action: 'submit', userId: '10327', answers: answers(0) }, { now: base.now + 60000 });
+  assert.strictEqual(fixed.body.success, true, fixed.body.msg);
+  assert.strictEqual(fixed.body.updated, true);
+  assert.strictEqual(redo.tables.sdq_responses.length, 1);
+  assert.strictEqual(redo.tables.sdq_responses[0].answers['1'], 0);
+  assert.strictEqual(redo.tables.sdq_responses[0].created_at, new Date(base.now).toISOString());
+  const fixedView = (await S.handleAction(redo, { action: 'results', userId: '안지윤' }, base)).body.view;
+  assert.strictEqual(fixedView.students.length, 1);
+  assert.strictEqual(fixedView.students[0].scores.total, 10);
+  assert.strictEqual(fixedView.students[0].bands.total.label, '정상');
+  assert.strictEqual(fixedView.students[0].revised, true);
+
+  const dup = makeDb({
+    users: [
+      { id: '10327', name: '홍길동', role: 'student', points: 10 },
+      { id: '임의수', name: '임의수', role: 'teacher', points: 0 },
+      { id: '안지윤', name: '안지윤', role: 'teacher', points: 0 }
+    ],
+    sdq_responses: [],
+    survey_logs: []
+  });
+  const early = new Date(base.now).toISOString();
+  const later = new Date(base.now + 10000).toISOString();
+  dup.tables.sdq_responses.push(
+    { id: 1, wave: '2026-1', student_id: '10327', student_name: '홍길동', grade: 1, class_no: 3, number: 27, answers: answers(2), created_at: early, updated_at: early },
+    { id: 2, wave: '2026-1', student_id: '10327', student_name: '홍길동', grade: 1, class_no: 3, number: 27, answers: answers(0), created_at: early, updated_at: later }
+  );
+  const dupView = (await S.handleAction(dup, { action: 'results', userId: '임의수', wave: '2026-1' }, base)).body.view;
+  assert.strictEqual(dupView.students.length, 1);
+  assert.strictEqual(dupView.students[0].scores.total, 10);
+  assert.strictEqual(dupView.responseCount, 1);
+  const collapsed = await S.handleAction(dup, { action: 'submit', userId: '10327', answers: answers(1) }, { now: base.now + 20000 });
+  assert.strictEqual(collapsed.body.updated, true);
+  assert.strictEqual(dup.tables.sdq_responses.length, 1);
+  assert.strictEqual(dup.tables.sdq_responses[0].id, 2);
+  assert.strictEqual(dup.tables.sdq_responses[0].answers['3'], 1);
+  const collapsedView = (await S.handleAction(dup, { action: 'results', userId: '안지윤' }, base)).body.view;
+  assert.strictEqual(collapsedView.students[0].scores.total, 20);
+
   const indexPage = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
   const sql = fs.readFileSync(path.join(__dirname, '../sql/sdq_responses.sql'), 'utf8');
+  const upsertSql = fs.readFileSync(path.join(__dirname, '../sql/sdq_responses_upsert.sql'), 'utf8');
   assert.ok(indexPage.includes('data-official-survey="sdq_kr"'));
   assert.ok(indexPage.includes('SDQ 정신건강 설문'));
   assert.ok(!/<option[^>]*value="sdq_kr"/.test(indexPage));
@@ -324,7 +381,14 @@ function borderlineAnswers() {
   const banner = indexPage.slice(bannerAt, bannerAt + 400);
   assert.ok(!banner.includes('SDQ'));
   assert.ok(indexPage.includes("surveyId === 'sdq_kr' ? '/sdq'"));
+  assert.ok(indexPage.includes('참여 완료 · 다시 응답하기'));
+  assert.ok(indexPage.includes('renderSdqDone'));
   assert.ok(sql.includes('ENABLE ROW LEVEL SECURITY'));
+  assert.ok(upsertSql.includes('ADD COLUMN IF NOT EXISTS updated_at'));
+  assert.ok(upsertSql.includes('UNIQUE (wave, student_id)'));
+  assert.ok(upsertSql.includes('DELETE FROM sdq_responses'));
+  assert.ok(!upsertSql.includes('GRANT '));
+  assert.ok(!/CREATE POLICY/i.test(upsertSql));
   assert.ok(sql.includes('REVOKE ALL ON TABLE sdq_responses FROM anon, authenticated'));
   assert.ok(sql.includes('UNIQUE (wave, student_id)'));
   assert.ok(!sql.includes('CREATE POLICY'));

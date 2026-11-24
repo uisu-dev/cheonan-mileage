@@ -437,7 +437,7 @@
             <button type="button" id="officialResultsBanner" class="official-results-banner" onclick="openOfficialResults()">
               <span class="official-results-kicker">교사 전용</span>
               <span class="official-survey-btn-title">공식 조사 결과 보기</span>
-              <span class="official-survey-btn-sub">교육과정 만족도 · 참여예산제 · 학생/학부모/교사 · 출력 · 엑셀</span>
+              <span class="official-survey-btn-sub">교육과정 만족도 · 참여예산제 · 학생/학부모/교사 · 학년·반 참여 현황 · 출력 · 엑셀</span>
             </button>
           </div>
         </div>
@@ -466,7 +466,7 @@
           </button>
           <button type="button" class="official-survey-btn" data-official-survey="sdq_kr" onclick="openOfficialSurvey('sdq_kr')" style="background:linear-gradient(to right,#3d348b,#7678ed);color:#fff;">
             <span class="official-survey-btn-title">SDQ 정신건강 설문</span>
-            <span class="official-survey-btn-sub">강점·난점 설문지 · 자기보고 25문항 · 실명 저장 · 회차마다 1회</span>
+            <span class="official-survey-btn-sub">강점·난점 설문지 · 자기보고 25문항 · 실명 저장 · 다시 응답하면 이전 답을 바꿉니다</span>
             <span class="official-survey-btn-action">참여하기</span>
           </button>
         </div>
@@ -4553,6 +4553,8 @@
 
       var officialResultsQuery = { surveyId: 'curriculum_sat_2026', group: 'all', grade: '', classNo: '', wave: '' };
       var officialFormCache = null;
+      var officialFormExisting = null;
+      var officialFormSubmitted = false;
 
       function setOfficialActionLabel(id, label) {
         document.querySelectorAll('[data-official-survey="' + id + '"] .official-survey-btn-action').forEach(function (el) {
@@ -4574,7 +4576,7 @@
         try {
           var sdq = await apiCall('/sdq', { action: 'status', userId: currentUser.id });
           if (!sdq || !sdq.success) return;
-          setOfficialActionLabel('sdq_kr', sdq.submitted ? '참여 완료 · 수정' : '참여하기');
+          setOfficialActionLabel('sdq_kr', sdq.submitted ? '참여 완료 · 다시 응답하기' : '참여하기');
         } catch (e) {}
       }
 
@@ -4588,22 +4590,40 @@
           showLoading(false);
           if (!res.success) return alert(res.msg || '설문을 열 수 없습니다.');
           officialFormCache = res.form;
-          var html = res.form.kind === 'budget'
-            ? OfficialSurvey.renderBudget(res.form, res.existing)
-            : (res.form.kind === 'sdq' ? OfficialSurvey.renderSdq(res.form, res.existing) : OfficialSurvey.renderCurriculum(res.form, res.existing));
+          officialFormExisting = res.existing;
+          officialFormSubmitted = !!res.submitted;
           document.getElementById('officialSurveyTitle').innerText = res.form.title;
-          var body = document.getElementById('officialSurveyBody');
-          body.innerHTML = html;
-          body.scrollTop = 0;
-          OfficialSurvey.mount(body);
-          var submitBtn = document.getElementById('officialSurveySubmit');
-          submitBtn.textContent = res.submitted ? '수정 제출' : '제출하기';
-          submitBtn.onclick = function () { submitOfficialSurvey(surveyId); };
+          showOfficialForm(surveyId, res.form.kind === 'sdq' && res.submitted);
           bootstrap.Modal.getOrCreateInstance(document.getElementById('officialSurveyModal')).show();
         } catch (e) {
           showLoading(false);
           alert('설문을 열 수 없습니다.');
         }
+      }
+
+      function showOfficialForm(surveyId, doneFirst) {
+        var body = document.getElementById('officialSurveyBody');
+        var submitBtn = document.getElementById('officialSurveySubmit');
+        if (doneFirst) {
+          body.innerHTML = OfficialSurvey.renderSdqDone(officialFormCache);
+          body.scrollTop = 0;
+          submitBtn.hidden = true;
+          var retry = body.querySelector('[data-sdq-retry]');
+          if (retry) retry.onclick = function () { showOfficialForm(surveyId, false); };
+          return;
+        }
+        var html = officialFormCache.kind === 'budget'
+          ? OfficialSurvey.renderBudget(officialFormCache, officialFormExisting)
+          : (officialFormCache.kind === 'sdq'
+            ? OfficialSurvey.renderSdq(officialFormCache, officialFormExisting)
+            : OfficialSurvey.renderCurriculum(officialFormCache, officialFormExisting));
+        body.innerHTML = html;
+        body.scrollTop = 0;
+        OfficialSurvey.mount(body);
+        submitBtn.hidden = false;
+        if (officialFormCache.kind === 'sdq' && officialFormSubmitted) submitBtn.textContent = '다시 제출';
+        else submitBtn.textContent = officialFormSubmitted ? '수정 제출' : '제출하기';
+        submitBtn.onclick = function () { submitOfficialSurvey(surveyId); };
       }
 
       async function submitOfficialSurvey(surveyId) {
@@ -4707,6 +4727,7 @@
         box.innerHTML = '<p class="text-muted">불러오는 중...</p>';
         syncSdqFilterVisibility();
         try {
+          var partReq = apiCall('/official-survey', { action: 'participation', userId: currentUser.id });
           var res;
           if (officialResultsQuery.surveyId === 'sdq_kr') {
             res = await apiCall('/sdq', {
@@ -4725,8 +4746,13 @@
               grade: officialResultsQuery.grade
             });
           }
+          var partHtml = '';
+          try {
+            var part = await partReq;
+            if (part && part.success) partHtml = OfficialSurvey.renderParticipation(part.report);
+          } catch (e) {}
           if (!res.success) {
-            box.innerHTML = '<div class="alert alert-warning">' + OfficialSurvey.esc(res.msg || '결과를 볼 수 없습니다.') + '</div>';
+            box.innerHTML = partHtml + '<div class="alert alert-warning">' + OfficialSurvey.esc(res.msg || '결과를 볼 수 없습니다.') + '</div>';
             return;
           }
           if (officialResultsQuery.surveyId === 'sdq_kr') {
@@ -4734,10 +4760,10 @@
               refreshOfficialResults();
               return;
             }
-            box.innerHTML = OfficialSurvey.renderSdqResults(res.view);
+            box.innerHTML = partHtml + OfficialSurvey.renderSdqResults(res.view);
             return;
           }
-          box.innerHTML = OfficialSurvey.renderResults(res.view);
+          box.innerHTML = partHtml + OfficialSurvey.renderResults(res.view);
         } catch (e) {
           box.innerHTML = '<div class="alert alert-warning">결과를 불러오지 못했습니다.</div>';
         }
