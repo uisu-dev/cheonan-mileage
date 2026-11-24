@@ -154,7 +154,40 @@
 .os-bar-borderline > span { background: #b54708; }
 .os-bar-clinical > span { background: #b42318; }
 .os-sdq-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.os-sdq-table { min-width: 760px; font-size: 0.82rem; }
+.os-sdq-table { min-width: 860px; font-size: 0.82rem; }
+.os-part { margin: 0 0 8px; }
+.os-part h3 { font-size: 1.05rem; }
+.os-part-table { min-width: 520px; }
+.os-part-open {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #0054a6;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.os-part-class { cursor: pointer; }
+.os-part-table tr.os-part-low td { background: #fff1f0; }
+.os-part-table tr.os-part-sub td { background: #f4f7fb; font-weight: 800; }
+.os-part-table tr.os-part-total td { background: #e7f0fb; font-weight: 800; }
+.os-part-table tr.os-part-sub.os-part-low td,
+.os-part-table tr.os-part-total.os-part-low td { background: #fff1f0; }
+.os-part-table tr.os-part-low td.os-part-rate { color: #b42318; font-weight: 800; }
+.os-part-table tr.os-part-low td:first-child { box-shadow: inset 4px 0 0 #b42318; }
+.os-part-class:hover td { background: #f8fafc; }
+.os-part-low.os-part-class:hover td { background: #ffe4e0; }
+.os-part-missing td { background: #fff; white-space: normal; font-weight: 500; }
+.os-part-misshead { font-weight: 800; margin-bottom: 6px; }
+.os-part-name {
+  display: inline-block;
+  margin: 3px 6px 3px 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #fff7e8;
+  border: 1px solid #f5d48a;
+  font-size: 0.82rem;
+}
 .os-sdq-table td, .os-sdq-table th { white-space: nowrap; }
 .os-sdq-scale td, .os-sdq-scale th { white-space: normal; }
 .os-sdq-card { border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 12px; padding: 10px 12px; margin: 0 0 8px; background: #fff; }
@@ -186,7 +219,7 @@ blockquote.os-open { margin: 8px 0; padding: 8px 10px; background: #f8fafc; bord
   body { background: #fff; }
   .no-print, .os-submitbar, .official-results-banner, .official-survey-btn { display: none !important; }
   .os-card, .os-results section { box-shadow: none; }
-  .os-bar > span, .os-table th, .os-example th, .os-band { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .os-bar > span, .os-table th, .os-example th, .os-band, .os-part-low td, .os-part-name { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .os-sdq-mobile { display: none !important; }
   .os-sdq-desktop { display: block !important; }
 }

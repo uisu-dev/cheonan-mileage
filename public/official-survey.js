@@ -244,11 +244,26 @@
     return '';
   }
 
+  function renderSdqDone(form) {
+    var who = form && form.identity ? form.identity : {};
+    var html = '<div class="os-sdq-done" data-kind="sdq" data-sdq-done="1">';
+    html += '<p class="os-done">이번 회차 응답을 마쳤습니다.' + (form && form.wave ? ' (회차 ' + esc(form.wave) + ')' : '') + '</p>';
+    html += '<p class="os-note">다시 응답하면 이전 응답은 남지 않고 새 답으로 바뀝니다. 점수도 새 답으로 다시 계산됩니다.</p>';
+    if (who.name) {
+      html += '<p class="os-note">' + esc(who.grade) + '학년 ' + esc(who.classNo) + '반 ' + esc(who.number) + '번 ' + esc(who.name) + '</p>';
+    }
+    html += '<button type="button" class="btn btn-primary fw-bold w-100" data-sdq-retry>다시 응답하기</button>';
+    html += '</div>';
+    return html;
+  }
+
   function renderSdq(form, existing) {
     var saved = existing && existing.answers ? existing.answers : {};
     var who = form && form.identity ? form.identity : {};
     var html = '<div class="os-form" data-kind="sdq" data-survey="' + esc(form.surveyId) + '">';
-    html += doneNote(existing);
+    if (existing) {
+      html += '<p class="os-done">다시 제출하면 이번 회차의 이전 응답을 새 답으로 바꿉니다. 아래에는 마지막 응답을 채워 두었습니다.</p>';
+    }
     html += '<p class="os-doc">강점·난점 설문지 (SDQ-Kr) · 자기보고용 · 회차 ' + esc(form.wave || '') + '</p>';
     if (who.name) {
       html += '<p class="os-note">저장되는 학생: ' + esc(who.grade) + '학년 ' + esc(who.classNo) + '반 ' + esc(who.number) + '번 ' + esc(who.name) + ' (' + esc(who.studentId) + ')</p>';
@@ -282,6 +297,38 @@
       answers[el.getAttribute('data-qid')] = checked ? Number(checked.value) : '';
     }
     return answers;
+  }
+
+  function formatKst(iso) {
+    if (!iso) return '';
+    var date = new Date(iso);
+    if (isNaN(date.getTime())) return '';
+    try {
+      var parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).formatToParts(date);
+      var get = function (type) {
+        var found = null;
+        for (var i = 0; i < parts.length; i++) if (parts[i].type === type) found = parts[i];
+        return found ? found.value : '';
+      };
+      var hour = get('hour') === '24' ? '00' : get('hour');
+      return get('year') + '-' + get('month') + '-' + get('day') + ' ' + hour + ':' + get('minute');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function sdqWhen(row) {
+    var time = formatKst(row && row.updatedAt);
+    var badge = row && row.revised ? ' <span class="os-band os-band-borderline">재응답</span>' : '';
+    return (time || '-') + badge;
   }
 
   function bandMark(band) {
@@ -333,9 +380,9 @@
   }
 
   function renderSdqStudentTable(students) {
-    var html = '<div class="os-sdq-desktop"><div class="os-sdq-tablewrap"><table class="os-table os-sdq-table"><thead><tr><th>위험</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>학번</th><th>정서</th><th>품행</th><th>과잉</th><th>또래</th><th>친사회</th><th>총난점</th></tr></thead><tbody>';
+    var html = '<div class="os-sdq-desktop"><div class="os-sdq-tablewrap"><table class="os-table os-sdq-table"><thead><tr><th>위험</th><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>학번</th><th>최근 제출</th><th>정서</th><th>품행</th><th>과잉</th><th>또래</th><th>친사회</th><th>총난점</th></tr></thead><tbody>';
     students.forEach(function (row) {
-      html += '<tr><td>' + bandMark(row.bands && row.bands.total) + '</td><td>' + esc(row.grade) + '</td><td>' + esc(row.classNo) + '</td><td>' + esc(row.number) + '</td><td>' + esc(row.name) + '</td><td>' + esc(row.studentId) + '</td>';
+      html += '<tr><td>' + bandMark(row.bands && row.bands.total) + '</td><td>' + esc(row.grade) + '</td><td>' + esc(row.classNo) + '</td><td>' + esc(row.number) + '</td><td>' + esc(row.name) + '</td><td>' + esc(row.studentId) + '</td><td>' + sdqWhen(row) + '</td>';
       html += sdqScoreCell(row.scores, row.bands, 'emotional');
       html += sdqScoreCell(row.scores, row.bands, 'conduct');
       html += sdqScoreCell(row.scores, row.bands, 'hyperactivity');
@@ -354,7 +401,7 @@
       var id = row.bands && row.bands.total ? row.bands.total.id : 'normal';
       html += '<article class="os-sdq-card os-sdq-card-' + esc(id) + '">';
       html += '<div class="os-sdq-who">' + bandMark(row.bands && row.bands.total) + ' ' + esc(row.grade) + '학년 ' + esc(row.classNo) + '반 ' + esc(row.number) + '번 ' + esc(row.name) + '</div>';
-      html += '<div class="os-optional">' + esc(row.studentId) + '</div>';
+      html += '<div class="os-optional">' + esc(row.studentId) + ' · ' + sdqWhen(row) + '</div>';
       if (!row.scores) {
         html += '<p class="os-empty">채점할 수 없는 응답입니다.</p>';
       } else {
@@ -376,7 +423,7 @@
     var html = '<div class="os-results os-sdq-results">';
     html += '<h2>' + esc(view.title) + '</h2>';
     html += '<p class="os-meta">회차 ' + esc(view.wave) + ' · ' + esc(view.gradeLabel) + ' · ' + esc(view.classLabel) + ' · 명단 ' + Number(view.responseCount || 0) + '명</p>';
-    html += '<p class="os-note">임상 학생을 위에 두고, 같은 수준에서는 총난점이 높은 순입니다. 선별 참고 점수이며 진단이 아닙니다.</p>';
+    html += '<p class="os-note">임상 학생을 위에 두고, 같은 수준에서는 총난점이 높은 순입니다. 선별 참고 점수이며 진단이 아닙니다. 같은 회차에 다시 제출한 학생은 마지막 응답과 그 시각만 보입니다.</p>';
     html += renderSdqStats(view);
     var students = view.students || [];
     if (!students.length) {
@@ -413,6 +460,56 @@
     opt.textContent = 'SDQ 정신건강 설문';
     select.appendChild(opt);
     return true;
+  }
+
+  function renderParticipation(report) {
+    var surveys = report && report.surveys ? report.surveys : [];
+    if (!surveys.length) return '';
+    var html = '<div class="os-results os-participation">';
+    surveys.forEach(function (survey) {
+      html += '<section class="os-part">';
+      html += '<h3>참여 현황 · ' + esc(survey.title) + '</h3>';
+      if (survey.wave) html += '<p class="os-meta">회차 ' + esc(survey.wave) + ' · 응답 여부만 표시합니다. 문항 답과 위험 수준은 여기에 없습니다.</p>';
+      else html += '<p class="os-meta">학생 응답만 집계합니다. 학부모·교사 응답은 아래 결과에서 봅니다.</p>';
+      if (survey.warning) html += '<p class="os-note">' + esc(survey.warning) + '</p>';
+      if (survey.unavailable) {
+        html += '</section>';
+        return;
+      }
+      var lowRate = Number(survey.lowRate || (report && report.lowRate) || 70);
+      html += '<p class="os-meta">재적 학생 대비 응답입니다. 참여율 ' + lowRate + '% 미만인 반은 색으로 표시했습니다. 반을 누르면 아직 응답하지 않은 학생의 번호와 이름이 나옵니다.</p>';
+      if (!survey.grades || !survey.grades.length) {
+        html += '<p class="os-empty">재적 학생이 없습니다.</p></section>';
+        return;
+      }
+      html += '<div class="os-sdq-tablewrap"><table class="os-table os-part-table"><thead><tr><th>학년</th><th>반</th><th>응답</th><th>재적</th><th>참여율</th></tr></thead><tbody>';
+      (survey.grades || []).forEach(function (grade) {
+        (grade.classes || []).forEach(function (cls) {
+          var key = String(survey.id) + '-' + grade.grade + '-' + cls.classNo;
+          var label = grade.grade + '학년 ' + cls.classNo + '반 미응답 보기';
+          html += '<tr class="os-part-class' + (cls.low ? ' os-part-low' : '') + '" data-part-key="' + esc(key) + '">';
+          html += '<td>' + esc(grade.grade) + '</td>';
+          html += '<td><button type="button" class="os-part-open" aria-expanded="false" aria-label="' + esc(label) + '">' + esc(cls.classNo) + '반</button></td>';
+          html += '<td>' + Number(cls.responded || 0) + '</td>';
+          html += '<td>' + Number(cls.enrolled || 0) + '</td>';
+          html += '<td class="os-part-rate">' + esc(cls.rate) + '%</td></tr>';
+          html += '<tr class="os-part-missing" data-part-panel="' + esc(key) + '" hidden><td colspan="5">';
+          if (!cls.missing || !cls.missing.length) html += '이 반은 모두 응답했습니다.';
+          else {
+            html += '<div class="os-part-misshead">미응답 ' + cls.missing.length + '명</div>';
+            cls.missing.forEach(function (stu) {
+              html += '<span class="os-part-name">' + esc(stu.number) + '번 ' + esc(stu.name) + '</span>';
+            });
+          }
+          html += '</td></tr>';
+        });
+        html += '<tr class="os-part-sub' + (grade.low ? ' os-part-low' : '') + '"><td>' + esc(grade.grade) + '</td><td>소계</td><td>' + Number(grade.responded || 0) + '</td><td>' + Number(grade.enrolled || 0) + '</td><td class="os-part-rate">' + esc(grade.rate) + '%</td></tr>';
+      });
+      html += '<tr class="os-part-total' + (survey.low ? ' os-part-low' : '') + '"><td colspan="2">학교 전체</td><td>' + Number(survey.responded || 0) + '</td><td>' + Number(survey.enrolled || 0) + '</td><td class="os-part-rate">' + esc(survey.rate) + '%</td></tr>';
+      html += '</tbody></table></div></section>';
+    });
+    html += '</div>';
+    return html;
   }
 
   function renderResults(view) {
@@ -524,6 +621,16 @@
         refreshProposalControls(box);
         return;
       }
+      var partRow = target.closest('[data-part-key]');
+      if (partRow && partRow.parentNode) {
+        var panel = partRow.parentNode.querySelector('[data-part-panel="' + String(partRow.getAttribute('data-part-key') || '').replace(/"/g, '') + '"]');
+        if (panel) {
+          panel.hidden = !panel.hidden;
+          var opener = partRow.querySelector('.os-part-open');
+          if (opener) opener.setAttribute('aria-expanded', panel.hidden ? 'false' : 'true');
+        }
+        return;
+      }
       var remove = target.closest('[data-remove-proposal]');
       if (remove) {
         var box2 = remove.closest('[data-os-budget]');
@@ -540,6 +647,8 @@
     renderCurriculum: renderCurriculum,
     renderBudget: renderBudget,
     renderSdq: renderSdq,
+    renderSdqDone: renderSdqDone,
+    renderParticipation: renderParticipation,
     readCurriculum: readCurriculum,
     readBudget: readBudget,
     readSdq: readSdq,
