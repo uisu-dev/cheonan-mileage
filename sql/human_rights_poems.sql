@@ -20,5 +20,7 @@ CREATE TABLE IF NOT EXISTS poem_chat_throttle (
   last_chat_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE human_rights_poems DISABLE ROW LEVEL SECURITY;
-ALTER TABLE poem_chat_throttle DISABLE ROW LEVEL SECURITY;
+-- RLS (Row Level Security) 활성화
+-- 앱은 서비스 롤 키만 사용하므로 정책 없이 RLS만 활성화하여 anon 키 차단
+ALTER TABLE human_rights_poems ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poem_chat_throttle ENABLE ROW LEVEL SECURITY;
